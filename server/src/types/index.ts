@@ -1,6 +1,6 @@
-import type { Request } from 'express';
+import type { FastifyRequest } from 'fastify';
 
-export interface AuthenticatedRequest extends Request {
+export interface AuthenticatedRequest extends FastifyRequest {
   userId?: string;
   userEmail?: string;
   accessToken?: string;

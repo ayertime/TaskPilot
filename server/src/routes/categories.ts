@@ -1,11 +1,7 @@
-import { Router, type Response } from 'express';
+import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { authMiddleware } from '../middleware/auth';
 import { createUserClient } from '../services/supabase';
-import type { AuthenticatedRequest } from '../types';
-
-const router = Router();
-router.use(authMiddleware as any);
 
 const createCategorySchema = z.object({
   name: z.string().min(1),
@@ -15,95 +11,99 @@ const createCategorySchema = z.object({
 
 const updateCategorySchema = createCategorySchema.partial();
 
-// GET /api/categories
-router.get('/', async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const supabase = createUserClient(req.accessToken!);
-    const { data, error } = await supabase
-      .from('categories')
-      .select('*')
-      .order('name');
+export default async function categoryRoutes(app: FastifyInstance) {
+  app.addHook('onRequest', authMiddleware);
 
-    if (error) {
-      res.status(400).json({ error: error.message });
-      return;
+  // GET /api/categories
+  app.get('/', async (req, reply) => {
+    try {
+      const supabase = createUserClient((req as any).accessToken!);
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .order('name');
+
+      if (error) {
+        reply.code(400).send({ error: error.message });
+        return;
+      }
+      return data;
+    } catch {
+      reply.code(500).send({ error: 'Failed to fetch categories' });
     }
-    res.json(data);
-  } catch {
-    res.status(500).json({ error: 'Failed to fetch categories' });
-  }
-});
+  });
 
-// POST /api/categories
-router.post('/', async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const result = createCategorySchema.safeParse(req.body);
-    if (!result.success) {
-      res.status(400).json({ error: 'Invalid category data', details: result.error.issues });
-      return;
+  // POST /api/categories
+  app.post('/', async (req, reply) => {
+    try {
+      const result = createCategorySchema.safeParse(req.body);
+      if (!result.success) {
+        reply.code(400).send({ error: 'Invalid category data', details: result.error.issues });
+        return;
+      }
+
+      const supabase = createUserClient((req as any).accessToken!);
+      const { data, error } = await supabase
+        .from('categories')
+        .insert({ ...result.data, user_id: (req as any).userId })
+        .select()
+        .single();
+
+      if (error) {
+        reply.code(400).send({ error: error.message });
+        return;
+      }
+      reply.code(201).send(data);
+    } catch {
+      reply.code(500).send({ error: 'Failed to create category' });
     }
+  });
 
-    const supabase = createUserClient(req.accessToken!);
-    const { data, error } = await supabase
-      .from('categories')
-      .insert({ ...result.data, user_id: req.userId })
-      .select()
-      .single();
+  // PATCH /api/categories/:id
+  app.patch('/:id', async (req, reply) => {
+    try {
+      const result = updateCategorySchema.safeParse(req.body);
+      if (!result.success) {
+        reply.code(400).send({ error: 'Invalid update data' });
+        return;
+      }
 
-    if (error) {
-      res.status(400).json({ error: error.message });
-      return;
+      const { id } = req.params as { id: string };
+      const supabase = createUserClient((req as any).accessToken!);
+      const { data, error } = await supabase
+        .from('categories')
+        .update(result.data)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        reply.code(400).send({ error: error.message });
+        return;
+      }
+      return data;
+    } catch {
+      reply.code(500).send({ error: 'Failed to update category' });
     }
-    res.status(201).json(data);
-  } catch {
-    res.status(500).json({ error: 'Failed to create category' });
-  }
-});
+  });
 
-// PATCH /api/categories/:id
-router.patch('/:id', async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const result = updateCategorySchema.safeParse(req.body);
-    if (!result.success) {
-      res.status(400).json({ error: 'Invalid update data' });
-      return;
+  // DELETE /api/categories/:id
+  app.delete('/:id', async (req, reply) => {
+    try {
+      const { id } = req.params as { id: string };
+      const supabase = createUserClient((req as any).accessToken!);
+      const { error } = await supabase
+        .from('categories')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        reply.code(400).send({ error: error.message });
+        return;
+      }
+      reply.code(204).send();
+    } catch {
+      reply.code(500).send({ error: 'Failed to delete category' });
     }
-
-    const supabase = createUserClient(req.accessToken!);
-    const { data, error } = await supabase
-      .from('categories')
-      .update(result.data)
-      .eq('id', req.params.id)
-      .select()
-      .single();
-
-    if (error) {
-      res.status(400).json({ error: error.message });
-      return;
-    }
-    res.json(data);
-  } catch {
-    res.status(500).json({ error: 'Failed to update category' });
-  }
-});
-
-// DELETE /api/categories/:id
-router.delete('/:id', async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const supabase = createUserClient(req.accessToken!);
-    const { error } = await supabase
-      .from('categories')
-      .delete()
-      .eq('id', req.params.id);
-
-    if (error) {
-      res.status(400).json({ error: error.message });
-      return;
-    }
-    res.status(204).send();
-  } catch {
-    res.status(500).json({ error: 'Failed to delete category' });
-  }
-});
-
-export default router;
+  });
+}

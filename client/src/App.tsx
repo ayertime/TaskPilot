@@ -1,4 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from '@/lib/query';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Toaster } from '@/components/ui/sonner';
 import { LoginPage } from '@/components/auth/LoginPage';
@@ -10,21 +12,23 @@ import { ProfileSettings } from '@/components/settings/ProfileSettings';
 
 function App() {
   return (
-    <TooltipProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/auth/callback" element={<AuthCallback />} />
-          <Route element={<ProtectedRoute />}>
-            <Route element={<AppLayout />}>
-              <Route path="/" element={<TaskBoard />} />
-              <Route path="/settings" element={<ProfileSettings />} />
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route element={<ProtectedRoute />}>
+              <Route element={<AppLayout />}>
+                <Route path="/" element={<TaskBoard />} />
+                <Route path="/settings" element={<ProfileSettings />} />
+              </Route>
             </Route>
-          </Route>
-        </Routes>
-      </BrowserRouter>
-      <Toaster position="bottom-right" richColors />
-    </TooltipProvider>
+          </Routes>
+        </BrowserRouter>
+        <Toaster position="bottom-right" richColors />
+      </TooltipProvider>
+    </QueryClientProvider>
   );
 }
 

@@ -1,16 +1,14 @@
-import type { Response, NextFunction } from 'express';
+import type { FastifyRequest, FastifyReply } from 'fastify';
 import { supabaseAdmin } from '../services/supabase';
-import type { AuthenticatedRequest } from '../types';
 
 export async function authMiddleware(
-  req: AuthenticatedRequest,
-  res: Response,
-  next: NextFunction
+  req: FastifyRequest,
+  reply: FastifyReply
 ) {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    res.status(401).json({ error: 'Missing or invalid authorization header' });
+    reply.code(401).send({ error: 'Missing or invalid authorization header' });
     return;
   }
 
@@ -20,15 +18,14 @@ export async function authMiddleware(
     const { data, error } = await supabaseAdmin.auth.getUser(token);
 
     if (error || !data.user) {
-      res.status(401).json({ error: 'Invalid or expired token' });
+      reply.code(401).send({ error: 'Invalid or expired token' });
       return;
     }
 
-    req.userId = data.user.id;
-    req.userEmail = data.user.email;
-    req.accessToken = token;
-    next();
+    (req as any).userId = data.user.id;
+    (req as any).userEmail = data.user.email;
+    (req as any).accessToken = token;
   } catch {
-    res.status(500).json({ error: 'Authentication failed' });
+    reply.code(500).send({ error: 'Authentication failed' });
   }
 }

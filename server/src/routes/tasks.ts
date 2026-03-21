@@ -1,11 +1,7 @@
-import { Router, type Response } from 'express';
+import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { authMiddleware } from '../middleware/auth';
 import { createUserClient } from '../services/supabase';
-import type { AuthenticatedRequest } from '../types';
-
-const router = Router();
-router.use(authMiddleware as any);
 
 const createTaskSchema = z.object({
   title: z.string().min(1),
@@ -34,168 +30,172 @@ const reorderSchema = z.object({
   ),
 });
 
-// GET /api/tasks
-router.get('/', async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const supabase = createUserClient(req.accessToken!);
-    const { status, category_id, priority } = req.query;
+export default async function taskRoutes(app: FastifyInstance) {
+  app.addHook('onRequest', authMiddleware);
 
-    let query = supabase
-      .from('tasks')
-      .select('*')
-      .order('position', { ascending: true });
+  // GET /api/tasks
+  app.get('/', async (req, reply) => {
+    try {
+      const supabase = createUserClient((req as any).accessToken!);
+      const { status, category_id, priority } = req.query as Record<string, string>;
 
-    if (status) query = query.eq('status', status as string);
-    if (category_id) query = query.eq('category_id', category_id as string);
-    if (priority) query = query.eq('priority', priority as string);
+      let query = supabase
+        .from('tasks')
+        .select('*')
+        .order('position', { ascending: true });
 
-    const { data, error } = await query;
-    if (error) {
-      res.status(400).json({ error: error.message });
-      return;
+      if (status) query = query.eq('status', status);
+      if (category_id) query = query.eq('category_id', category_id);
+      if (priority) query = query.eq('priority', priority);
+
+      const { data, error } = await query;
+      if (error) {
+        reply.code(400).send({ error: error.message });
+        return;
+      }
+      return data;
+    } catch {
+      reply.code(500).send({ error: 'Failed to fetch tasks' });
     }
-    res.json(data);
-  } catch {
-    res.status(500).json({ error: 'Failed to fetch tasks' });
-  }
-});
+  });
 
-// POST /api/tasks
-router.post('/', async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const result = createTaskSchema.safeParse(req.body);
-    if (!result.success) {
-      res.status(400).json({ error: 'Invalid task data', details: result.error.issues });
-      return;
+  // POST /api/tasks
+  app.post('/', async (req, reply) => {
+    try {
+      const result = createTaskSchema.safeParse(req.body);
+      if (!result.success) {
+        reply.code(400).send({ error: 'Invalid task data', details: result.error.issues });
+        return;
+      }
+
+      const supabase = createUserClient((req as any).accessToken!);
+
+      const { data: existing } = await supabase
+        .from('tasks')
+        .select('position')
+        .eq('status', result.data.status!)
+        .order('position', { ascending: false })
+        .limit(1)
+        .single();
+
+      const position = (existing?.position ?? -1) + 1;
+
+      const { data, error } = await supabase
+        .from('tasks')
+        .insert({ ...result.data, user_id: (req as any).userId, position })
+        .select()
+        .single();
+
+      if (error) {
+        reply.code(400).send({ error: error.message });
+        return;
+      }
+      reply.code(201).send(data);
+    } catch {
+      reply.code(500).send({ error: 'Failed to create task' });
     }
+  });
 
-    const supabase = createUserClient(req.accessToken!);
+  // PATCH /api/tasks/reorder (must be before /:id)
+  app.patch('/reorder', async (req, reply) => {
+    try {
+      const result = reorderSchema.safeParse(req.body);
+      if (!result.success) {
+        reply.code(400).send({ error: 'Invalid reorder data' });
+        return;
+      }
 
-    // Get max position for the status column
-    const { data: existing } = await supabase
-      .from('tasks')
-      .select('position')
-      .eq('status', result.data.status!)
-      .order('position', { ascending: false })
-      .limit(1)
-      .single();
+      const supabase = createUserClient((req as any).accessToken!);
 
-    const position = (existing?.position ?? -1) + 1;
+      await Promise.all(
+        result.data.tasks.map((task) =>
+          supabase
+            .from('tasks')
+            .update({ status: task.status, position: task.position })
+            .eq('id', task.id)
+        )
+      );
 
-    const { data, error } = await supabase
-      .from('tasks')
-      .insert({ ...result.data, user_id: req.userId, position })
-      .select()
-      .single();
-
-    if (error) {
-      res.status(400).json({ error: error.message });
-      return;
+      return { success: true };
+    } catch {
+      reply.code(500).send({ error: 'Failed to reorder tasks' });
     }
-    res.status(201).json(data);
-  } catch {
-    res.status(500).json({ error: 'Failed to create task' });
-  }
-});
+  });
 
-// PATCH /api/tasks/reorder (must be before /:id)
-router.patch('/reorder', async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const result = reorderSchema.safeParse(req.body);
-    if (!result.success) {
-      res.status(400).json({ error: 'Invalid reorder data' });
-      return;
+  // PATCH /api/tasks/:id/complete
+  app.patch('/:id/complete', async (req, reply) => {
+    try {
+      const { id } = req.params as { id: string };
+      const supabase = createUserClient((req as any).accessToken!);
+
+      const { data, error } = await supabase
+        .from('tasks')
+        .update({
+          status: 'done',
+          completed_at: new Date().toISOString(),
+          completed_by: 'user',
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        reply.code(400).send({ error: error.message });
+        return;
+      }
+      return data;
+    } catch {
+      reply.code(500).send({ error: 'Failed to complete task' });
     }
+  });
 
-    const supabase = createUserClient(req.accessToken!);
+  // PATCH /api/tasks/:id
+  app.patch('/:id', async (req, reply) => {
+    try {
+      const result = updateTaskSchema.safeParse(req.body);
+      if (!result.success) {
+        reply.code(400).send({ error: 'Invalid update data', details: result.error.issues });
+        return;
+      }
 
-    await Promise.all(
-      result.data.tasks.map((task) =>
-        supabase
-          .from('tasks')
-          .update({ status: task.status, position: task.position })
-          .eq('id', task.id)
-      )
-    );
+      const { id } = req.params as { id: string };
+      const supabase = createUserClient((req as any).accessToken!);
 
-    res.json({ success: true });
-  } catch {
-    res.status(500).json({ error: 'Failed to reorder tasks' });
-  }
-});
+      const { data, error } = await supabase
+        .from('tasks')
+        .update(result.data)
+        .eq('id', id)
+        .select()
+        .single();
 
-// PATCH /api/tasks/:id/complete
-router.patch('/:id/complete', async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const supabase = createUserClient(req.accessToken!);
-
-    const { data, error } = await supabase
-      .from('tasks')
-      .update({
-        status: 'done',
-        completed_at: new Date().toISOString(),
-        completed_by: 'user',
-      })
-      .eq('id', req.params.id)
-      .select()
-      .single();
-
-    if (error) {
-      res.status(400).json({ error: error.message });
-      return;
+      if (error) {
+        reply.code(400).send({ error: error.message });
+        return;
+      }
+      return data;
+    } catch {
+      reply.code(500).send({ error: 'Failed to update task' });
     }
-    res.json(data);
-  } catch {
-    res.status(500).json({ error: 'Failed to complete task' });
-  }
-});
+  });
 
-// PATCH /api/tasks/:id
-router.patch('/:id', async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const result = updateTaskSchema.safeParse(req.body);
-    if (!result.success) {
-      res.status(400).json({ error: 'Invalid update data', details: result.error.issues });
-      return;
+  // DELETE /api/tasks/:id
+  app.delete('/:id', async (req, reply) => {
+    try {
+      const { id } = req.params as { id: string };
+      const supabase = createUserClient((req as any).accessToken!);
+
+      const { error } = await supabase
+        .from('tasks')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        reply.code(400).send({ error: error.message });
+        return;
+      }
+      reply.code(204).send();
+    } catch {
+      reply.code(500).send({ error: 'Failed to delete task' });
     }
-
-    const supabase = createUserClient(req.accessToken!);
-
-    const { data, error } = await supabase
-      .from('tasks')
-      .update(result.data)
-      .eq('id', req.params.id)
-      .select()
-      .single();
-
-    if (error) {
-      res.status(400).json({ error: error.message });
-      return;
-    }
-    res.json(data);
-  } catch {
-    res.status(500).json({ error: 'Failed to update task' });
-  }
-});
-
-// DELETE /api/tasks/:id
-router.delete('/:id', async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const supabase = createUserClient(req.accessToken!);
-
-    const { error } = await supabase
-      .from('tasks')
-      .delete()
-      .eq('id', req.params.id);
-
-    if (error) {
-      res.status(400).json({ error: error.message });
-      return;
-    }
-    res.status(204).send();
-  } catch {
-    res.status(500).json({ error: 'Failed to delete task' });
-  }
-});
-
-export default router;
+  });
+}

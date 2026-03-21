@@ -42,8 +42,8 @@ TaskPilot is an intelligent task management app with an AI agent powered by Clau
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | React 19, TypeScript, Vite, shadcn/ui, Tailwind CSS v4 |
-| Backend | Node.js, Express 5, TypeScript |
+| Frontend | React 19, TypeScript, Vite, shadcn/ui, Tailwind CSS v4, TanStack Query |
+| Backend | Node.js, Fastify, TypeScript |
 | Database | Supabase (PostgreSQL) |
 | AI | Claude API (Anthropic) with tool-use |
 | Auth | Supabase Auth (Google, Microsoft, Yahoo, email/password) |

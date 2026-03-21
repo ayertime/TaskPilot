@@ -1,27 +1,19 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { apiFetch } from '@/lib/api';
 import type { Task } from '@/types';
 
 export function useTasks() {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
-  const fetchTasks = useCallback(async () => {
-    try {
-      const data = await apiFetch('/api/tasks');
-      setTasks(data);
-    } catch (err) {
-      console.error('Failed to fetch tasks:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const { data: tasks = [], isLoading: loading } = useQuery({
+    queryKey: ['tasks'],
+    queryFn: () => apiFetch('/api/tasks') as Promise<Task[]>,
+  });
 
+  // Subscribe to Supabase Realtime for live updates
   useEffect(() => {
-    fetchTasks();
-
-    // Subscribe to Supabase Realtime for live updates
     const channel = supabase
       .channel('tasks-realtime')
       .on(
@@ -31,22 +23,21 @@ export function useTasks() {
           const newRecord = payload.new as Task;
           const oldRecord = payload.old as { id: string };
 
-          switch (payload.eventType) {
-            case 'INSERT':
-              setTasks((prev) => {
+          queryClient.setQueryData<Task[]>(['tasks'], (prev = []) => {
+            switch (payload.eventType) {
+              case 'INSERT':
                 if (prev.some((t) => t.id === newRecord.id)) return prev;
                 return [...prev, newRecord];
-              });
-              break;
-            case 'UPDATE':
-              setTasks((prev) =>
-                prev.map((t) => (t.id === newRecord.id ? newRecord : t))
-              );
-              break;
-            case 'DELETE':
-              setTasks((prev) => prev.filter((t) => t.id !== oldRecord.id));
-              break;
-          }
+              case 'UPDATE':
+                return prev.map((t) =>
+                  t.id === newRecord.id ? newRecord : t
+                );
+              case 'DELETE':
+                return prev.filter((t) => t.id !== oldRecord.id);
+              default:
+                return prev;
+            }
+          });
         }
       )
       .subscribe();
@@ -54,73 +45,86 @@ export function useTasks() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [fetchTasks]);
+  }, [queryClient]);
 
-  const createTask = useCallback(
-    async (data: {
+  const createMutation = useMutation({
+    mutationFn: (data: {
       title: string;
       description?: string | null;
       status?: Task['status'];
       priority?: Task['priority'];
       due_date?: string | null;
       category_id?: string | null;
-    }) => {
-      const task = await apiFetch('/api/tasks', {
+    }) =>
+      apiFetch('/api/tasks', {
         method: 'POST',
         body: JSON.stringify(data),
-      });
-      setTasks((prev) => {
+      }) as Promise<Task>,
+    onSuccess: (task) => {
+      queryClient.setQueryData<Task[]>(['tasks'], (prev = []) => {
         if (prev.some((t) => t.id === task.id)) return prev;
         return [...prev, task];
       });
-      return task;
     },
-    []
-  );
+  });
 
-  const updateTask = useCallback(
-    async (id: string, data: Partial<Task>) => {
-      const task = await apiFetch(`/api/tasks/${id}`, {
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<Task> }) =>
+      apiFetch(`/api/tasks/${id}`, {
         method: 'PATCH',
         body: JSON.stringify(data),
-      });
-      setTasks((prev) => prev.map((t) => (t.id === id ? task : t)));
-      return task;
+      }) as Promise<Task>,
+    onSuccess: (task) => {
+      queryClient.setQueryData<Task[]>(['tasks'], (prev = []) =>
+        prev.map((t) => (t.id === task.id ? task : t))
+      );
     },
-    []
-  );
+  });
 
-  const deleteTask = useCallback(async (id: string) => {
-    await apiFetch(`/api/tasks/${id}`, { method: 'DELETE' });
-    setTasks((prev) => prev.filter((t) => t.id !== id));
-  }, []);
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) =>
+      apiFetch(`/api/tasks/${id}`, { method: 'DELETE' }),
+    onSuccess: (_, id) => {
+      queryClient.setQueryData<Task[]>(['tasks'], (prev = []) =>
+        prev.filter((t) => t.id !== id)
+      );
+    },
+  });
 
-  const completeTask = useCallback(async (id: string) => {
-    const task = await apiFetch(`/api/tasks/${id}/complete`, {
-      method: 'PATCH',
-    });
-    setTasks((prev) => prev.map((t) => (t.id === id ? task : t)));
-    return task;
-  }, []);
+  const completeMutation = useMutation({
+    mutationFn: (id: string) =>
+      apiFetch(`/api/tasks/${id}/complete`, {
+        method: 'PATCH',
+      }) as Promise<Task>,
+    onSuccess: (task) => {
+      queryClient.setQueryData<Task[]>(['tasks'], (prev = []) =>
+        prev.map((t) => (t.id === task.id ? task : t))
+      );
+    },
+  });
 
-  const reorderTasks = useCallback(
-    async (reordered: { id: string; status: Task['status']; position: number }[]) => {
-      await apiFetch('/api/tasks/reorder', {
+  const reorderMutation = useMutation({
+    mutationFn: (
+      reordered: { id: string; status: Task['status']; position: number }[]
+    ) =>
+      apiFetch('/api/tasks/reorder', {
         method: 'PATCH',
         body: JSON.stringify({ tasks: reordered }),
-      });
-    },
-    []
-  );
+      }),
+  });
 
   return {
     tasks,
     loading,
-    createTask,
-    updateTask,
-    deleteTask,
-    completeTask,
-    reorderTasks,
-    refetch: fetchTasks,
+    createTask: (data: Parameters<typeof createMutation.mutateAsync>[0]) =>
+      createMutation.mutateAsync(data),
+    updateTask: (id: string, data: Partial<Task>) =>
+      updateMutation.mutateAsync({ id, data }),
+    deleteTask: (id: string) => deleteMutation.mutateAsync(id),
+    completeTask: (id: string) => completeMutation.mutateAsync(id),
+    reorderTasks: (
+      reordered: { id: string; status: Task['status']; position: number }[]
+    ) => reorderMutation.mutateAsync(reordered),
+    refetch: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
   };
 }

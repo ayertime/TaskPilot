@@ -1,11 +1,7 @@
-import { Router, type Response } from 'express';
+import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { authMiddleware } from '../middleware/auth';
 import { createUserClient } from '../services/supabase';
-import type { AuthenticatedRequest } from '../types';
-
-const router = Router();
-router.use(authMiddleware as any);
 
 const updateProfileSchema = z.object({
   display_name: z.string().min(1).optional(),
@@ -15,51 +11,53 @@ const updateProfileSchema = z.object({
   timezone: z.string().optional(),
 });
 
-// GET /api/profile
-router.get('/', async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const supabase = createUserClient(req.accessToken!);
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', req.userId!)
-      .single();
+export default async function profileRoutes(app: FastifyInstance) {
+  app.addHook('onRequest', authMiddleware);
 
-    if (error) {
-      res.status(400).json({ error: error.message });
-      return;
+  // GET /api/profile
+  app.get('/', async (req, reply) => {
+    try {
+      const supabase = createUserClient((req as any).accessToken!);
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', (req as any).userId!)
+        .single();
+
+      if (error) {
+        reply.code(400).send({ error: error.message });
+        return;
+      }
+      return data;
+    } catch {
+      reply.code(500).send({ error: 'Failed to fetch profile' });
     }
-    res.json(data);
-  } catch {
-    res.status(500).json({ error: 'Failed to fetch profile' });
-  }
-});
+  });
 
-// PATCH /api/profile
-router.patch('/', async (req: AuthenticatedRequest, res: Response) => {
-  try {
-    const result = updateProfileSchema.safeParse(req.body);
-    if (!result.success) {
-      res.status(400).json({ error: 'Invalid profile data', details: result.error.issues });
-      return;
+  // PATCH /api/profile
+  app.patch('/', async (req, reply) => {
+    try {
+      const result = updateProfileSchema.safeParse(req.body);
+      if (!result.success) {
+        reply.code(400).send({ error: 'Invalid profile data', details: result.error.issues });
+        return;
+      }
+
+      const supabase = createUserClient((req as any).accessToken!);
+      const { data, error } = await supabase
+        .from('profiles')
+        .update(result.data)
+        .eq('id', (req as any).userId!)
+        .select()
+        .single();
+
+      if (error) {
+        reply.code(400).send({ error: error.message });
+        return;
+      }
+      return data;
+    } catch {
+      reply.code(500).send({ error: 'Failed to update profile' });
     }
-
-    const supabase = createUserClient(req.accessToken!);
-    const { data, error } = await supabase
-      .from('profiles')
-      .update(result.data)
-      .eq('id', req.userId!)
-      .select()
-      .single();
-
-    if (error) {
-      res.status(400).json({ error: error.message });
-      return;
-    }
-    res.json(data);
-  } catch {
-    res.status(500).json({ error: 'Failed to update profile' });
-  }
-});
-
-export default router;
+  });
+}

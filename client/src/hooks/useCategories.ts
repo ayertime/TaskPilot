@@ -1,61 +1,60 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
 import type { Category } from '@/types';
 
 export function useCategories() {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
-  const fetchCategories = useCallback(async () => {
-    try {
-      const data = await apiFetch('/api/categories');
-      setCategories(data);
-    } catch (err) {
-      console.error('Failed to fetch categories:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const { data: categories = [], isLoading: loading } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => apiFetch('/api/categories') as Promise<Category[]>,
+  });
 
-  useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
-
-  const createCategory = useCallback(
-    async (data: { name: string; color: string; icon?: string }) => {
-      const category = await apiFetch('/api/categories', {
+  const createMutation = useMutation({
+    mutationFn: (data: { name: string; color: string; icon?: string }) =>
+      apiFetch('/api/categories', {
         method: 'POST',
         body: JSON.stringify(data),
-      });
-      setCategories((prev) => [...prev, category]);
-      return category;
+      }) as Promise<Category>,
+    onSuccess: (category) => {
+      queryClient.setQueryData<Category[]>(['categories'], (prev = []) => [
+        ...prev,
+        category,
+      ]);
     },
-    []
-  );
+  });
 
-  const updateCategory = useCallback(
-    async (id: string, data: Partial<Category>) => {
-      const category = await apiFetch(`/api/categories/${id}`, {
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<Category> }) =>
+      apiFetch(`/api/categories/${id}`, {
         method: 'PATCH',
         body: JSON.stringify(data),
-      });
-      setCategories((prev) => prev.map((c) => (c.id === id ? category : c)));
-      return category;
+      }) as Promise<Category>,
+    onSuccess: (category) => {
+      queryClient.setQueryData<Category[]>(['categories'], (prev = []) =>
+        prev.map((c) => (c.id === category.id ? category : c))
+      );
     },
-    []
-  );
+  });
 
-  const deleteCategory = useCallback(async (id: string) => {
-    await apiFetch(`/api/categories/${id}`, { method: 'DELETE' });
-    setCategories((prev) => prev.filter((c) => c.id !== id));
-  }, []);
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) =>
+      apiFetch(`/api/categories/${id}`, { method: 'DELETE' }),
+    onSuccess: (_, id) => {
+      queryClient.setQueryData<Category[]>(['categories'], (prev = []) =>
+        prev.filter((c) => c.id !== id)
+      );
+    },
+  });
 
   return {
     categories,
     loading,
-    createCategory,
-    updateCategory,
-    deleteCategory,
-    refetch: fetchCategories,
+    createCategory: (data: { name: string; color: string; icon?: string }) =>
+      createMutation.mutateAsync(data),
+    updateCategory: (id: string, data: Partial<Category>) =>
+      updateMutation.mutateAsync({ id, data }),
+    deleteCategory: (id: string) => deleteMutation.mutateAsync(id),
+    refetch: () => queryClient.invalidateQueries({ queryKey: ['categories'] }),
   };
 }
