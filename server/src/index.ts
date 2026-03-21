@@ -1,6 +1,9 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import taskRoutes from './routes/tasks';
+import categoryRoutes from './routes/categories';
+import profileRoutes from './routes/profile';
 
 dotenv.config();
 
@@ -18,6 +21,11 @@ app.use(express.json());
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', name: 'TaskPilot API', version: '1.0.0' });
 });
+
+// Routes
+app.use('/api/tasks', taskRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/profile', profileRoutes);
 
 // Start server
 app.listen(PORT, () => {

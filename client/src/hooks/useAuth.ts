@@ -51,7 +51,7 @@ export function useAuth() {
 
   const signInWithYahoo = useCallback(async () => {
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'yahoo',
+      provider: 'yahoo' as any,
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
       },

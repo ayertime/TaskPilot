@@ -1,23 +1,30 @@
 import { BrowserRouter, Routes, Route } from 'react-router';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { Toaster } from '@/components/ui/sonner';
 import { LoginPage } from '@/components/auth/LoginPage';
 import { AuthCallback } from '@/components/auth/AuthCallback';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { Dashboard } from '@/components/layout/Dashboard';
+import { TaskBoard } from '@/components/dashboard/TaskBoard';
+import { ProfileSettings } from '@/components/settings/ProfileSettings';
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/auth/callback" element={<AuthCallback />} />
-        <Route element={<ProtectedRoute />}>
-          <Route element={<AppLayout />}>
-            <Route path="/" element={<Dashboard />} />
+    <TooltipProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route element={<ProtectedRoute />}>
+            <Route element={<AppLayout />}>
+              <Route path="/" element={<TaskBoard />} />
+              <Route path="/settings" element={<ProfileSettings />} />
+            </Route>
           </Route>
-        </Route>
-      </Routes>
-    </BrowserRouter>
+        </Routes>
+      </BrowserRouter>
+      <Toaster position="bottom-right" richColors />
+    </TooltipProvider>
   );
 }
 

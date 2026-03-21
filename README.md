@@ -6,15 +6,26 @@ TaskPilot is an intelligent task management app with an AI agent powered by Clau
 
 ## Features
 
-### Sprint 1: Foundation (Current)
+### Sprint 1: Foundation
 - Google, Microsoft, Yahoo OAuth login
 - Email/password registration and login
 - Supabase authentication with Row Level Security
 - Express API server with JWT verification
 - Project scaffolding with React + TypeScript + Vite
 
+### Sprint 2: Task Management + User Customization (Current)
+- 3-column Kanban board (To Do / In Progress / Done)
+- Full task CRUD with Zod-validated API endpoints
+- Task cards with priority colors, due dates, category badges, and auto-pilot indicators
+- Category management (create, delete) with color-coded sidebar
+- Profile settings page (display name, theme, accent color, timezone)
+- Dark mode toggle with instant theme switching
+- Sidebar navigation with task and settings views
+- Supabase Realtime subscription for live task updates
+- Toast notifications for all actions (sonner)
+- Overdue task highlighting
+
 ### Upcoming
-- Sprint 2: Task Management (Kanban board, CRUD, categories, user customization)
 - Sprint 3: Drag-and-Drop + Polish (animations, dark mode, visual polish)
 - Sprint 4: AI Agent (24 tools — email, calendar, web search, weather, and more)
 - Sprint 5: Proactive Agent (auto-executes tasks, activity log, deployment)
@@ -87,7 +98,7 @@ cd client && npm run dev
 
 ## Sprint Progress
 - [x] Sprint 1: Foundation (auth, project setup)
-- [ ] Sprint 2: Task Management (CRUD, Kanban board)
+- [x] Sprint 2: Task Management + User Customization (Kanban board, CRUD, categories, profile settings)
 - [ ] Sprint 3: Drag-and-Drop + Polish
 - [ ] Sprint 4: AI Agent (24 tools)
 - [ ] Sprint 5: Proactive Agent + Deployment
