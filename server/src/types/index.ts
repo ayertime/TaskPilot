@@ -1,0 +1,7 @@
+import type { Request } from 'express';
+
+export interface AuthenticatedRequest extends Request {
+  userId?: string;
+  userEmail?: string;
+  accessToken?: string;
+}
