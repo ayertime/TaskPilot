@@ -13,7 +13,7 @@ TaskPilot is an intelligent task management app with an AI agent powered by Clau
 - Express API server with JWT verification
 - Project scaffolding with React + TypeScript + Vite
 
-### Sprint 2: Task Management + User Customization (Current)
+### Sprint 2: Task Management + User Customization
 - 3-column Kanban board (To Do / In Progress / Done)
 - Full task CRUD with Zod-validated API endpoints
 - Task cards with priority colors, due dates, category badges, and auto-pilot indicators
@@ -25,8 +25,16 @@ TaskPilot is an intelligent task management app with an AI agent powered by Clau
 - Toast notifications for all actions (sonner)
 - Overdue task highlighting
 
+### Sprint 3: Drag-and-Drop + Polish (Current)
+- Drag-and-drop task cards between columns and within columns (dnd-kit)
+- Drag overlay with rotation effect and drop target highlighting
+- TaskStats bar with animated counters (total, in progress, completed, overdue)
+- Motion-animated column entrances and header transitions
+- User accent color applied globally (buttons, links, focus rings)
+- Overdue task background highlighting
+- Dark mode visual polish throughout
+
 ### Upcoming
-- Sprint 3: Drag-and-Drop + Polish (animations, dark mode, visual polish)
 - Sprint 4: AI Agent (24 tools — email, calendar, web search, weather, and more)
 - Sprint 5: Proactive Agent (auto-executes tasks, activity log, deployment)
 
@@ -39,7 +47,7 @@ TaskPilot is an intelligent task management app with an AI agent powered by Clau
 | Database | Supabase (PostgreSQL) |
 | AI | Claude API (Anthropic) with tool-use |
 | Auth | Supabase Auth (Google, Microsoft, Yahoo, email/password) |
-| UI/UX | Motion (animations), dnd-kit (drag-and-drop), Lucide icons |
+| UI/UX | motion (animations), @dnd-kit (drag-and-drop), Lucide icons |
 
 ## Getting Started
 
@@ -99,7 +107,7 @@ cd client && npm run dev
 ## Sprint Progress
 - [x] Sprint 1: Foundation (auth, project setup)
 - [x] Sprint 2: Task Management + User Customization (Kanban board, CRUD, categories, profile settings)
-- [ ] Sprint 3: Drag-and-Drop + Polish
+- [x] Sprint 3: Drag-and-Drop + Polish (dnd-kit, motion animations, accent color, TaskStats)
 - [ ] Sprint 4: AI Agent (24 tools)
 - [ ] Sprint 5: Proactive Agent + Deployment
 

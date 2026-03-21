@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router';
+import { motion } from 'motion/react';
 import { useAuth } from '@/hooks/useAuth';
 import { useCategories } from '@/hooks/useCategories';
 import { apiFetch } from '@/lib/api';
@@ -24,6 +25,43 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+function applyAccentColor(hex: string) {
+  const r = parseInt(hex.slice(1, 3), 16) / 255;
+  const g = parseInt(hex.slice(3, 5), 16) / 255;
+  const b = parseInt(hex.slice(5, 7), 16) / 255;
+
+  const max = Math.max(r, g, b),
+    min = Math.min(r, g, b);
+  let h = 0,
+    s = 0;
+  const l = (max + min) / 2;
+
+  if (max !== min) {
+    const d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r:
+        h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+        break;
+      case g:
+        h = ((b - r) / d + 2) / 6;
+        break;
+      case b:
+        h = ((r - g) / d + 4) / 6;
+        break;
+    }
+  }
+
+  const hsl = `hsl(${Math.round(h * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%)`;
+  const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  const fg = luminance > 0.5 ? 'hsl(222.2 84% 4.9%)' : 'hsl(210 40% 98%)';
+
+  document.documentElement.style.setProperty('--color-primary', hsl);
+  document.documentElement.style.setProperty('--color-primary-foreground', fg);
+  document.documentElement.style.setProperty('--color-ring', hsl);
+  document.documentElement.style.setProperty('--color-sidebar-primary', hsl);
+}
+
 export function AppLayout() {
   const { user, signOut } = useAuth();
   const { categories, createCategory, deleteCategory } = useCategories();
@@ -41,7 +79,7 @@ export function AppLayout() {
     .toUpperCase()
     .slice(0, 2);
 
-  // Load and apply saved theme on mount
+  // Load and apply saved theme + accent color on mount
   useEffect(() => {
     apiFetch('/api/profile')
       .then((profile) => {
@@ -54,6 +92,9 @@ export function AppLayout() {
             '(prefers-color-scheme: dark)'
           ).matches;
           document.documentElement.classList.toggle('dark', isDark);
+        }
+        if (profile?.accent_color && profile.accent_color !== '#6366f1') {
+          applyAccentColor(profile.accent_color);
         }
       })
       .catch(() => {});
@@ -83,7 +124,12 @@ export function AppLayout() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b bg-card sticky top-0 z-50">
+      <motion.header
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="border-b bg-card sticky top-0 z-50"
+      >
         <div className="flex items-center justify-between px-6 h-16">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
@@ -138,7 +184,7 @@ export function AppLayout() {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-      </header>
+      </motion.header>
 
       {/* Body */}
       <div className="flex h-[calc(100vh-4rem)]">

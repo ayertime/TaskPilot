@@ -75,7 +75,9 @@ export function TaskCard({
 
   return (
     <Card
-      className={`border-l-4 ${priority.border} hover:shadow-md transition-shadow cursor-pointer group`}
+      className={`border-l-4 ${priority.border} hover:shadow-md transition-all duration-200 cursor-pointer group ${
+        isOverdue ? 'bg-red-50/50 dark:bg-red-950/20' : ''
+      }`}
       onClick={onEdit}
     >
       <CardContent className="p-3">
