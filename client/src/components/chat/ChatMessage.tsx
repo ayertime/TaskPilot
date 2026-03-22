@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import ReactMarkdown from 'react-markdown';
 import {
   Bot,
   User,
@@ -169,7 +170,7 @@ export function ChatMessage({ role, content, toolCalls, isStreaming }: ChatMessa
           'flex h-7 w-7 shrink-0 items-center justify-center rounded-full',
           isUser
             ? 'bg-primary text-primary-foreground'
-            : 'bg-muted text-muted-foreground',
+            : 'bg-gradient-to-br from-primary to-primary/70 text-primary-foreground',
         )}
       >
         {isUser ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
@@ -183,26 +184,62 @@ export function ChatMessage({ role, content, toolCalls, isStreaming }: ChatMessa
               <ToolCallCard
                 key={i}
                 toolCall={tc}
-                isActive={isStreaming && i === toolCalls.length - 1 && !tc.result}
+                isActive={!!isStreaming && i === toolCalls.length - 1 && !tc.result}
               />
             ))}
           </div>
         )}
 
         {content && (
-          <div
-            className={cn(
-              'inline-block rounded-lg px-3 py-2 text-sm',
-              isUser
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted text-foreground',
+          <>
+            {isUser ? (
+              <div className="inline-block rounded-lg px-3 py-2 text-sm bg-primary text-primary-foreground">
+                {content}
+              </div>
+            ) : (
+              <div className="prose prose-sm dark:prose-invert max-w-none text-sm text-foreground [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+                <ReactMarkdown
+                  components={{
+                    p: ({ children }) => <p className="mb-2 last:mb-0 leading-relaxed">{children}</p>,
+                    ul: ({ children }) => <ul className="mb-2 ml-4 list-disc space-y-0.5">{children}</ul>,
+                    ol: ({ children }) => <ol className="mb-2 ml-4 list-decimal space-y-0.5">{children}</ol>,
+                    li: ({ children }) => <li className="text-sm">{children}</li>,
+                    strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                    code: ({ children, className }) => {
+                      const isBlock = className?.includes('language-');
+                      if (isBlock) {
+                        return (
+                          <code className="block bg-muted rounded-md px-3 py-2 text-xs overflow-x-auto my-2">
+                            {children}
+                          </code>
+                        );
+                      }
+                      return <code className="bg-muted rounded px-1 py-0.5 text-xs">{children}</code>;
+                    },
+                    pre: ({ children }) => <pre className="my-2">{children}</pre>,
+                    h1: ({ children }) => <h3 className="text-sm font-semibold mt-3 mb-1">{children}</h3>,
+                    h2: ({ children }) => <h3 className="text-sm font-semibold mt-3 mb-1">{children}</h3>,
+                    h3: ({ children }) => <h3 className="text-sm font-semibold mt-3 mb-1">{children}</h3>,
+                    a: ({ children, href }) => (
+                      <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary underline underline-offset-2">
+                        {children}
+                      </a>
+                    ),
+                    blockquote: ({ children }) => (
+                      <blockquote className="border-l-2 border-primary/30 pl-3 my-2 text-muted-foreground italic">
+                        {children}
+                      </blockquote>
+                    ),
+                  }}
+                >
+                  {content}
+                </ReactMarkdown>
+                {isStreaming && (
+                  <span className="ml-1 inline-block h-4 w-1 animate-pulse bg-foreground" />
+                )}
+              </div>
             )}
-          >
-            {content}
-            {isStreaming && (
-              <span className="ml-1 inline-block h-4 w-1 animate-pulse bg-current" />
-            )}
-          </div>
+          </>
         )}
 
         {/* Show spinner when streaming but no content or tool calls yet */}
