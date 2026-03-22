@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router';
 import { motion } from 'motion/react';
 import { useAuth } from '@/hooks/useAuth';
@@ -16,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { CategoryForm } from './CategoryForm';
+import { ChatPanel } from '@/components/chat/ChatPanel';
 import {
   LogOut,
   Settings,
@@ -23,6 +24,7 @@ import {
   LayoutDashboard,
   Plus,
   X,
+  MessageSquare,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -33,6 +35,20 @@ export function AppLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const [categoryFormOpen, setCategoryFormOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
+
+  // Ctrl+K to toggle chat panel
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      e.preventDefault();
+      setChatOpen((prev) => !prev);
+    }
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown]);
 
   const displayName =
     user?.user_metadata?.full_name || user?.email || 'User';
@@ -105,6 +121,20 @@ export function AppLayout() {
             <span className="text-xl font-bold">TaskPilot</span>
           </div>
 
+          <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={() => setChatOpen(true)}
+          >
+            <MessageSquare className="h-4 w-4" />
+            <span className="hidden sm:inline">AI Chat</span>
+            <kbd className="hidden sm:inline-flex h-5 items-center gap-0.5 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+              Ctrl+K
+            </kbd>
+          </Button>
+
           <DropdownMenu>
             <DropdownMenuTrigger className="relative h-9 w-9 rounded-full inline-flex items-center justify-center hover:bg-accent transition-colors cursor-pointer focus:outline-none">
               <Avatar className="h-9 w-9">
@@ -137,6 +167,7 @@ export function AppLayout() {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          </div>
         </div>
       </motion.header>
 
@@ -221,6 +252,8 @@ export function AppLayout() {
         onOpenChange={setCategoryFormOpen}
         onSubmit={handleCreateCategory}
       />
+
+      <ChatPanel open={chatOpen} onOpenChange={setChatOpen} />
     </div>
   );
 }

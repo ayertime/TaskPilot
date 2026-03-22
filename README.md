@@ -10,7 +10,7 @@ TaskPilot is an intelligent task management app with an AI agent powered by Clau
 - Google, Microsoft, Yahoo OAuth login
 - Email/password registration and login
 - Supabase authentication with Row Level Security
-- Express API server with JWT verification
+- Fastify API server with JWT verification
 - Project scaffolding with React + TypeScript + Vite
 
 ### Sprint 2: Task Management + User Customization
@@ -25,7 +25,7 @@ TaskPilot is an intelligent task management app with an AI agent powered by Clau
 - Toast notifications for all actions (sonner)
 - Overdue task highlighting
 
-### Sprint 3: Drag-and-Drop + Polish (Current)
+### Sprint 3: Drag-and-Drop + Polish
 - Drag-and-drop task cards between columns and within columns (dnd-kit)
 - Drag overlay with rotation effect and drop target highlighting
 - TaskStats bar with animated counters (total, in progress, completed, overdue)
@@ -34,9 +34,32 @@ TaskPilot is an intelligent task management app with an AI agent powered by Clau
 - Overdue task background highlighting
 - Dark mode visual polish throughout
 
+### Sprint 4: AI Agent (Current)
+- AI agent powered by Claude with 24 tools and tool-use loop
+- Chat panel (slide-out) with SSE streaming responses
+- Keyboard shortcut (Ctrl+K) to open AI chat
+- **Task Management tools**: list, create, update, complete, delete tasks + create categories + break down tasks into subtasks
+- **Email**: send emails via Gmail API or Microsoft Graph (requires connected OAuth account)
+- **Calendar**: create events via Google Calendar or Outlook Calendar API
+- **Web Search**: real-time internet search via Tavily API
+- **Document Generation**: AI-generated reports/summaries attached to tasks
+- **URL Summarization**: fetch and summarize any web page
+- **Reminders**: set timed reminders on tasks
+- **Recurring Tasks**: create tasks with daily/weekly/monthly recurrence patterns
+- **Schedule Optimizer**: AI analyzes tasks and suggests optimal daily ordering
+- **Productivity Analytics**: completion rate, busiest days, agent vs user stats
+- **Task Suggestions**: AI proactively suggests what to work on next
+- **Daily Summary**: comprehensive report of what was accomplished
+- **Focus Mode**: AI picks the single most important task right now
+- **Time Estimates**: AI estimates duration for each task
+- **Conflict Detection**: find scheduling overlaps between tasks
+- **Translation**: translate text between languages
+- **Weather**: check weather for outdoor task planning (OpenWeatherMap)
+- **Export**: export tasks as CSV or formatted markdown
+- Activity logging for all agent actions
+
 ### Upcoming
-- Sprint 4: AI Agent (24 tools — email, calendar, web search, weather, and more)
-- Sprint 5: Proactive Agent (auto-executes tasks, activity log, deployment)
+- Sprint 5: Proactive Agent (auto-executes tasks, activity log UI, deployment)
 
 ## Tech Stack
 
@@ -45,8 +68,10 @@ TaskPilot is an intelligent task management app with an AI agent powered by Clau
 | Frontend | React 19, TypeScript, Vite, shadcn/ui, Tailwind CSS v4, TanStack Query |
 | Backend | Node.js, Fastify, TypeScript |
 | Database | Supabase (PostgreSQL) |
-| AI | Claude API (Anthropic) with tool-use |
+| AI | Claude API (Anthropic) with tool-use (24 tools) |
 | Auth | Supabase Auth (Google, Microsoft, Yahoo, email/password) |
+| Search | Tavily API (web search) |
+| Weather | OpenWeatherMap API |
 | UI/UX | motion (animations), @dnd-kit (drag-and-drop), Lucide icons |
 
 ## Getting Started
@@ -74,6 +99,9 @@ cp server/.env.example server/.env
 - `SUPABASE_URL` — Your Supabase project URL
 - `SUPABASE_ANON_KEY` — Your Supabase anon/public key
 - `SUPABASE_SERVICE_ROLE_KEY` — Your Supabase service role key (from Settings > API)
+- `ANTHROPIC_API_KEY` — Your Anthropic API key (for Claude AI agent)
+- `TAVILY_API_KEY` — Your Tavily API key (for web search, optional)
+- `OPENWEATHERMAP_API_KEY` — Your OpenWeatherMap API key (for weather, optional)
 
 ### Database Setup
 
@@ -108,7 +136,7 @@ cd client && npm run dev
 - [x] Sprint 1: Foundation (auth, project setup)
 - [x] Sprint 2: Task Management + User Customization (Kanban board, CRUD, categories, profile settings)
 - [x] Sprint 3: Drag-and-Drop + Polish (dnd-kit, motion animations, accent color, TaskStats)
-- [ ] Sprint 4: AI Agent (24 tools)
+- [x] Sprint 4: AI Agent (24 tools, chat panel, SSE streaming)
 - [ ] Sprint 5: Proactive Agent + Deployment
 
 ## License
