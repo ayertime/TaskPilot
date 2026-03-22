@@ -3,6 +3,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/query';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Toaster } from '@/components/ui/sonner';
+import { LandingPage } from '@/components/landing/LandingPage';
 import { LoginPage } from '@/components/auth/LoginPage';
 import { AuthCallback } from '@/components/auth/AuthCallback';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
@@ -17,11 +18,12 @@ function App() {
       <TooltipProvider>
         <BrowserRouter>
           <Routes>
+            <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route element={<ProtectedRoute />}>
               <Route element={<AppLayout />}>
-                <Route path="/" element={<TaskBoard />} />
+                <Route path="/dashboard" element={<TaskBoard />} />
                 <Route path="/activity" element={<ActivityLog />} />
                 <Route path="/settings" element={<ProfileSettings />} />
               </Route>

@@ -178,9 +178,9 @@ export function AppLayout() {
         <aside className="w-60 border-r bg-card/50 flex flex-col overflow-y-auto">
           <nav className="p-3 space-y-1">
             <Button
-              variant={location.pathname === '/' ? 'secondary' : 'ghost'}
+              variant={location.pathname === '/dashboard' ? 'secondary' : 'ghost'}
               className="w-full justify-start"
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/dashboard')}
             >
               <LayoutDashboard className="mr-2 h-4 w-4" />
               Tasks
