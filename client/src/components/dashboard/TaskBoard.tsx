@@ -19,7 +19,8 @@ import { TaskCard } from './TaskCard';
 import { TaskForm } from './TaskForm';
 import { TaskStats } from './TaskStats';
 import { TaskDetailModal } from './TaskDetailModal';
-import { TaskFilters } from './TaskFilters';
+import { TaskFilters, type ViewMode } from './TaskFilters';
+import { TaskListView } from './TaskListView';
 import { WelcomeBackModal } from './WelcomeBackModal';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
@@ -46,6 +47,14 @@ export function TaskBoard() {
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    return (localStorage.getItem('taskpilot_view_mode') as ViewMode) || 'board';
+  });
+
+  function handleViewModeChange(mode: ViewMode) {
+    setViewMode(mode);
+    localStorage.setItem('taskpilot_view_mode', mode);
+  }
 
   // Welcome-back modal
   const [welcomeOpen, setWelcomeOpen] = useState(false);
@@ -333,8 +342,21 @@ export function TaskBoard() {
         categories={categories}
         hasFilters={hasFilters}
         onClear={() => { setSearch(''); setCategoryFilter('all'); setPriorityFilter('all'); }}
+        viewMode={viewMode}
+        onViewModeChange={handleViewModeChange}
       />
 
+      {viewMode === 'list' ? (
+        <TaskListView
+          tasks={filteredTasks}
+          categories={categories}
+          onViewTask={handleViewDetail}
+          onEditTask={handleEditTask}
+          onDeleteTask={handleDelete}
+          onCompleteTask={handleComplete}
+          onStatusChange={handleStatusChange}
+        />
+      ) : (
       <DndContext
         sensors={sensors}
         collisionDetection={closestCorners}
@@ -375,6 +397,7 @@ export function TaskBoard() {
           )}
         </DragOverlay>
       </DndContext>
+      )}
 
       <TaskForm
         open={formOpen}

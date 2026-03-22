@@ -147,8 +147,8 @@ export function TaskCard({
 
   return (
     <Card
-      className={`border-l-4 ${priority.border} hover:shadow-md transition-all duration-200 cursor-pointer group ${
-        isOverdue ? 'bg-red-50 dark:bg-red-950/30 border-red-400 dark:border-red-700 shadow-[0_0_15px_rgba(239,68,68,0.4),0_0_30px_rgba(239,68,68,0.2),0_0_45px_rgba(239,68,68,0.1)] dark:shadow-[0_0_15px_rgba(239,68,68,0.3),0_0_30px_rgba(239,68,68,0.15),0_0_45px_rgba(239,68,68,0.08)] animate-pulse' : ''
+      className={`border-l-[3px] ${priority.border} hover:shadow-sm hover:-translate-y-[1px] transition-all duration-200 cursor-pointer group ${
+        isOverdue ? 'bg-red-50 dark:bg-red-950/30 border-red-400/50 dark:border-red-700/50 shadow-[0_0_0_1px_rgba(239,68,68,0.2),0_0_8px_rgba(239,68,68,0.12)] animate-[slow-pulse_3s_ease-in-out_infinite]' : ''
       }`}
       onClick={onView || onEdit}
     >
@@ -156,7 +156,7 @@ export function TaskCard({
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">
             <p
-              className={`font-medium text-sm ${
+              className={`font-medium text-[13px] leading-snug ${
                 task.status === 'done'
                   ? 'line-through text-muted-foreground'
                   : ''
@@ -278,7 +278,7 @@ export function TaskCard({
                 {remaining && (
                   <span className={`ml-0.5 ${remaining.color} ${
                     remaining.blink
-                      ? 'animate-pulse drop-shadow-[0_0_6px_rgba(239,68,68,0.8)]'
+                      ? 'animate-[slow-pulse_3s_ease-in-out_infinite]'
                       : ''
                   }`}>
                     ({remaining.text})

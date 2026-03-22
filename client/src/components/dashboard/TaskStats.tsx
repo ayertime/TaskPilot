@@ -11,14 +11,16 @@ function StatCard({
   label,
   value,
   icon: Icon,
-  color,
+  accentColor,
+  gradient,
   delay,
   glow,
 }: {
   label: string;
   value: number;
   icon: React.ElementType;
-  color: string;
+  accentColor: string;
+  gradient: string;
   delay: number;
   glow?: boolean;
 }) {
@@ -27,33 +29,32 @@ function StatCard({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay }}
-      className={`flex items-center gap-3 rounded-lg border bg-card p-3 ${
+      className={`relative overflow-hidden rounded-lg border border-border/50 p-3 ${gradient} ${
         glow
-          ? 'border-red-400 dark:border-red-700 shadow-[0_0_15px_rgba(239,68,68,0.4),0_0_30px_rgba(239,68,68,0.2),0_0_45px_rgba(239,68,68,0.1)] dark:shadow-[0_0_15px_rgba(239,68,68,0.3),0_0_30px_rgba(239,68,68,0.15),0_0_45px_rgba(239,68,68,0.08)] animate-pulse'
+          ? 'border-red-400/50 dark:border-red-700/50 shadow-[0_0_12px_rgba(239,68,68,0.15)] animate-[slow-pulse_3s_ease-in-out_infinite]'
           : ''
       }`}
     >
-      <div className={`rounded-md p-2 ${color}`}>
-        <Icon className="h-4 w-4" />
-      </div>
-      <div>
-        <motion.p
-          key={value}
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="text-xl font-bold leading-none"
-        >
-          {value}
-        </motion.p>
-        <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
-      </div>
+      {/* Watermark icon */}
+      <Icon className="absolute -right-1 -top-1 h-10 w-10 opacity-[0.06]" />
+
+      <motion.p
+        key={value}
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className={`text-2xl font-bold leading-none ${accentColor}`}
+      >
+        {value}
+      </motion.p>
+      <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider mt-1.5">
+        {label}
+      </p>
     </motion.div>
   );
 }
 
 export function TaskStats({ tasks }: TaskStatsProps) {
-  // Re-evaluate every 30s so overdue count updates in real-time
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
     const interval = setInterval(() => setNow(new Date()), 30_000);
@@ -72,33 +73,37 @@ export function TaskStats({ tasks }: TaskStatsProps) {
   }, [tasks, now]);
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
       <StatCard
         label="Total Tasks"
         value={stats.total}
         icon={ListTodo}
-        color="bg-blue-500/10 text-blue-600 dark:text-blue-400"
+        accentColor="text-blue-600 dark:text-blue-400"
+        gradient="bg-gradient-to-br from-card to-blue-500/[0.04] dark:to-blue-500/[0.06]"
         delay={0}
       />
       <StatCard
         label="In Progress"
         value={stats.inProgress}
         icon={Clock}
-        color="bg-amber-500/10 text-amber-600 dark:text-amber-400"
+        accentColor="text-amber-600 dark:text-amber-400"
+        gradient="bg-gradient-to-br from-card to-amber-500/[0.04] dark:to-amber-500/[0.06]"
         delay={0.05}
       />
       <StatCard
         label="Completed"
         value={stats.completed}
         icon={CheckCircle2}
-        color="bg-green-500/10 text-green-600 dark:text-green-400"
+        accentColor="text-green-600 dark:text-green-400"
+        gradient="bg-gradient-to-br from-card to-green-500/[0.04] dark:to-green-500/[0.06]"
         delay={0.1}
       />
       <StatCard
         label="Overdue"
         value={stats.overdue}
         icon={AlertTriangle}
-        color="bg-red-500/10 text-red-600 dark:text-red-400"
+        accentColor="text-red-600 dark:text-red-400"
+        gradient="bg-gradient-to-br from-card to-red-500/[0.04] dark:to-red-500/[0.06]"
         delay={0.15}
         glow={stats.overdue > 0}
       />

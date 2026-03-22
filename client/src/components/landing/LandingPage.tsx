@@ -85,10 +85,10 @@ export function LandingPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Nav */}
-      <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-50">
+      <header className="border-b border-border/50 bg-card/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-sm shadow-primary/20">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
@@ -104,7 +104,7 @@ export function LandingPage() {
                 <path d="M2 12l10 5 10-5" />
               </svg>
             </div>
-            <span className="text-xl font-bold">TaskPilot</span>
+            <span className="text-lg font-semibold tracking-tight">TaskPilot</span>
           </div>
 
           <div className="flex items-center gap-3">
@@ -121,7 +121,10 @@ export function LandingPage() {
                 >
                   Log in
                 </Button>
-                <Button onClick={() => navigate('/login')}>
+                <Button
+                  className="shadow-lg shadow-primary/25"
+                  onClick={() => navigate('/login')}
+                >
                   Get Started
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
@@ -132,176 +135,149 @@ export function LandingPage() {
       </header>
 
       {/* Hero */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 pt-12 sm:pt-20 pb-12 sm:pb-16 text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
-            <Sparkles className="h-4 w-4" />
-            Powered by Claude AI
-          </div>
+      <section className="relative overflow-hidden">
+        {/* Radial gradient wash */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,var(--color-primary)/0.06,transparent_70%)]" />
 
-          <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-6">
-            Your To Do app that
-            <br />
-            <span className="text-primary">actually does things</span>
-          </h1>
-
-          <p className="text-base sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 sm:mb-10">
-            TaskPilot doesn't just track your tasks — it completes them. An AI
-            agent that sends emails, creates events, does research, and
-            proactively handles tasks you might miss.
-          </p>
-
-          <div className="flex items-center justify-center gap-4">
-            <Button
-              size="lg"
-              className="h-12 px-8 text-base"
-              onClick={() => navigate(user ? '/dashboard' : '/login')}
-            >
-              {user ? 'Go to Dashboard' : 'Get Started Free'}
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-          </div>
-        </motion.div>
-
-        {/* Mock UI Preview */}
-        <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="mt-12 sm:mt-16 mx-auto max-w-4xl hidden sm:block"
-        >
-          <div className="rounded-xl border bg-card shadow-2xl overflow-hidden">
-            {/* Fake browser bar */}
-            <div className="bg-muted/50 px-4 py-2.5 border-b flex items-center gap-2">
-              <div className="flex gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-red-400" />
-                <div className="w-3 h-3 rounded-full bg-yellow-400" />
-                <div className="w-3 h-3 rounded-full bg-green-400" />
-              </div>
-              <div className="flex-1 mx-4">
-                <div className="bg-background rounded-md px-3 py-1 text-xs text-muted-foreground text-center">
-                  taskpilot.app
-                </div>
-              </div>
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 pt-12 sm:pt-20 pb-12 sm:pb-16 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6 border border-primary/20">
+              <Sparkles className="h-4 w-4" />
+              Powered by Claude AI
             </div>
 
-            {/* Fake Kanban preview */}
-            <div className="p-6">
-              <div className="grid grid-cols-3 gap-4">
-                {/* To Do Column */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-sm font-semibold">To Do</span>
-                    <span className="text-xs bg-blue-500/10 text-blue-600 px-1.5 py-0.5 rounded">
-                      3
-                    </span>
-                  </div>
-                  {[
-                    {
-                      title: 'Review Q1 report',
-                      priority: 'border-l-orange-500',
-                      bot: true,
-                    },
-                    {
-                      title: 'Email team updates',
-                      priority: 'border-l-red-500',
-                      bot: true,
-                    },
-                    {
-                      title: 'Plan sprint retro',
-                      priority: 'border-l-yellow-400',
-                      bot: false,
-                    },
-                  ].map((t) => (
-                    <div
-                      key={t.title}
-                      className={`border-l-4 ${t.priority} rounded-lg border bg-card p-2.5`}
-                    >
-                      <p className="text-xs font-medium">{t.title}</p>
-                      <div className="flex items-center gap-1 mt-1.5">
-                        {t.bot && (
-                          <Bot className="h-3 w-3 text-primary" />
-                        )}
-                        <GripVertical className="h-3 w-3 text-muted-foreground ml-auto" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
+            <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-6">
+              Your To Do app that
+              <br />
+              <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                actually does things
+              </span>
+            </h1>
 
-                {/* In Progress Column */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-sm font-semibold">In Progress</span>
-                    <span className="text-xs bg-amber-500/10 text-amber-600 px-1.5 py-0.5 rounded">
-                      2
-                    </span>
-                  </div>
-                  {[
-                    {
-                      title: 'Research competitors',
-                      priority: 'border-l-yellow-400',
-                      sparkle: true,
-                    },
-                    {
-                      title: 'Design landing page',
-                      priority: 'border-l-blue-400',
-                      sparkle: false,
-                    },
-                  ].map((t) => (
-                    <div
-                      key={t.title}
-                      className={`border-l-4 ${t.priority} rounded-lg border bg-card p-2.5`}
-                    >
-                      <p className="text-xs font-medium">{t.title}</p>
-                      <div className="flex items-center gap-1 mt-1.5">
-                        {t.sparkle && (
-                          <Sparkles className="h-3 w-3 text-amber-500" />
-                        )}
-                        <GripVertical className="h-3 w-3 text-muted-foreground ml-auto" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
+            <p className="text-base sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 sm:mb-10">
+              TaskPilot doesn't just track your tasks — it completes them. An AI
+              agent that sends emails, creates events, does research, and
+              proactively handles tasks you might miss.
+            </p>
 
-                {/* Done Column */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-sm font-semibold">Done</span>
-                    <span className="text-xs bg-green-500/10 text-green-600 px-1.5 py-0.5 rounded">
-                      4
-                    </span>
+            <div className="flex items-center justify-center gap-4">
+              <Button
+                size="lg"
+                className="h-12 px-8 text-base shadow-lg shadow-primary/25"
+                onClick={() => navigate(user ? '/dashboard' : '/login')}
+              >
+                {user ? 'Go to Dashboard' : 'Get Started Free'}
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </div>
+          </motion.div>
+
+          {/* Mock UI Preview */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="mt-12 sm:mt-16 mx-auto max-w-4xl hidden sm:block"
+          >
+            <div className="relative rounded-xl border border-border/50 bg-card shadow-2xl ring-1 ring-border/50 overflow-hidden">
+              {/* Fake browser bar */}
+              <div className="bg-muted/50 px-4 py-2.5 border-b flex items-center gap-2">
+                <div className="flex gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-red-400" />
+                  <div className="w-3 h-3 rounded-full bg-yellow-400" />
+                  <div className="w-3 h-3 rounded-full bg-green-400" />
+                </div>
+                <div className="flex-1 mx-4">
+                  <div className="bg-background rounded-md px-3 py-1 text-xs text-muted-foreground text-center">
+                    taskpilot.app
                   </div>
-                  {[
-                    { title: 'Set up CI/CD', agent: true },
-                    { title: 'Send weekly report', agent: true },
-                    { title: 'Fix login bug', agent: false },
-                  ].map((t) => (
-                    <div
-                      key={t.title}
-                      className="border-l-4 border-l-green-500 rounded-lg border bg-card p-2.5"
-                    >
-                      <p className="text-xs font-medium line-through text-muted-foreground">
-                        {t.title}
-                      </p>
-                      {t.agent && (
+                </div>
+              </div>
+
+              {/* Fake Kanban preview */}
+              <div className="p-6">
+                <div className="grid grid-cols-3 gap-4">
+                  {/* To Do Column */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">To Do</span>
+                      <span className="text-[10px] font-medium text-blue-600 bg-blue-500/10 px-1.5 py-0.5 rounded-full">
+                        3
+                      </span>
+                    </div>
+                    {[
+                      { title: 'Review Q1 report', priority: 'border-l-orange-500', bot: true },
+                      { title: 'Email team updates', priority: 'border-l-red-500', bot: true },
+                      { title: 'Plan sprint retro', priority: 'border-l-yellow-400', bot: false },
+                    ].map((t) => (
+                      <div key={t.title} className={`border-l-[3px] ${t.priority} rounded-lg border border-border/50 bg-card p-2.5`}>
+                        <p className="text-xs font-medium">{t.title}</p>
                         <div className="flex items-center gap-1 mt-1.5">
-                          <Bot className="h-3 w-3 text-primary" />
-                          <span className="text-[10px] text-primary">
-                            Agent
-                          </span>
+                          {t.bot && <Bot className="h-3 w-3 text-primary" />}
+                          <GripVertical className="h-3 w-3 text-muted-foreground ml-auto" />
                         </div>
-                      )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* In Progress Column */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">In Progress</span>
+                      <span className="text-[10px] font-medium text-amber-600 bg-amber-500/10 px-1.5 py-0.5 rounded-full">
+                        2
+                      </span>
                     </div>
-                  ))}
+                    {[
+                      { title: 'Research competitors', priority: 'border-l-yellow-400', sparkle: true },
+                      { title: 'Design landing page', priority: 'border-l-blue-400', sparkle: false },
+                    ].map((t) => (
+                      <div key={t.title} className={`border-l-[3px] ${t.priority} rounded-lg border border-border/50 bg-card p-2.5`}>
+                        <p className="text-xs font-medium">{t.title}</p>
+                        <div className="flex items-center gap-1 mt-1.5">
+                          {t.sparkle && <Sparkles className="h-3 w-3 text-amber-500" />}
+                          <GripVertical className="h-3 w-3 text-muted-foreground ml-auto" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Done Column */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Done</span>
+                      <span className="text-[10px] font-medium text-green-600 bg-green-500/10 px-1.5 py-0.5 rounded-full">
+                        3
+                      </span>
+                    </div>
+                    {[
+                      { title: 'Set up CI/CD', agent: true },
+                      { title: 'Send weekly report', agent: true },
+                      { title: 'Fix login bug', agent: false },
+                    ].map((t) => (
+                      <div key={t.title} className="border-l-[3px] border-l-green-500 rounded-lg border border-border/50 bg-card p-2.5">
+                        <p className="text-xs font-medium line-through text-muted-foreground">{t.title}</p>
+                        {t.agent && (
+                          <div className="flex items-center gap-1 mt-1.5">
+                            <Bot className="h-3 w-3 text-primary" />
+                            <span className="text-[10px] text-primary">Agent</span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
+
+              {/* Bottom fade */}
+              <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-background to-transparent pointer-events-none" />
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
+        </div>
       </section>
 
       {/* Features Grid */}
@@ -311,7 +287,7 @@ export function LandingPage() {
             Everything you need, automated
           </h2>
           <p className="text-muted-foreground max-w-xl mx-auto">
-            24 AI-powered tools that turn your to-do list into a done list.
+            26 AI-powered tools that turn your to-do list into a done list.
           </p>
         </div>
 
@@ -324,10 +300,10 @@ export function LandingPage() {
               viewport={{ once: true }}
               transition={{ delay: i * 0.1 }}
             >
-              <Card className="h-full hover:shadow-md transition-shadow">
+              <Card className="h-full border-border/50 hover:shadow-sm hover:-translate-y-0.5 transition-all">
                 <CardContent className="p-5">
                   <feature.icon
-                    className={`h-8 w-8 ${feature.color} mb-3`}
+                    className={`h-6 w-6 ${feature.color} mb-3`}
                   />
                   <h3 className="font-semibold mb-1">{feature.title}</h3>
                   <p className="text-sm text-muted-foreground">
@@ -341,10 +317,10 @@ export function LandingPage() {
       </section>
 
       {/* Capabilities Checklist */}
-      <section className="bg-muted/30 border-y">
+      <section className="bg-gradient-to-b from-muted/30 to-transparent border-t">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-20">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-3">24 tools, one chat</h2>
+            <h2 className="text-3xl font-bold mb-3">26 tools, one chat</h2>
             <p className="text-muted-foreground max-w-xl mx-auto">
               Just tell TaskPilot what you need. It figures out which tools to use.
             </p>
@@ -360,7 +336,7 @@ export function LandingPage() {
                 transition={{ delay: i * 0.03 }}
                 className="flex items-center gap-2"
               >
-                <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
                 <span className="text-sm">{cap}</span>
               </motion.div>
             ))}
@@ -403,8 +379,11 @@ export function LandingPage() {
               transition={{ delay: i * 0.15 }}
               className="text-center"
             >
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+              <div className="relative w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
                 <item.icon className="h-6 w-6 text-primary" />
+                <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
+                  {item.step}
+                </span>
               </div>
               <h3 className="font-semibold mb-1">{item.title}</h3>
               <p className="text-sm text-muted-foreground">{item.desc}</p>
@@ -414,34 +393,37 @@ export function LandingPage() {
       </section>
 
       {/* CTA */}
-      <section className="max-w-6xl mx-auto px-6 py-20 text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-        >
-          <h2 className="text-3xl font-bold mb-3">
-            Ready to put your tasks on auto-pilot?
-          </h2>
-          <p className="text-muted-foreground mb-8 max-w-lg mx-auto">
-            Stop just tracking tasks. Start completing them — automatically.
-          </p>
-          <Button
-            size="lg"
-            className="h-12 px-8 text-base"
-            onClick={() => navigate(user ? '/dashboard' : '/login')}
+      <section className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,var(--color-primary)/0.05,transparent_70%)]" />
+        <div className="relative max-w-6xl mx-auto px-6 py-20 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
           >
-            {user ? 'Go to Dashboard' : 'Get Started Free'}
-            <ArrowRight className="ml-2 h-5 w-5" />
-          </Button>
-        </motion.div>
+            <h2 className="text-3xl font-bold mb-3">
+              Ready to put your tasks on auto-pilot?
+            </h2>
+            <p className="text-muted-foreground mb-8 max-w-lg mx-auto">
+              Stop just tracking tasks. Start completing them — automatically.
+            </p>
+            <Button
+              size="lg"
+              className="h-12 px-8 text-base shadow-lg shadow-primary/25"
+              onClick={() => navigate(user ? '/dashboard' : '/login')}
+            >
+              {user ? 'Go to Dashboard' : 'Get Started Free'}
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+          </motion.div>
+        </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t bg-card/50">
+      <footer className="border-t bg-muted/20">
         <div className="max-w-6xl mx-auto px-6 py-8 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-primary flex items-center justify-center">
+            <div className="w-6 h-6 rounded bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"

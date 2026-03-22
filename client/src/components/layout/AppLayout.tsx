@@ -134,7 +134,7 @@ export function AppLayout() {
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="border-b bg-card sticky top-0 z-50"
+        className="border-b border-border/50 bg-card/80 backdrop-blur-xl sticky top-0 z-50"
       >
         <div className="flex items-center justify-between px-4 md:px-6 h-14 md:h-16">
           <div className="flex items-center gap-2">
@@ -146,7 +146,7 @@ export function AppLayout() {
             >
               <Menu className="h-5 w-5" />
             </Button>
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-sm shadow-primary/20">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
@@ -162,7 +162,7 @@ export function AppLayout() {
                 <path d="M2 12l10 5 10-5" />
               </svg>
             </div>
-            <span className="text-xl font-bold">TaskPilot</span>
+            <span className="text-lg font-semibold tracking-tight">TaskPilot</span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -173,7 +173,7 @@ export function AppLayout() {
           <Button
             variant="outline"
             size="sm"
-            className="gap-2"
+            className="gap-2 bg-primary/5 border-primary/20 hover:bg-primary/10 text-primary"
             onClick={() => setChatOpen(true)}
           >
             <MessageSquare className="h-4 w-4" />
@@ -184,7 +184,7 @@ export function AppLayout() {
           </Button>
 
           <DropdownMenu>
-            <DropdownMenuTrigger className="relative h-9 w-9 rounded-full inline-flex items-center justify-center hover:bg-accent transition-colors cursor-pointer focus:outline-none">
+            <DropdownMenuTrigger className="relative h-9 w-9 rounded-full inline-flex items-center justify-center hover:bg-accent ring-2 ring-transparent hover:ring-primary/20 transition-all cursor-pointer focus:outline-none">
               <Avatar className="h-9 w-9">
                 <AvatarImage src={avatarUrl} alt={displayName} />
                 <AvatarFallback>{initials}</AvatarFallback>
@@ -231,51 +231,40 @@ export function AppLayout() {
 
         {/* Sidebar */}
         <aside
-          className={`fixed inset-y-0 left-0 top-14 md:top-0 md:static z-40 w-60 border-r bg-card flex flex-col overflow-y-auto transition-transform duration-200 md:transition-none md:translate-x-0 ${
+          className={`fixed inset-y-0 left-0 top-14 md:top-0 md:static z-40 w-60 border-r border-border/50 bg-card/50 backdrop-blur-sm flex flex-col overflow-y-auto transition-transform duration-200 md:transition-none md:translate-x-0 ${
             sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
           }`}
         >
           <nav className="p-3 space-y-1">
-            <Link
-              to="/dashboard"
-              onClick={() => setSidebarOpen(false)}
-              className={cn(
-                buttonVariants({ variant: location.pathname === '/dashboard' ? 'secondary' : 'ghost' }),
-                'w-full justify-start'
-              )}
-            >
-              <LayoutDashboard className="mr-2 h-4 w-4" />
-              Tasks
-            </Link>
-            <Link
-              to="/activity"
-              onClick={() => setSidebarOpen(false)}
-              className={cn(
-                buttonVariants({ variant: location.pathname === '/activity' ? 'secondary' : 'ghost' }),
-                'w-full justify-start'
-              )}
-            >
-              <Activity className="mr-2 h-4 w-4" />
-              Activity
-            </Link>
-            <Link
-              to="/settings"
-              onClick={() => setSidebarOpen(false)}
-              className={cn(
-                buttonVariants({ variant: location.pathname === '/settings' ? 'secondary' : 'ghost' }),
-                'w-full justify-start'
-              )}
-            >
-              <Settings className="mr-2 h-4 w-4" />
-              Settings
-            </Link>
+            {[
+              { to: '/dashboard', icon: LayoutDashboard, label: 'Tasks' },
+              { to: '/activity', icon: Activity, label: 'Activity' },
+              { to: '/settings', icon: Settings, label: 'Settings' },
+            ].map(({ to, icon: Icon, label }) => {
+              const isActive = location.pathname === to;
+              return (
+                <Link
+                  key={to}
+                  to={to}
+                  onClick={() => setSidebarOpen(false)}
+                  className={cn(
+                    buttonVariants({ variant: 'ghost' }),
+                    'w-full justify-start relative',
+                    isActive && 'bg-accent text-accent-foreground before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-4 before:w-[3px] before:rounded-full before:bg-primary'
+                  )}
+                >
+                  <Icon className="mr-2 h-4 w-4" />
+                  {label}
+                </Link>
+              );
+            })}
           </nav>
 
           <Separator />
 
           <div className="p-3 flex-1">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
                 Categories
               </span>
               <Button
@@ -295,8 +284,8 @@ export function AppLayout() {
                   className="group flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-accent transition-colors"
                 >
                   <div
-                    className="w-2.5 h-2.5 rounded-full shrink-0"
-                    style={{ backgroundColor: cat.color }}
+                    className="w-2 h-2 rounded-full shrink-0 ring-2 ring-offset-1 ring-offset-background"
+                    style={{ backgroundColor: cat.color, '--tw-ring-color': cat.color + '40' } as React.CSSProperties}
                   />
                   <span className="truncate flex-1">{cat.name}</span>
                   <button

@@ -63,12 +63,15 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4 relative">
+      {/* Background gradient */}
+      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_center,var(--color-primary)/0.04,transparent_70%)] pointer-events-none" />
+
+      <div className="relative w-full max-w-md">
         {/* Logo / Branding */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-sm shadow-primary/20">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
@@ -91,7 +94,7 @@ export function LoginPage() {
           </p>
         </div>
 
-        <Card>
+        <Card className="shadow-xl shadow-black/[0.04] dark:shadow-black/[0.15]">
           <CardHeader className="text-center">
             <CardTitle>Welcome</CardTitle>
             <CardDescription>Sign in to your account or create a new one</CardDescription>

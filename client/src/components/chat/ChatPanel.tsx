@@ -33,7 +33,7 @@ export function ChatPanel({ open, onOpenChange }: ChatPanelProps) {
       <SheetContent className="w-full sm:max-w-lg flex flex-col p-0" showCloseButton={false}>
         <SheetHeader className="px-4 py-3 border-b flex flex-row items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
+            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
               <Bot className="h-4 w-4 text-primary-foreground" />
             </div>
             <SheetTitle className="text-base">TaskPilot AI</SheetTitle>
@@ -65,7 +65,7 @@ export function ChatPanel({ open, onOpenChange }: ChatPanelProps) {
         <ScrollArea className="flex-1 px-4" ref={scrollRef}>
           {messages.length === 0 && !streaming && (
             <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
-              <Sparkles className="h-10 w-10 mb-3 opacity-50" />
+              <Sparkles className="h-10 w-10 mb-3 text-primary opacity-30" />
               <p className="text-sm font-medium">How can I help?</p>
               <p className="text-xs mt-1 max-w-[250px] mb-4">
                 I can manage your tasks, send emails, search the web, check the
@@ -83,7 +83,7 @@ export function ChatPanel({ open, onOpenChange }: ChatPanelProps) {
                   <button
                     key={prompt}
                     onClick={() => sendMessage(prompt)}
-                    className="text-xs px-2.5 py-1.5 rounded-full border bg-card hover:bg-accent transition-colors text-foreground"
+                    className="text-xs px-2.5 py-1.5 rounded-full border border-primary/20 bg-primary/[0.03] hover:bg-primary/[0.08] transition-colors text-foreground"
                   >
                     {prompt}
                   </button>

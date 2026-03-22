@@ -6,7 +6,6 @@ import {
 } from '@dnd-kit/sortable';
 import { motion } from 'motion/react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { SortableTaskCard } from './SortableTaskCard';
 import { Plus } from 'lucide-react';
@@ -31,6 +30,12 @@ const columnDelay: Record<string, number> = {
   done: 0.2,
 };
 
+const columnColors: Record<string, string> = {
+  todo: 'text-blue-600 dark:text-blue-400',
+  in_progress: 'text-amber-600 dark:text-amber-400',
+  done: 'text-green-600 dark:text-green-400',
+};
+
 export function TaskColumn({
   id,
   title,
@@ -47,30 +52,23 @@ export function TaskColumn({
 
   const taskIds = useMemo(() => tasks.map((t) => t.id), [tasks]);
 
-  const columnColors: Record<string, string> = {
-    todo: 'bg-blue-500/10 text-blue-700 dark:text-blue-400',
-    in_progress: 'bg-amber-500/10 text-amber-700 dark:text-amber-400',
-    done: 'bg-green-500/10 text-green-700 dark:text-green-400',
-  };
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: columnDelay[id] ?? 0 }}
-      className={`flex flex-col rounded-lg bg-muted/40 border transition-colors duration-200 ${
-        isOver ? 'border-primary/50 bg-primary/5' : ''
+      className={`flex flex-col rounded-lg bg-muted/30 border border-border/50 transition-all duration-200 ${
+        isOver ? 'border-primary/30 bg-primary/[0.03] ring-1 ring-primary/10' : ''
       }`}
     >
-      <div className="flex items-center justify-between p-3 border-b">
+      <div className="flex items-center justify-between px-3 py-2.5 border-b border-border/40">
         <div className="flex items-center gap-2">
-          <h3 className="font-semibold text-sm">{title}</h3>
-          <Badge
-            variant="secondary"
-            className={`text-xs font-medium ${columnColors[id] || ''}`}
-          >
+          <h3 className={`text-xs font-semibold uppercase tracking-wider text-muted-foreground`}>
+            {title}
+          </h3>
+          <span className={`text-[10px] font-medium tabular-nums rounded-full px-1.5 py-0.5 bg-muted ${columnColors[id] || ''}`}>
             {tasks.length}
-          </Badge>
+          </span>
         </div>
         <Button
           variant="ghost"
@@ -98,7 +96,7 @@ export function TaskColumn({
               />
             ))}
             {tasks.length === 0 && (
-              <div className="text-center py-8">
+              <div className="border-2 border-dashed border-border/30 rounded-lg py-8 text-center">
                 <p className="text-sm text-muted-foreground">No tasks</p>
                 <Button
                   variant="ghost"
