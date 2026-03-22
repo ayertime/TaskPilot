@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router';
+import { createBrowserRouter, RouterProvider } from 'react-router';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { queryClient } from '@/lib/query';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -12,24 +12,30 @@ import { TaskBoard } from '@/components/dashboard/TaskBoard';
 import { ProfileSettings } from '@/components/settings/ProfileSettings';
 import { ActivityLog } from '@/components/activity/ActivityLog';
 
+const router = createBrowserRouter([
+  { path: '/', element: <LandingPage /> },
+  { path: '/login', element: <LoginPage /> },
+  { path: '/auth/callback', element: <AuthCallback /> },
+  {
+    element: <ProtectedRoute />,
+    children: [
+      {
+        element: <AppLayout />,
+        children: [
+          { path: '/dashboard', element: <TaskBoard /> },
+          { path: '/activity', element: <ActivityLog /> },
+          { path: '/settings', element: <ProfileSettings /> },
+        ],
+      },
+    ],
+  },
+]);
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/auth/callback" element={<AuthCallback />} />
-            <Route element={<ProtectedRoute />}>
-              <Route element={<AppLayout />}>
-                <Route path="/dashboard" element={<TaskBoard />} />
-                <Route path="/activity" element={<ActivityLog />} />
-                <Route path="/settings" element={<ProfileSettings />} />
-              </Route>
-            </Route>
-          </Routes>
-        </BrowserRouter>
+        <RouterProvider router={router} />
         <Toaster position="bottom-right" richColors />
       </TooltipProvider>
     </QueryClientProvider>

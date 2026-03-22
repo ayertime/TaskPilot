@@ -194,8 +194,8 @@ export function AppLayout() {
 
         {/* Sidebar */}
         <aside
-          className={`fixed md:static z-40 h-full w-60 border-r bg-card/50 flex flex-col overflow-y-auto transition-transform duration-200 md:translate-x-0 ${
-            sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          className={`fixed inset-y-0 left-0 top-14 md:top-0 md:static z-40 w-60 border-r bg-card flex flex-col overflow-y-auto transition-transform duration-200 md:transition-none md:translate-x-0 ${
+            sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
           }`}
         >
           <nav className="p-3 space-y-1">
