@@ -1,18 +1,60 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { supabase } from '@/lib/supabase';
+import { apiFetch } from '@/lib/api';
+
+async function saveProviderTokens(session: { provider_token?: string | null; provider_refresh_token?: string | null; user: { app_metadata: { provider?: string } } }) {
+  if (!session.provider_token) return;
+  try {
+    await apiFetch('/api/profile/oauth-tokens', {
+      method: 'POST',
+      body: JSON.stringify({
+        provider: session.user.app_metadata.provider || 'google',
+        provider_token: session.provider_token,
+        provider_refresh_token: session.provider_refresh_token || null,
+      }),
+    });
+  } catch {
+    // Non-blocking
+  }
+}
 
 export function AuthCallback() {
   const navigate = useNavigate();
+  const handled = useRef(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // Listen for the SIGNED_IN event — this is the most reliable way
+    // to capture the provider_token from OAuth redirects
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (handled.current) return;
+        if (event === 'SIGNED_IN' && session) {
+          handled.current = true;
+          await saveProviderTokens(session);
+          navigate('/dashboard', { replace: true });
+        }
+      }
+    );
+
+    // Fallback: if session already exists (e.g., page reload)
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (handled.current) return;
       if (session) {
+        handled.current = true;
+        await saveProviderTokens(session);
         navigate('/dashboard', { replace: true });
       } else {
-        navigate('/login', { replace: true });
+        // Give the auth state change listener a moment, then redirect
+        setTimeout(() => {
+          if (!handled.current) {
+            navigate('/login', { replace: true });
+          }
+        }, 3000);
       }
     });
+
+    return () => subscription.unsubscribe();
   }, [navigate]);
 
   return (

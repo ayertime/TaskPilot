@@ -54,6 +54,38 @@ export function AppLayout() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
+  // Live clock
+  const [currentTime, setCurrentTime] = useState(() => new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const timeZone = (() => {
+    try {
+      if (profile?.timezone) {
+        Intl.DateTimeFormat(undefined, { timeZone: profile.timezone });
+        return profile.timezone;
+      }
+    } catch { /* invalid timezone, fall back */ }
+    return undefined;
+  })();
+
+  const formattedTime = currentTime.toLocaleTimeString([], {
+    hour: 'numeric',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true,
+    timeZone,
+  });
+
+  const formattedDate = currentTime.toLocaleDateString([], {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    timeZone,
+  });
+
   const displayName =
     user?.user_metadata?.full_name || user?.email || 'User';
   const avatarUrl = user?.user_metadata?.avatar_url;
@@ -134,6 +166,10 @@ export function AppLayout() {
           </div>
 
           <div className="flex items-center gap-2">
+          <div className="hidden sm:flex flex-col items-end mr-1 text-right">
+            <span className="text-sm font-medium leading-none tabular-nums">{formattedTime}</span>
+            <span className="text-[11px] text-muted-foreground leading-tight">{formattedDate}</span>
+          </div>
           <Button
             variant="outline"
             size="sm"

@@ -1,4 +1,4 @@
-import { supabaseAdmin } from './supabase';
+import { getValidToken } from './oauth-token-service';
 
 interface CalendarEventParams {
   title: string;
@@ -11,19 +11,15 @@ interface CalendarEventParams {
 
 /**
  * Create a calendar event using the user's connected OAuth provider.
- * Supports Google Calendar API and Microsoft Outlook Calendar.
+ * Automatically refreshes expired tokens.
  */
 export async function createCalendarEvent(
   userId: string,
   params: CalendarEventParams,
 ): Promise<{ success: boolean; message: string; event_id?: string }> {
-  const { data: profile } = await supabaseAdmin
-    .from('profiles')
-    .select('provider, provider_token, provider_refresh_token')
-    .eq('id', userId)
-    .single();
+  const token = await getValidToken(userId);
 
-  if (!profile?.provider_token) {
+  if (!token) {
     return {
       success: false,
       message:
@@ -31,15 +27,15 @@ export async function createCalendarEvent(
     };
   }
 
-  if (profile.provider === 'google') {
-    return createGoogleCalendarEvent(profile.provider_token, params);
-  } else if (profile.provider === 'azure') {
-    return createOutlookCalendarEvent(profile.provider_token, params);
+  if (token.provider === 'google') {
+    return createGoogleCalendarEvent(token.accessToken, params);
+  } else if (token.provider === 'azure') {
+    return createOutlookCalendarEvent(token.accessToken, params);
   }
 
   return {
     success: false,
-    message: `Calendar is not supported for the "${profile.provider}" provider. Please connect a Google or Microsoft account.`,
+    message: `Calendar is not supported for the "${token.provider}" provider. Please connect a Google or Microsoft account.`,
   };
 }
 

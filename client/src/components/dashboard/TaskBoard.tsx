@@ -13,14 +13,17 @@ import {
 } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
 import { useTasks } from '@/hooks/useTasks';
+import { apiFetch } from '@/lib/api';
 import { TaskColumn } from './TaskColumn';
 import { TaskCard } from './TaskCard';
 import { TaskForm } from './TaskForm';
 import { TaskStats } from './TaskStats';
 import { TaskDetailModal } from './TaskDetailModal';
 import { TaskFilters } from './TaskFilters';
+import { WelcomeBackModal } from './WelcomeBackModal';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
+import { formatDistanceStrict } from 'date-fns';
 import type { Task, Category } from '@/types';
 
 interface AppContext {
@@ -43,6 +46,63 @@ export function TaskBoard() {
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [priorityFilter, setPriorityFilter] = useState('all');
+
+  // Welcome-back modal
+  const [welcomeOpen, setWelcomeOpen] = useState(false);
+  const [awayDuration, setAwayDuration] = useState('');
+  const [agentActions, setAgentActions] = useState<
+    { action_type: string; description: string; created_at: string }[]
+  >([]);
+
+  useEffect(() => {
+    if (loading || tasks.length === 0) return;
+
+    const AWAY_THRESHOLD = 60 * 60 * 1000; // 1 hour
+    const STORAGE_KEY = 'taskpilot_last_active';
+    const DISMISSED_KEY = 'taskpilot_welcome_dismissed';
+
+    const lastActive = localStorage.getItem(STORAGE_KEY);
+    const now = Date.now();
+
+    // Update last active time
+    localStorage.setItem(STORAGE_KEY, String(now));
+
+    if (!lastActive) return; // First visit, no modal
+
+    const elapsed = now - Number(lastActive);
+    if (elapsed < AWAY_THRESHOLD) return;
+
+    // Check if already dismissed in this session
+    const dismissed = sessionStorage.getItem(DISMISSED_KEY);
+    if (dismissed) return;
+
+    // Show welcome back modal
+    setAwayDuration(formatDistanceStrict(Number(lastActive), now));
+
+    // Fetch agent activity from while they were away
+    apiFetch('/api/activity/summary')
+      .then((data: { actions: { action_type: string; description: string; created_at: string }[] }) => {
+        setAgentActions(data.actions || []);
+      })
+      .catch(() => setAgentActions([]));
+
+    setWelcomeOpen(true);
+  }, [loading, tasks.length]);
+
+  function handleWelcomeDismiss(open: boolean) {
+    setWelcomeOpen(open);
+    if (!open) {
+      sessionStorage.setItem('taskpilot_welcome_dismissed', '1');
+    }
+  }
+
+  // Keep last active time updated while on the page
+  useEffect(() => {
+    const interval = setInterval(() => {
+      localStorage.setItem('taskpilot_last_active', String(Date.now()));
+    }, 60000); // Update every minute
+    return () => clearInterval(interval);
+  }, []);
 
   // Sync local tasks from server state when not actively dragging
   useEffect(() => {
@@ -341,6 +401,14 @@ export function TaskBoard() {
           }
         }}
         onComplete={handleComplete}
+      />
+
+      <WelcomeBackModal
+        open={welcomeOpen}
+        onOpenChange={handleWelcomeDismiss}
+        tasks={tasks}
+        agentActions={agentActions}
+        awayDuration={awayDuration}
       />
     </>
   );

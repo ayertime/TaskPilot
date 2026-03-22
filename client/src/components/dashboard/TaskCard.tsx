@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -25,6 +26,62 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import type { Task, Category } from '@/types';
+
+function timeRemaining(dueDate: string, isDone: boolean, now: number): { text: string; color: string; blink: boolean; needsSeconds: boolean } | null {
+  if (isDone) return null;
+  const due = new Date(dueDate).getTime();
+  const diff = due - now;
+  const absDiff = Math.abs(diff);
+
+  const totalSeconds = Math.floor(absDiff / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  let label: string;
+  let needsSeconds = false;
+
+  if (diff > 0 && diff <= 60000) {
+    // Under 1 minute — show seconds countdown
+    label = `${Math.max(totalSeconds, 0)}s`;
+    needsSeconds = true;
+  } else if (days > 0) {
+    const remHours = hours % 24;
+    label = remHours > 0 ? `${days}d ${remHours}h` : `${days}d`;
+  } else if (hours > 0) {
+    const remMin = minutes % 60;
+    label = remMin > 0 ? `${hours}h ${remMin}m` : `${hours}h`;
+  } else {
+    label = `${Math.max(minutes, 1)}m`;
+  }
+
+  const text = diff > 0 ? `${label} left` : `${label} overdue`;
+
+  // Color and blink logic
+  const minutesLeft = diff / 60000;
+  let color: string;
+  let blink = false;
+
+  if (minutesLeft <= 0) {
+    color = 'text-red-500 font-semibold';
+    blink = true;
+  } else if (needsSeconds) {
+    // Under 1 minute — flashing red
+    color = 'text-red-500 font-bold';
+    blink = true;
+  } else if (minutesLeft <= 10) {
+    color = 'text-red-500 font-semibold';
+    blink = true;
+  } else if (minutesLeft <= 40) {
+    color = 'text-red-500 font-medium';
+  } else if (minutesLeft <= 60) {
+    color = 'text-yellow-500 dark:text-yellow-400 font-medium';
+  } else {
+    color = 'text-emerald-500 dark:text-emerald-400';
+  }
+
+  return { text, color, blink, needsSeconds };
+}
 
 interface TaskCardProps {
   task: Task;
@@ -73,8 +130,20 @@ export function TaskCard({
 }: TaskCardProps) {
   const category = categories.find((c) => c.id === task.category_id);
   const priority = priorityConfig[task.priority];
+
+  // Live ticker: re-render every second when under 1 minute, otherwise every 30s
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    if (task.status === 'done' || !task.due_date) return;
+    const diff = new Date(task.due_date).getTime() - Date.now();
+    // Tick every second when within 1 minute, every 30s otherwise
+    const interval = diff > 0 && diff <= 60000 ? 1000 : 30000;
+    const timer = setInterval(() => setNow(Date.now()), interval);
+    return () => clearInterval(timer);
+  }, [task.due_date, task.status, now]);
+
   const isOverdue =
-    task.due_date && task.status !== 'done' && new Date(task.due_date) < new Date();
+    task.due_date && task.status !== 'done' && new Date(task.due_date).getTime() < now;
 
   return (
     <Card
@@ -194,18 +263,30 @@ export function TaskCard({
             </Badge>
           )}
 
-          {task.due_date && (
-            <span
-              className={`text-[10px] flex items-center gap-0.5 ${
-                isOverdue
-                  ? 'text-red-500 font-medium'
-                  : 'text-muted-foreground'
-              }`}
-            >
-              <Calendar className="h-3 w-3" />
-              {format(new Date(task.due_date), 'MMM d')}
-            </span>
-          )}
+          {task.due_date && (() => {
+            const remaining = timeRemaining(task.due_date, task.status === 'done', now);
+            return (
+              <span
+                className={`text-[10px] flex items-center gap-0.5 ${
+                  isOverdue
+                    ? 'text-red-500 font-medium'
+                    : 'text-muted-foreground'
+                }`}
+              >
+                <Calendar className="h-3 w-3" />
+                {format(new Date(task.due_date), 'MMM d')}
+                {remaining && (
+                  <span className={`ml-0.5 ${remaining.color} ${
+                    remaining.blink
+                      ? 'animate-pulse drop-shadow-[0_0_6px_rgba(239,68,68,0.8)]'
+                      : ''
+                  }`}>
+                    ({remaining.text})
+                  </span>
+                )}
+              </span>
+            );
+          })()}
 
           {task.is_automatable && (
             <Tooltip>

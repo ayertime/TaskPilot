@@ -11,7 +11,7 @@ const createTaskSchema = z.object({
   due_date: z.string().nullable().optional(),
   category_id: z.string().nullable().optional(),
   parent_task_id: z.string().nullable().optional(),
-  is_automatable: z.boolean().optional().default(false),
+  is_automatable: z.boolean().optional().default(true),
   auto_execute_at: z.string().nullable().optional(),
   action_type: z.string().nullable().optional(),
   action_metadata: z.record(z.string(), z.unknown()).nullable().optional(),

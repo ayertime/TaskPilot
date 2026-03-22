@@ -4,6 +4,8 @@ import { webSearch } from '../services/search-service';
 import { checkWeather } from '../services/weather-service';
 import { sendEmail } from '../services/email-service';
 import { createCalendarEvent } from '../services/calendar-service';
+import { readEmails } from '../services/gmail-service';
+import { readCalendarEvents } from '../services/gcalendar-service';
 import { exportTasksCsv, exportTasksMarkdown } from '../services/export-service';
 
 interface ToolContext {
@@ -34,6 +36,10 @@ export async function executeTool(
       return handleBreakDownTask(input, ctx);
 
     // ── Real-World Actions ─────────────────────────────────────────
+    case 'read_emails':
+      return handleReadEmails(input, ctx);
+    case 'read_calendar':
+      return handleReadCalendar(input, ctx);
     case 'send_email':
       return handleSendEmail(input, ctx);
     case 'create_calendar_event':
@@ -298,6 +304,55 @@ async function handleBreakDownTask(
 }
 
 // ── Real-World Actions Handlers ──────────────────────────────────────
+
+async function handleReadEmails(
+  input: Record<string, unknown>,
+  ctx: ToolContext,
+): Promise<string> {
+  const result = await readEmails(ctx.userId, {
+    query: input.query as string | undefined,
+    maxResults: input.max_results as number | undefined,
+    unreadOnly: input.unread_only as boolean | undefined,
+  });
+
+  if (result.success && result.emails && result.emails.length > 0) {
+    await supabaseAdmin.from('agent_activity').insert({
+      user_id: ctx.userId,
+      action_type: 'read_emails',
+      description: input.query
+        ? `Searched emails: "${input.query}"`
+        : `Read ${result.emails.length} recent email(s)`,
+      result: result.message,
+    });
+  }
+
+  return JSON.stringify(result);
+}
+
+async function handleReadCalendar(
+  input: Record<string, unknown>,
+  ctx: ToolContext,
+): Promise<string> {
+  const result = await readCalendarEvents(ctx.userId, {
+    timeMin: input.time_min as string | undefined,
+    timeMax: input.time_max as string | undefined,
+    maxResults: input.max_results as number | undefined,
+    query: input.query as string | undefined,
+  });
+
+  if (result.success && result.events && result.events.length > 0) {
+    await supabaseAdmin.from('agent_activity').insert({
+      user_id: ctx.userId,
+      action_type: 'read_calendar',
+      description: input.query
+        ? `Searched calendar: "${input.query}"`
+        : `Read ${result.events.length} upcoming event(s)`,
+      result: result.message,
+    });
+  }
+
+  return JSON.stringify(result);
+}
 
 async function handleSendEmail(
   input: Record<string, unknown>,

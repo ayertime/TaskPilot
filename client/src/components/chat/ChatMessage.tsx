@@ -52,6 +52,8 @@ const TOOL_CONFIG: Record<string, { icon: typeof Bot; label: string; getDetail?:
   delete_task: { icon: Trash2, label: 'Deleting task' },
   create_category: { icon: FolderPlus, label: 'Creating category', getDetail: (i) => String(i.name || '') },
   break_down_task: { icon: Scissors, label: 'Breaking down task' },
+  read_emails: { icon: Mail, label: 'Reading inbox', getDetail: (i) => i.query ? `"${i.query}"` : '' },
+  read_calendar: { icon: Calendar, label: 'Reading calendar' },
   send_email: { icon: Mail, label: 'Sending email', getDetail: (i) => `To: ${i.to || ''}` },
   create_calendar_event: { icon: Calendar, label: 'Creating event', getDetail: (i) => String(i.title || '') },
   web_search: { icon: Search, label: 'Searching the web', getDetail: (i) => `"${i.query || ''}"` },

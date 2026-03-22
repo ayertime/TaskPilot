@@ -1,4 +1,4 @@
-import { supabaseAdmin } from './supabase';
+import { getValidToken } from './oauth-token-service';
 
 interface EmailParams {
   to: string;
@@ -10,20 +10,15 @@ interface EmailParams {
 
 /**
  * Send an email using the user's connected OAuth provider.
- * Supports Gmail API and Microsoft Graph API.
+ * Automatically refreshes expired tokens.
  */
 export async function sendEmail(
   userId: string,
   params: EmailParams,
 ): Promise<{ success: boolean; message: string }> {
-  // Get user's provider tokens from profile
-  const { data: profile } = await supabaseAdmin
-    .from('profiles')
-    .select('provider, provider_token, provider_refresh_token')
-    .eq('id', userId)
-    .single();
+  const token = await getValidToken(userId);
 
-  if (!profile?.provider_token) {
+  if (!token) {
     return {
       success: false,
       message:
@@ -31,15 +26,15 @@ export async function sendEmail(
     };
   }
 
-  if (profile.provider === 'google') {
-    return sendViaGmail(profile.provider_token, params);
-  } else if (profile.provider === 'azure') {
-    return sendViaMicrosoftGraph(profile.provider_token, params);
+  if (token.provider === 'google') {
+    return sendViaGmail(token.accessToken, params);
+  } else if (token.provider === 'azure') {
+    return sendViaMicrosoftGraph(token.accessToken, params);
   }
 
   return {
     success: false,
-    message: `Email sending is not supported for the "${profile.provider}" provider. Please connect a Google or Microsoft account.`,
+    message: `Email sending is not supported for the "${token.provider}" provider. Please connect a Google or Microsoft account.`,
   };
 }
 

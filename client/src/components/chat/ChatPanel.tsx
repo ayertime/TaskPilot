@@ -10,7 +10,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChatMessage } from './ChatMessage';
 import { ChatInput } from './ChatInput';
 import { useChat } from '@/hooks/useChat';
-import { Trash2, Bot, Sparkles } from 'lucide-react';
+import { Trash2, Bot, Sparkles, X } from 'lucide-react';
 
 interface ChatPanelProps {
   open: boolean;
@@ -30,7 +30,7 @@ export function ChatPanel({ open, onOpenChange }: ChatPanelProps) {
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-lg flex flex-col p-0">
+      <SheetContent className="w-full sm:max-w-lg flex flex-col p-0" showCloseButton={false}>
         <SheetHeader className="px-4 py-3 border-b flex flex-row items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
@@ -38,15 +38,28 @@ export function ChatPanel({ open, onOpenChange }: ChatPanelProps) {
             </div>
             <SheetTitle className="text-base">TaskPilot AI</SheetTitle>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={clearHistory}
-            title="Clear chat history"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-1">
+            {messages.length > 0 && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={clearHistory}
+                title="Clear chat history"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => onOpenChange(false)}
+              title="Close"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </SheetHeader>
 
         <ScrollArea className="flex-1 px-4" ref={scrollRef}>

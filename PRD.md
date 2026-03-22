@@ -42,7 +42,7 @@ TaskPilot bridges the gap between planning and execution. Users describe what ne
 | Backend | Node.js, Fastify 5, TypeScript |
 | Database | Supabase (PostgreSQL) with Row Level Security |
 | AI | Anthropic Claude API (claude-haiku-4-5) |
-| Authentication | Supabase Auth (Google, Microsoft, Yahoo OAuth + email/password) |
+| Authentication | Supabase Auth (Google OAuth + email/password; Microsoft, Yahoo, Slack coming soon) |
 | Scheduling | node-cron (1-minute intervals) |
 | Validation | Zod |
 
@@ -53,9 +53,9 @@ TaskPilot bridges the gap between planning and execution. Users describe what ne
 | Anthropic Claude API | AI agent reasoning and tool use | API key |
 | Tavily API | Real-time web search | Free (1,000/month) |
 | OpenWeatherMap API | Weather data for outdoor task planning | Free (1,000/day) |
-| Gmail API | Send emails via Google OAuth | OAuth |
-| Microsoft Graph API | Send emails and create Outlook events | OAuth |
-| Google Calendar API | Create Google Calendar events | OAuth |
+| Gmail API | Send emails and read inbox via Google OAuth | OAuth (free) |
+| Google Calendar API | Create and read Google Calendar events | OAuth (free) |
+| Microsoft Graph API | Send emails and create Outlook events (coming soon) | OAuth |
 
 ### 2.3 System Architecture
 
@@ -70,7 +70,7 @@ Server (Fastify)
   |
   |-- Auth Middleware (JWT verification)
   |-- Route Handlers (tasks, categories, chat, activity, profile)
-  |-- AI Agent Service (Claude API + 24 tools)
+  |-- AI Agent Service (Claude API + 26 tools)
   |-- Proactive Scheduler (node-cron, every 60s)
   |-- External Services (email, calendar, search, weather)
   |
@@ -100,6 +100,11 @@ Supabase (PostgreSQL)
 - Subtask hierarchy (parent-child relationships)
 - Recurrence patterns: daily, weekly (with day selection), monthly (with date)
 - Auto-execute scheduling (specific date/time for agent execution)
+
+**Time Remaining Countdown**
+- Color-coded countdown on task cards: green (>1hr), yellow (40min-1hr), red (<40min)
+- Blinking red glow when under 10 minutes
+- Live seconds countdown (59, 58, 57...) when under 1 minute with flashing red
 
 **Filtering and Search**
 - Filter by status, priority, and category
@@ -139,7 +144,13 @@ Supabase (PostgreSQL)
 - Maximum 10 tool rounds per request to prevent runaway loops
 - Dynamic system prompt includes user name, timezone, and current time
 
-### 3.3 AI Agent Tools (24 Total)
+**Task Creation Form**
+- Three-section layout: Task Info, Settings, Agent Action
+- Visual action picker with clickable icon cards (None, Email, Calendar, Research, Document, Reminder)
+- Dynamic metadata panels: email fields (To, Subject, Body), calendar fields (Start, End, Location)
+- Auto-pilot enabled by default for all new tasks
+
+### 3.3 AI Agent Tools (26 Total)
 
 **Task Management (7)**
 
@@ -153,10 +164,12 @@ Supabase (PostgreSQL)
 | create_category | Add new categories with color and icon |
 | break_down_task | Decompose complex tasks into subtasks |
 
-**Real-World Actions (5)**
+**Real-World Actions (7)**
 
 | Tool | Description |
 |------|-------------|
+| read_emails | Read Gmail inbox with search, filter unread, and create tasks from actionable emails |
+| read_calendar | Read upcoming Google Calendar events, find free time, create tasks from meetings |
 | send_email | Send via Gmail or Microsoft Graph (supports to, cc, bcc) |
 | create_calendar_event | Create events in Google Calendar or Outlook |
 | web_search | Real-time search via Tavily API (up to 10 results) |
@@ -227,10 +240,17 @@ The scheduler is the core differentiating feature of TaskPilot.
 ### 3.5 Authentication
 
 **Supported Providers**
-- Google OAuth (with gmail.send + calendar.events scopes)
-- Microsoft OAuth (with Mail.Send + Calendars.ReadWrite scopes)
-- Yahoo OAuth
+- Google OAuth (with gmail.send, gmail.readonly, calendar.events scopes)
+- Microsoft OAuth (coming soon)
+- Yahoo OAuth (coming soon)
+- Slack (coming soon)
 - Email and password signup with email confirmation
+
+**OAuth Token Management**
+- Access tokens refreshed automatically when expired (via refresh token + client credentials)
+- Tokens stored in profiles table and managed by a centralized oauth-token-service
+- AuthCallback page captures provider tokens during OAuth redirect flow
+- No manual reconnection needed after initial setup
 
 **Security**
 - JWT-based session management via Supabase
@@ -245,7 +265,9 @@ The scheduler is the core differentiating feature of TaskPilot.
 - Custom avatar upload
 - Accent color (applies globally to UI)
 - Theme: light, dark, or system
-- Timezone (used for scheduling accuracy)
+- Timezone (dropdown of all IANA timezones, used for scheduling and header clock)
+- Smart Sync toggle (enable/disable automatic email and calendar syncing)
+- Sync interval (1h, 3h, 5h, 12h, or once a day)
 
 ### 3.7 Activity Log
 
@@ -255,14 +277,31 @@ The scheduler is the core differentiating feature of TaskPilot.
 - Daily summary with action breakdown by type
 - Provides full transparency into what the agent did and why
 
-### 3.8 Dashboard and Analytics
+### 3.8 Welcome Back Modal
 
+- Appears when user returns after 1+ hour away (tracked via localStorage)
+- Shows away duration, overdue tasks, agent activity, top priority tasks, and tasks due in 24 hours
+- "All clear" state with green checkmark if nothing pending
+- Dismissed per session (sessionStorage) to prevent repeat display
+
+### 3.9 Smart Sync (Email & Calendar Integration)
+
+- Automatically reads Gmail inbox and Google Calendar on a configurable interval
+- AI agent analyzes emails and creates tasks only for actionable ones (ignores newsletters, marketing, notifications)
+- Creates preparation tasks from upcoming calendar events (meetings, appointments)
+- Deduplication via gmail_id/gcal_id in action_metadata prevents duplicate task creation
+- User-configurable: toggle on/off and set sync interval in Settings
+- On-demand sync available via chat ("check my email", "what's on my calendar")
+
+### 3.10 Dashboard and Analytics
+
+- **Live Clock**: User's current time and date displayed in header, updated every second, uses profile timezone
 - **Task Stats Bar**: Animated counters for total, in progress, completed, and overdue
 - **Overdue glow**: Overdue stat card and task cards pulse with a red glow effect to draw attention
 - **Real-time overdue detection**: Stats bar re-evaluates every 30 seconds so overdue counts update without a page refresh
 - **Productivity Dashboard**: Completion rates, agent vs. user task completion, trends
 
-### 3.9 UI/UX
+### 3.11 UI/UX
 
 - Responsive design (mobile and desktop)
 - Landing page at `/` for unauthenticated visitors
@@ -282,6 +321,7 @@ The scheduler is the core differentiating feature of TaskPilot.
 - id, email, full_name, avatar_url, display_name, custom_avatar_url
 - theme, accent_color, timezone
 - provider, provider_token, provider_refresh_token
+- sync_enabled, sync_interval
 
 **tasks** — Core task data
 - id, user_id, category_id, parent_task_id
@@ -331,6 +371,8 @@ The scheduler is the core differentiating feature of TaskPilot.
 | GET | /api/activity/summary | Today's activity summary |
 | GET | /api/profile | Get user profile |
 | PATCH | /api/profile | Update profile |
+| GET | /api/profile/oauth-status | Check OAuth connection status |
+| POST | /api/profile/oauth-tokens | Save OAuth provider tokens |
 
 All endpoints except /api/health require JWT authentication.
 
@@ -347,6 +389,7 @@ All endpoints except /api/health require JWT authentication.
 | 3 | Drag-and-drop, animations, TaskStats, accent color customization |
 | 4 | AI agent with 24 tools, chat panel, SSE streaming |
 | 5 | Proactive scheduler, activity log, task detail modal, onboarding |
+| 6 | Google OAuth, Gmail/Calendar integration, Smart Sync, token refresh, time countdown, welcome-back modal, dark mode fix, task form redesign |
 
 ### 6.2 Deployment
 
@@ -363,6 +406,7 @@ All endpoints except /api/health require JWT authentication.
 - ANTHROPIC_API_KEY
 - TAVILY_API_KEY
 - OPENWEATHERMAP_API_KEY
+- GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET (for token refresh)
 
 **Client**
 - VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY

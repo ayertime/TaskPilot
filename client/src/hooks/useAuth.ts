@@ -17,10 +17,33 @@ export function useAuth() {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+
+        // Save OAuth provider tokens when signing in via Google/Microsoft
+        console.log('[Auth] Event:', event, 'Has provider_token:', !!session?.provider_token);
+        if (event === 'SIGNED_IN' && session?.provider_token) {
+          try {
+            const token = session.access_token;
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+            await fetch(`${API_URL}/api/profile/oauth-tokens`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                provider: session.user.app_metadata.provider || 'google',
+                provider_token: session.provider_token,
+                provider_refresh_token: session.provider_refresh_token || null,
+              }),
+            });
+          } catch {
+            // Non-blocking
+          }
+        }
       }
     );
 
@@ -32,7 +55,11 @@ export function useAuth() {
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
-        scopes: 'https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/calendar.events',
+        scopes: 'https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/calendar.events',
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+        },
       },
     });
     if (error) throw error;

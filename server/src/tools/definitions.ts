@@ -196,7 +196,60 @@ const break_down_task: Tool = {
   },
 };
 
-// ── Real-World Actions (5) ───────────────────────────────────────────
+// ── Real-World Actions (7) ───────────────────────────────────────────
+
+const read_emails: Tool = {
+  name: 'read_emails',
+  description:
+    'Read emails from the user\'s Gmail inbox. Can search, filter unread, or get recent messages. Use this to check for actionable emails that could become tasks.',
+  input_schema: {
+    type: 'object' as const,
+    properties: {
+      query: {
+        type: 'string',
+        description:
+          'Gmail search query (e.g. "from:boss@company.com", "subject:invoice", "is:important"). Leave empty for recent emails.',
+      },
+      max_results: {
+        type: 'number',
+        description: 'Number of emails to return (default 10, max 20)',
+      },
+      unread_only: {
+        type: 'boolean',
+        description: 'Only return unread emails (default false)',
+      },
+    },
+    required: [],
+  },
+};
+
+const read_calendar: Tool = {
+  name: 'read_calendar',
+  description:
+    'Read upcoming events from the user\'s Google Calendar. Use this to check what\'s on the schedule, find free time, or create tasks from upcoming events.',
+  input_schema: {
+    type: 'object' as const,
+    properties: {
+      time_min: {
+        type: 'string',
+        description: 'Start of time range (ISO 8601, defaults to now)',
+      },
+      time_max: {
+        type: 'string',
+        description: 'End of time range (ISO 8601, defaults to 7 days from now)',
+      },
+      max_results: {
+        type: 'number',
+        description: 'Number of events to return (default 15, max 50)',
+      },
+      query: {
+        type: 'string',
+        description: 'Search query to filter events by title/description',
+      },
+    },
+    required: [],
+  },
+};
 
 const send_email: Tool = {
   name: 'send_email',
@@ -542,6 +595,8 @@ export const allTools: Tool[] = [
   create_category,
   break_down_task,
   // Real-World Actions
+  read_emails,
+  read_calendar,
   send_email,
   create_calendar_event,
   web_search,
