@@ -1,12 +1,15 @@
 import { motion } from 'motion/react';
 import { useActivity } from '@/hooks/useActivity';
+import { useTasks } from '@/hooks/useTasks';
 import { ActivityItem } from './ActivityItem';
+import { ProductivityDashboard } from './ProductivityDashboard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Bot, Activity } from 'lucide-react';
 import type { AgentActivity } from '@/types';
 
 export function ActivityLog() {
   const { activities, loading } = useActivity();
+  const { tasks } = useTasks();
 
   if (loading) {
     return (
@@ -41,6 +44,8 @@ export function ActivityLog() {
           </p>
         </div>
       </motion.div>
+
+      <ProductivityDashboard tasks={tasks} />
 
       {activities.length === 0 ? (
         <motion.div

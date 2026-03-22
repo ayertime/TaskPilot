@@ -51,13 +51,31 @@ export function ChatPanel({ open, onOpenChange }: ChatPanelProps) {
 
         <ScrollArea className="flex-1 px-4" ref={scrollRef}>
           {messages.length === 0 && !streaming && (
-            <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground">
+            <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
               <Sparkles className="h-10 w-10 mb-3 opacity-50" />
               <p className="text-sm font-medium">How can I help?</p>
-              <p className="text-xs mt-1 max-w-[250px]">
+              <p className="text-xs mt-1 max-w-[250px] mb-4">
                 I can manage your tasks, send emails, search the web, check the
                 weather, and much more.
               </p>
+              <div className="flex flex-wrap justify-center gap-2 max-w-xs">
+                {[
+                  'What should I focus on?',
+                  'Organize my day',
+                  'How productive was I this week?',
+                  'Send an email',
+                  'Search the web for...',
+                  'Break down a task',
+                ].map((prompt) => (
+                  <button
+                    key={prompt}
+                    onClick={() => sendMessage(prompt)}
+                    className="text-xs px-2.5 py-1.5 rounded-full border bg-card hover:bg-accent transition-colors text-foreground"
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 

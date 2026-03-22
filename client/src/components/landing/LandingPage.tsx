@@ -132,7 +132,7 @@ export function LandingPage() {
       </header>
 
       {/* Hero */}
-      <section className="max-w-6xl mx-auto px-6 pt-20 pb-16 text-center">
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 pt-12 sm:pt-20 pb-12 sm:pb-16 text-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -143,13 +143,13 @@ export function LandingPage() {
             Powered by Claude AI
           </div>
 
-          <h1 className="text-5xl sm:text-6xl font-bold tracking-tight mb-6">
+          <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-6">
             Your To Do app that
             <br />
             <span className="text-primary">actually does things</span>
           </h1>
 
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-10">
+          <p className="text-base sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 sm:mb-10">
             TaskPilot doesn't just track your tasks — it completes them. An AI
             agent that sends emails, creates events, does research, and
             proactively handles tasks you might miss.
@@ -172,7 +172,7 @@ export function LandingPage() {
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="mt-16 mx-auto max-w-4xl"
+          className="mt-12 sm:mt-16 mx-auto max-w-4xl hidden sm:block"
         >
           <div className="rounded-xl border bg-card shadow-2xl overflow-hidden">
             {/* Fake browser bar */}
@@ -305,7 +305,7 @@ export function LandingPage() {
       </section>
 
       {/* Features Grid */}
-      <section className="max-w-6xl mx-auto px-6 py-20">
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-20">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold mb-3">
             Everything you need, automated
@@ -342,7 +342,7 @@ export function LandingPage() {
 
       {/* Capabilities Checklist */}
       <section className="bg-muted/30 border-y">
-        <div className="max-w-6xl mx-auto px-6 py-20">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-20">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-3">24 tools, one chat</h2>
             <p className="text-muted-foreground max-w-xl mx-auto">
@@ -369,7 +369,7 @@ export function LandingPage() {
       </section>
 
       {/* How It Works */}
-      <section className="max-w-6xl mx-auto px-6 py-20">
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-20">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold mb-3">How it works</h2>
         </div>

@@ -26,6 +26,7 @@ import {
   X,
   MessageSquare,
   Activity,
+  Menu,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -37,6 +38,7 @@ export function AppLayout() {
   const navigate = useNavigate();
   const [categoryFormOpen, setCategoryFormOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Ctrl+K to toggle chat panel
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -101,8 +103,16 @@ export function AppLayout() {
         transition={{ duration: 0.3 }}
         className="border-b bg-card sticky top-0 z-50"
       >
-        <div className="flex items-center justify-between px-6 h-16">
+        <div className="flex items-center justify-between px-4 md:px-6 h-14 md:h-16">
           <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden h-8 w-8"
+              onClick={() => setSidebarOpen((prev) => !prev)}
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -173,14 +183,26 @@ export function AppLayout() {
       </motion.header>
 
       {/* Body */}
-      <div className="flex h-[calc(100vh-4rem)]">
+      <div className="flex h-[calc(100vh-3.5rem)] md:h-[calc(100vh-4rem)]">
+        {/* Mobile sidebar overlay */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 z-40 bg-black/50 md:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
         {/* Sidebar */}
-        <aside className="w-60 border-r bg-card/50 flex flex-col overflow-y-auto">
+        <aside
+          className={`fixed md:static z-40 h-full w-60 border-r bg-card/50 flex flex-col overflow-y-auto transition-transform duration-200 md:translate-x-0 ${
+            sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
+        >
           <nav className="p-3 space-y-1">
             <Button
               variant={location.pathname === '/dashboard' ? 'secondary' : 'ghost'}
               className="w-full justify-start"
-              onClick={() => navigate('/dashboard')}
+              onClick={() => { navigate('/dashboard'); setSidebarOpen(false); }}
             >
               <LayoutDashboard className="mr-2 h-4 w-4" />
               Tasks
@@ -190,7 +212,7 @@ export function AppLayout() {
                 location.pathname === '/activity' ? 'secondary' : 'ghost'
               }
               className="w-full justify-start"
-              onClick={() => navigate('/activity')}
+              onClick={() => { navigate('/activity'); setSidebarOpen(false); }}
             >
               <Activity className="mr-2 h-4 w-4" />
               Activity
@@ -200,7 +222,7 @@ export function AppLayout() {
                 location.pathname === '/settings' ? 'secondary' : 'ghost'
               }
               className="w-full justify-start"
-              onClick={() => navigate('/settings')}
+              onClick={() => { navigate('/settings'); setSidebarOpen(false); }}
             >
               <Settings className="mr-2 h-4 w-4" />
               Settings
@@ -253,7 +275,7 @@ export function AppLayout() {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-4 md:p-6">
           <Outlet context={{ categories }} />
         </main>
       </div>

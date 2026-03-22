@@ -18,6 +18,7 @@ import { TaskCard } from './TaskCard';
 import { TaskForm } from './TaskForm';
 import { TaskStats } from './TaskStats';
 import { TaskDetailModal } from './TaskDetailModal';
+import { TaskFilters } from './TaskFilters';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import type { Task, Category } from '@/types';
@@ -39,6 +40,9 @@ export function TaskBoard() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [localTasks, setLocalTasks] = useState<Task[]>([]);
+  const [search, setSearch] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [priorityFilter, setPriorityFilter] = useState('all');
 
   // Sync local tasks from server state when not actively dragging
   useEffect(() => {
@@ -57,20 +61,31 @@ export function TaskBoard() {
     { id: 'done', title: 'Done' },
   ];
 
+  const filteredTasks = useMemo(() => {
+    return localTasks.filter((task) => {
+      if (search && !task.title.toLowerCase().includes(search.toLowerCase())) return false;
+      if (categoryFilter !== 'all' && task.category_id !== categoryFilter) return false;
+      if (priorityFilter !== 'all' && task.priority !== priorityFilter) return false;
+      return true;
+    });
+  }, [localTasks, search, categoryFilter, priorityFilter]);
+
+  const hasFilters = search !== '' || categoryFilter !== 'all' || priorityFilter !== 'all';
+
   const tasksByColumn = useMemo(() => {
     const grouped: Record<Task['status'], Task[]> = {
       todo: [],
       in_progress: [],
       done: [],
     };
-    for (const task of localTasks) {
+    for (const task of filteredTasks) {
       grouped[task.status]?.push(task);
     }
     for (const key of Object.keys(grouped) as Task['status'][]) {
       grouped[key].sort((a, b) => a.position - b.position);
     }
     return grouped;
-  }, [localTasks]);
+  }, [filteredTasks]);
 
   const activeTask = activeId
     ? localTasks.find((t) => t.id === activeId) ?? null
@@ -248,6 +263,18 @@ export function TaskBoard() {
     <>
       <TaskStats tasks={localTasks} />
 
+      <TaskFilters
+        search={search}
+        onSearchChange={setSearch}
+        categoryFilter={categoryFilter}
+        onCategoryFilterChange={setCategoryFilter}
+        priorityFilter={priorityFilter}
+        onPriorityFilterChange={setPriorityFilter}
+        categories={categories}
+        hasFilters={hasFilters}
+        onClear={() => { setSearch(''); setCategoryFilter('all'); setPriorityFilter('all'); }}
+      />
+
       <DndContext
         sensors={sensors}
         collisionDetection={closestCorners}
@@ -255,7 +282,7 @@ export function TaskBoard() {
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-[calc(100vh-16rem)]">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 md:h-[calc(100vh-16rem)]">
           {columns.map((col) => (
             <TaskColumn
               key={col.id}
