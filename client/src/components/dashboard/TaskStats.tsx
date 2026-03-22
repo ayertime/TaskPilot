@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { CheckCircle2, Clock, AlertTriangle, ListTodo } from 'lucide-react';
 import type { Task } from '@/types';
@@ -13,19 +13,25 @@ function StatCard({
   icon: Icon,
   color,
   delay,
+  glow,
 }: {
   label: string;
   value: number;
   icon: React.ElementType;
   color: string;
   delay: number;
+  glow?: boolean;
 }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay }}
-      className="flex items-center gap-3 rounded-lg border bg-card p-3"
+      className={`flex items-center gap-3 rounded-lg border bg-card p-3 ${
+        glow
+          ? 'border-red-400 dark:border-red-700 shadow-[0_0_15px_rgba(239,68,68,0.4),0_0_30px_rgba(239,68,68,0.2),0_0_45px_rgba(239,68,68,0.1)] dark:shadow-[0_0_15px_rgba(239,68,68,0.3),0_0_30px_rgba(239,68,68,0.15),0_0_45px_rgba(239,68,68,0.08)] animate-pulse'
+          : ''
+      }`}
     >
       <div className={`rounded-md p-2 ${color}`}>
         <Icon className="h-4 w-4" />
@@ -47,8 +53,14 @@ function StatCard({
 }
 
 export function TaskStats({ tasks }: TaskStatsProps) {
+  // Re-evaluate every 30s so overdue count updates in real-time
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const interval = setInterval(() => setNow(new Date()), 30_000);
+    return () => clearInterval(interval);
+  }, []);
+
   const stats = useMemo(() => {
-    const now = new Date();
     return {
       total: tasks.length,
       completed: tasks.filter((t) => t.status === 'done').length,
@@ -57,7 +69,7 @@ export function TaskStats({ tasks }: TaskStatsProps) {
       ).length,
       inProgress: tasks.filter((t) => t.status === 'in_progress').length,
     };
-  }, [tasks]);
+  }, [tasks, now]);
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
@@ -88,6 +100,7 @@ export function TaskStats({ tasks }: TaskStatsProps) {
         icon={AlertTriangle}
         color="bg-red-500/10 text-red-600 dark:text-red-400"
         delay={0.15}
+        glow={stats.overdue > 0}
       />
     </div>
   );

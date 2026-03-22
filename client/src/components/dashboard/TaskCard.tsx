@@ -79,7 +79,7 @@ export function TaskCard({
   return (
     <Card
       className={`border-l-4 ${priority.border} hover:shadow-md transition-all duration-200 cursor-pointer group ${
-        isOverdue ? 'bg-red-50/50 dark:bg-red-950/20' : ''
+        isOverdue ? 'bg-red-50 dark:bg-red-950/30 border-red-400 dark:border-red-700 shadow-[0_0_15px_rgba(239,68,68,0.4),0_0_30px_rgba(239,68,68,0.2),0_0_45px_rgba(239,68,68,0.1)] dark:shadow-[0_0_15px_rgba(239,68,68,0.3),0_0_30px_rgba(239,68,68,0.15),0_0_45px_rgba(239,68,68,0.08)] animate-pulse' : ''
       }`}
       onClick={onView || onEdit}
     >

@@ -10,6 +10,32 @@ const MODEL = 'claude-haiku-4-5-20251001';
 const MAX_TOKENS = 4096;
 const MAX_TOOL_ROUNDS = 10;
 
+// --- Daily cost guardrail ---
+const DAILY_COST_LIMIT = 1.00; // $1.00/day
+const COST_PER_INPUT_TOKEN = 1.00 / 1_000_000;  // $1.00 per 1M tokens
+const COST_PER_OUTPUT_TOKEN = 1.00 / 1_000_000;  // $1.00 per 1M tokens
+
+let dailyCost = 0;
+let costDate = new Date().toDateString();
+
+function trackCost(inputTokens: number, outputTokens: number): void {
+  const today = new Date().toDateString();
+  if (today !== costDate) {
+    dailyCost = 0;
+    costDate = today;
+  }
+  dailyCost += (inputTokens * COST_PER_INPUT_TOKEN) + (outputTokens * COST_PER_OUTPUT_TOKEN);
+}
+
+function checkBudget(): { allowed: boolean; spent: number } {
+  const today = new Date().toDateString();
+  if (today !== costDate) {
+    dailyCost = 0;
+    costDate = today;
+  }
+  return { allowed: dailyCost < DAILY_COST_LIMIT, spent: dailyCost };
+}
+
 interface AgentOptions {
   userId: string;
   userClient: SupabaseClient;
@@ -51,7 +77,19 @@ function buildSystemPrompt(
 - For translate_text, you handle the translation directly — the tool just provides the text.
 - For generate_document, first call the tool, then generate the content yourself and use update_task to save it.
 - For schedule_optimizer, focus_mode, suggest_tasks, estimate_time, and find_conflicts — the tool returns data for you to analyze and present insights.
-- Always be proactive: if the user mentions a deadline, suggest setting a reminder. If they mention a meeting, offer to create a calendar event.`;
+- Always be proactive: if the user mentions a deadline, suggest setting a reminder. If they mention a meeting, offer to create a calendar event.
+
+## Content Policy
+You are strictly a task management and productivity assistant. You must refuse any request that falls outside this scope:
+- **No political content**: Do not discuss politics, political figures, elections, or political opinions.
+- **No sexual or explicit content**: Do not generate sexual, romantic, or explicit material of any kind.
+- **No offensive or hateful content**: Do not generate content that is racist, sexist, discriminatory, or hateful toward any group.
+- **No violence**: Do not generate content that promotes or glorifies violence or self-harm.
+- **No illegal activity**: Do not assist with anything illegal, including hacking, fraud, or drug-related content.
+- **No personal opinions on controversial topics**: Do not take sides on religion, social issues, or other divisive subjects.
+- **No impersonation**: Do not pretend to be a real person or write messages designed to deceive.
+
+If a user asks about any of these topics, politely decline and redirect them to task management. Example: "I'm TaskPilot, your productivity assistant. I can help you manage tasks, send emails, schedule events, and more. What would you like to get done today?"`;
 }
 
 /**
@@ -63,6 +101,15 @@ export async function runAgent(options: AgentOptions): Promise<{
   toolCalls: Array<{ name: string; input: Record<string, unknown>; result: string }>;
 }> {
   const { userId, userClient, userMessage, onEvent } = options;
+
+  // Check daily budget
+  const budget = checkBudget();
+  if (!budget.allowed) {
+    const msg = `I've reached the daily usage limit ($${budget.spent.toFixed(2)} / $${DAILY_COST_LIMIT.toFixed(2)}). The limit resets tomorrow. This is a development safeguard.`;
+    onEvent({ type: 'text_delta', content: msg });
+    onEvent({ type: 'done' });
+    return { assistantText: msg, toolCalls: [] };
+  }
 
   // Load user profile for system prompt
   const { data: profile } = await supabaseAdmin
@@ -120,6 +167,9 @@ export async function runAgent(options: AgentOptions): Promise<{
       tools: allTools,
       messages,
     });
+
+    // Track cost
+    trackCost(response.usage.input_tokens, response.usage.output_tokens);
 
     // Extract text and tool_use blocks
     const textBlocks: string[] = [];

@@ -108,7 +108,8 @@ export function useTasks() {
   const completeMutation = useMutation({
     mutationFn: (id: string) =>
       apiFetch(`/api/tasks/${id}/complete`, {
-        method: 'PATCH',
+        method: 'POST',
+        body: JSON.stringify({}),
       }) as Promise<Task>,
     onSuccess: (task) => {
       queryClient.setQueryData<Task[]>(['tasks'], (prev = []) =>

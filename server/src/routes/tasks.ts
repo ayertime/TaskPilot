@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { authMiddleware } from '../middleware/auth';
-import { createUserClient } from '../services/supabase';
+import { createUserClient, supabaseAdmin } from '../services/supabase';
 
 const createTaskSchema = z.object({
   title: z.string().min(1),
@@ -122,13 +122,13 @@ export default async function taskRoutes(app: FastifyInstance) {
     }
   });
 
-  // PATCH /api/tasks/:id/complete
-  app.patch('/:id/complete', async (req, reply) => {
+  // POST /api/tasks/:id/complete
+  app.post('/:id/complete', async (req, reply) => {
     try {
       const { id } = req.params as { id: string };
-      const supabase = createUserClient((req as any).accessToken!);
+      const userId = (req as any).userId;
 
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('tasks')
         .update({
           status: 'done',
@@ -136,6 +136,7 @@ export default async function taskRoutes(app: FastifyInstance) {
           completed_by: 'user',
         })
         .eq('id', id)
+        .eq('user_id', userId)
         .select()
         .single();
 
@@ -182,19 +183,24 @@ export default async function taskRoutes(app: FastifyInstance) {
   app.delete('/:id', async (req, reply) => {
     try {
       const { id } = req.params as { id: string };
-      const supabase = createUserClient((req as any).accessToken!);
+      const userId = (req as any).userId;
+      console.log('[DELETE] task id:', id, 'user:', userId);
 
-      const { error } = await supabase
+      const { error, status, statusText } = await supabaseAdmin
         .from('tasks')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_id', userId);
+
+      console.log('[DELETE] supabase response:', { error, status, statusText });
 
       if (error) {
         reply.code(400).send({ error: error.message });
         return;
       }
       reply.code(204).send();
-    } catch {
+    } catch (err) {
+      console.error('[DELETE] exception:', err);
       reply.code(500).send({ error: 'Failed to delete task' });
     }
   });

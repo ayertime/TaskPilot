@@ -120,6 +120,18 @@ Supabase (PostgreSQL)
 - Persistent chat history (last 50 messages for context)
 - Suggested prompt carousel for common actions
 - Clear history option
+- **Live tool visualization**: When the agent uses tools, the UI shows animated cards with tool-specific icons, contextual details (e.g., search queries, email recipients), spinning loaders while executing, green checkmarks on completion, and expandable result panels
+
+**Content Policy**
+- The agent is restricted to task management and productivity topics only
+- Refuses political, sexual, offensive, violent, illegal, and controversial content
+- Politely redirects off-topic requests back to task management
+
+**Daily Cost Guardrail**
+- Tracks token usage and estimated cost per day
+- Blocks new requests once the daily limit ($1.00) is reached
+- Resets automatically at midnight
+- Configurable limit for production deployment
 
 **Tool-Use Loop**
 - Claude receives user message + full tool definitions
@@ -246,6 +258,8 @@ The scheduler is the core differentiating feature of TaskPilot.
 ### 3.8 Dashboard and Analytics
 
 - **Task Stats Bar**: Animated counters for total, in progress, completed, and overdue
+- **Overdue glow**: Overdue stat card and task cards pulse with a red glow effect to draw attention
+- **Real-time overdue detection**: Stats bar re-evaluates every 30 seconds so overdue counts update without a page refresh
 - **Productivity Dashboard**: Completion rates, agent vs. user task completion, trends
 
 ### 3.9 UI/UX
@@ -256,6 +270,7 @@ The scheduler is the core differentiating feature of TaskPilot.
 - Smooth animations via Motion library
 - Toast notifications via Sonner
 - Keyboard shortcut (Ctrl+K) for quick chat access
+- Sidebar navigation uses proper `Link` components for instant page switching
 
 ---
 
@@ -302,7 +317,7 @@ The scheduler is the core differentiating feature of TaskPilot.
 | POST | /api/tasks | Create task |
 | PATCH | /api/tasks/:id | Update task |
 | DELETE | /api/tasks/:id | Delete task |
-| PATCH | /api/tasks/:id/complete | Complete task |
+| POST | /api/tasks/:id/complete | Complete task |
 | PATCH | /api/tasks/reorder | Batch reorder (drag-and-drop) |
 | GET | /api/categories | List categories |
 | POST | /api/categories | Create category |

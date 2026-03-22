@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Outlet, useLocation, useNavigate } from 'react-router';
+import { Outlet, useLocation, useNavigate, Link } from 'react-router';
 import { motion } from 'motion/react';
 import { useAuth } from '@/hooks/useAuth';
 import { useCategories } from '@/hooks/useCategories';
 import { useProfile } from '@/hooks/useProfile';
 import { applyTheme, applyAccentColor } from '@/lib/theme';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -199,34 +200,39 @@ export function AppLayout() {
           }`}
         >
           <nav className="p-3 space-y-1">
-            <Button
-              variant={location.pathname === '/dashboard' ? 'secondary' : 'ghost'}
-              className="w-full justify-start"
-              onClick={() => { navigate('/dashboard'); setSidebarOpen(false); }}
+            <Link
+              to="/dashboard"
+              onClick={() => setSidebarOpen(false)}
+              className={cn(
+                buttonVariants({ variant: location.pathname === '/dashboard' ? 'secondary' : 'ghost' }),
+                'w-full justify-start'
+              )}
             >
               <LayoutDashboard className="mr-2 h-4 w-4" />
               Tasks
-            </Button>
-            <Button
-              variant={
-                location.pathname === '/activity' ? 'secondary' : 'ghost'
-              }
-              className="w-full justify-start"
-              onClick={() => { navigate('/activity'); setSidebarOpen(false); }}
+            </Link>
+            <Link
+              to="/activity"
+              onClick={() => setSidebarOpen(false)}
+              className={cn(
+                buttonVariants({ variant: location.pathname === '/activity' ? 'secondary' : 'ghost' }),
+                'w-full justify-start'
+              )}
             >
               <Activity className="mr-2 h-4 w-4" />
               Activity
-            </Button>
-            <Button
-              variant={
-                location.pathname === '/settings' ? 'secondary' : 'ghost'
-              }
-              className="w-full justify-start"
-              onClick={() => { navigate('/settings'); setSidebarOpen(false); }}
+            </Link>
+            <Link
+              to="/settings"
+              onClick={() => setSidebarOpen(false)}
+              className={cn(
+                buttonVariants({ variant: location.pathname === '/settings' ? 'secondary' : 'ghost' }),
+                'w-full justify-start'
+              )}
             >
               <Settings className="mr-2 h-4 w-4" />
               Settings
-            </Button>
+            </Link>
           </nav>
 
           <Separator />

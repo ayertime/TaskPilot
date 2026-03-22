@@ -16,7 +16,7 @@ export function useCategories() {
   useEffect(() => {
     if (!loading && categories.length === 0 && !seeded.current) {
       seeded.current = true;
-      apiFetch('/api/categories/seed', { method: 'POST' }).then(() => {
+      apiFetch('/api/categories/seed', { method: 'POST', body: JSON.stringify({}) }).then(() => {
         queryClient.invalidateQueries({ queryKey: ['categories'] });
       }).catch(() => {
         // Silently ignore seed failures
