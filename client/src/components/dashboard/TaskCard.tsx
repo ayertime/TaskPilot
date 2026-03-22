@@ -21,6 +21,7 @@ import {
   Bot,
   ArrowRight,
   RotateCcw,
+  Sparkles,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import type { Task, Category } from '@/types';
@@ -28,6 +29,7 @@ import type { Task, Category } from '@/types';
 interface TaskCardProps {
   task: Task;
   categories: Category[];
+  onView?: () => void;
   onEdit: () => void;
   onDelete: () => void;
   onComplete: () => void;
@@ -63,6 +65,7 @@ const priorityConfig: Record<
 export function TaskCard({
   task,
   categories,
+  onView,
   onEdit,
   onDelete,
   onComplete,
@@ -78,7 +81,7 @@ export function TaskCard({
       className={`border-l-4 ${priority.border} hover:shadow-md transition-all duration-200 cursor-pointer group ${
         isOverdue ? 'bg-red-50/50 dark:bg-red-950/20' : ''
       }`}
-      onClick={onEdit}
+      onClick={onView || onEdit}
     >
       <CardContent className="p-3">
         <div className="flex items-start justify-between gap-2">
@@ -210,6 +213,15 @@ export function TaskCard({
                 <Bot className="h-3.5 w-3.5 text-primary" />
               </TooltipTrigger>
               <TooltipContent>Auto-pilot enabled</TooltipContent>
+            </Tooltip>
+          )}
+
+          {task.ai_result && (
+            <Tooltip>
+              <TooltipTrigger className="inline-flex">
+                <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+              </TooltipTrigger>
+              <TooltipContent>Has AI-generated content</TooltipContent>
             </Tooltip>
           )}
 

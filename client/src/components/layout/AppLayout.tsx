@@ -25,6 +25,7 @@ import {
   Plus,
   X,
   MessageSquare,
+  Activity,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -183,6 +184,16 @@ export function AppLayout() {
             >
               <LayoutDashboard className="mr-2 h-4 w-4" />
               Tasks
+            </Button>
+            <Button
+              variant={
+                location.pathname === '/activity' ? 'secondary' : 'ghost'
+              }
+              className="w-full justify-start"
+              onClick={() => navigate('/activity')}
+            >
+              <Activity className="mr-2 h-4 w-4" />
+              Activity
             </Button>
             <Button
               variant={

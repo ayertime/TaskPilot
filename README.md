@@ -34,7 +34,7 @@ TaskPilot is an intelligent task management app with an AI agent powered by Clau
 - Overdue task background highlighting
 - Dark mode visual polish throughout
 
-### Sprint 4: AI Agent (Current)
+### Sprint 4: AI Agent
 - AI agent powered by Claude with 24 tools and tool-use loop
 - Chat panel (slide-out) with SSE streaming responses
 - Keyboard shortcut (Ctrl+K) to open AI chat
@@ -58,8 +58,20 @@ TaskPilot is an intelligent task management app with an AI agent powered by Clau
 - **Export**: export tasks as CSV or formatted markdown
 - Activity logging for all agent actions
 
-### Upcoming
-- Sprint 5: Proactive Agent (auto-executes tasks, activity log UI, deployment)
+### Sprint 5: Proactive Agent + Activity Log (Current)
+- **Proactive task execution**: node-cron scheduler runs every minute, auto-executes overdue automatable tasks
+- **Recurring task generation**: automatically creates next instances of recurring tasks (daily, weekly, monthly)
+- **Activity Log page**: full history of everything TaskPilot has done, grouped by date
+- **Activity Log sidebar navigation**: quick access to agent activity from the sidebar
+- **TaskDetailModal**: click any task card to view details, AI results, subtasks, and auto-pilot settings
+  - **Details tab**: description, due date, recurrence, completion info, auto-pilot toggle with scheduled time
+  - **AI Result tab**: view AI-generated content (research, documents) attached to tasks
+  - **Subtasks tab**: view subtasks created by the AI agent's break_down_task tool
+- **Auto-pilot toggle**: enable/disable auto-execution per task with scheduled time picker
+- **Real-time toast notifications**: instant notification when TaskPilot auto-completes a task
+- **Expanded activity logging**: agent actions for task creation, completion, web search, recurring tasks, and auto-execution are all logged
+- **Sparkle indicator**: AI-generated content badge on task cards
+- **Onboarding**: automatic default categories (Work, Personal, Health, Learning) for new users
 
 ## Tech Stack
 
@@ -72,6 +84,7 @@ TaskPilot is an intelligent task management app with an AI agent powered by Clau
 | Auth | Supabase Auth (Google, Microsoft, Yahoo, email/password) |
 | Search | Tavily API (web search) |
 | Weather | OpenWeatherMap API |
+| Scheduler | node-cron (proactive task execution) |
 | UI/UX | motion (animations), @dnd-kit (drag-and-drop), Lucide icons |
 
 ## Getting Started
@@ -137,7 +150,7 @@ cd client && npm run dev
 - [x] Sprint 2: Task Management + User Customization (Kanban board, CRUD, categories, profile settings)
 - [x] Sprint 3: Drag-and-Drop + Polish (dnd-kit, motion animations, accent color, TaskStats)
 - [x] Sprint 4: AI Agent (24 tools, chat panel, SSE streaming)
-- [ ] Sprint 5: Proactive Agent + Deployment
+- [x] Sprint 5: Proactive Agent + Activity Log (scheduler, activity UI, task detail modal, onboarding)
 
 ## License
 

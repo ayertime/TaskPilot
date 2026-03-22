@@ -39,7 +39,7 @@ export async function executeTool(
     case 'create_calendar_event':
       return handleCreateCalendarEvent(input, ctx);
     case 'web_search':
-      return handleWebSearch(input);
+      return handleWebSearch(input, ctx);
     case 'generate_document':
       return handleGenerateDocument(input, ctx);
     case 'summarize_url':
@@ -144,6 +144,16 @@ async function handleCreateTask(
     .single();
 
   if (error) return JSON.stringify({ error: error.message });
+
+  // Log activity
+  await supabaseAdmin.from('agent_activity').insert({
+    user_id: ctx.userId,
+    task_id: data.id,
+    action_type: 'create_task',
+    description: `Created task: "${input.title}"`,
+    result: `Priority: ${input.priority || 'medium'}, Status: ${input.status || 'todo'}`,
+  });
+
   return JSON.stringify({ success: true, task: data });
 }
 
@@ -190,6 +200,16 @@ async function handleCompleteTask(
     .single();
 
   if (error) return JSON.stringify({ error: error.message });
+
+  // Log completion
+  await supabaseAdmin.from('agent_activity').insert({
+    user_id: ctx.userId,
+    task_id: data.id,
+    action_type: 'complete_task',
+    description: `Completed task: "${data.title}"`,
+    result: 'Marked as done by agent',
+  });
+
   return JSON.stringify({ success: true, task: data });
 }
 
@@ -327,11 +347,22 @@ async function handleCreateCalendarEvent(
 
 async function handleWebSearch(
   input: Record<string, unknown>,
+  ctx?: ToolContext,
 ): Promise<string> {
   const results = await webSearch(
     input.query as string,
     (input.num_results as number) || 5,
   );
+
+  if (ctx) {
+    await supabaseAdmin.from('agent_activity').insert({
+      user_id: ctx.userId,
+      action_type: 'web_search',
+      description: `Web search: "${input.query}"`,
+      result: `Found ${(input.num_results as number) || 5} results`,
+    });
+  }
+
   return JSON.stringify(results);
 }
 
@@ -459,6 +490,15 @@ async function handleCreateRecurringTask(
     .single();
 
   if (error) return JSON.stringify({ error: error.message });
+
+  await supabaseAdmin.from('agent_activity').insert({
+    user_id: ctx.userId,
+    task_id: data.id,
+    action_type: 'create_recurring_task',
+    description: `Created recurring task: "${input.title}" (${input.recurrence_pattern})`,
+    result: `Pattern: ${input.recurrence_pattern}`,
+  });
+
   return JSON.stringify({
     success: true,
     message: `Recurring task created with pattern: ${input.recurrence_pattern}`,

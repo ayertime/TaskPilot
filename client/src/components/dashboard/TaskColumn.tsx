@@ -18,6 +18,7 @@ interface TaskColumnProps {
   tasks: Task[];
   categories: Category[];
   onAddTask: () => void;
+  onViewTask: (task: Task) => void;
   onEditTask: (task: Task) => void;
   onDeleteTask: (id: string) => void;
   onCompleteTask: (id: string) => void;
@@ -36,6 +37,7 @@ export function TaskColumn({
   tasks,
   categories,
   onAddTask,
+  onViewTask,
   onEditTask,
   onDeleteTask,
   onCompleteTask,
@@ -88,6 +90,7 @@ export function TaskColumn({
                 key={task.id}
                 task={task}
                 categories={categories}
+                onView={() => onViewTask(task)}
                 onEdit={() => onEditTask(task)}
                 onDelete={() => onDeleteTask(task.id)}
                 onComplete={() => onCompleteTask(task.id)}

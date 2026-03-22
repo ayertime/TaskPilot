@@ -6,6 +6,7 @@ import type { Task, Category } from '@/types';
 interface SortableTaskCardProps {
   task: Task;
   categories: Category[];
+  onView?: () => void;
   onEdit: () => void;
   onDelete: () => void;
   onComplete: () => void;

@@ -66,7 +66,7 @@ export function ChatPanel({ open, onOpenChange }: ChatPanelProps) {
               key={msg.id}
               role={msg.role}
               content={msg.content}
-              toolCalls={msg.tool_calls ?? undefined}
+              toolCalls={msg.tool_calls as Array<{ name: string; input: Record<string, unknown>; result: string }> | undefined}
             />
           ))}
 

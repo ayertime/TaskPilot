@@ -9,6 +9,7 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { TaskBoard } from '@/components/dashboard/TaskBoard';
 import { ProfileSettings } from '@/components/settings/ProfileSettings';
+import { ActivityLog } from '@/components/activity/ActivityLog';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
             <Route element={<ProtectedRoute />}>
               <Route element={<AppLayout />}>
                 <Route path="/" element={<TaskBoard />} />
+                <Route path="/activity" element={<ActivityLog />} />
                 <Route path="/settings" element={<ProfileSettings />} />
               </Route>
             </Route>

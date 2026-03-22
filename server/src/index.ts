@@ -6,6 +6,7 @@ import categoryRoutes from './routes/categories';
 import profileRoutes from './routes/profile';
 import chatRoutes from './routes/chat';
 import activityRoutes from './routes/activity';
+import { startScheduler } from './services/scheduler';
 
 dotenv.config();
 
@@ -34,6 +35,9 @@ async function start() {
   // Start server
   await app.listen({ port: PORT, host: '0.0.0.0' });
   console.log(`TaskPilot API running on http://localhost:${PORT}`);
+
+  // Start proactive agent scheduler
+  startScheduler();
 }
 
 start().catch((err) => {

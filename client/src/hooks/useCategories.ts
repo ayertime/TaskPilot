@@ -1,14 +1,28 @@
+import { useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiFetch } from '@/lib/api';
 import type { Category } from '@/types';
 
 export function useCategories() {
   const queryClient = useQueryClient();
+  const seeded = useRef(false);
 
   const { data: categories = [], isLoading: loading } = useQuery({
     queryKey: ['categories'],
     queryFn: () => apiFetch('/api/categories') as Promise<Category[]>,
   });
+
+  // Auto-seed default categories for new users
+  useEffect(() => {
+    if (!loading && categories.length === 0 && !seeded.current) {
+      seeded.current = true;
+      apiFetch('/api/categories/seed', { method: 'POST' }).then(() => {
+        queryClient.invalidateQueries({ queryKey: ['categories'] });
+      }).catch(() => {
+        // Silently ignore seed failures
+      });
+    }
+  }, [loading, categories.length, queryClient]);
 
   const createMutation = useMutation({
     mutationFn: (data: { name: string; color: string; icon?: string }) =>

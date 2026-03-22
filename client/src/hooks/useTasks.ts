@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { apiFetch } from '@/lib/api';
+import { toast } from 'sonner';
 import type { Task } from '@/types';
 
 export function useTasks() {
@@ -28,10 +29,23 @@ export function useTasks() {
               case 'INSERT':
                 if (prev.some((t) => t.id === newRecord.id)) return prev;
                 return [...prev, newRecord];
-              case 'UPDATE':
+              case 'UPDATE': {
+                // Notify when agent auto-completes a task
+                const oldTask = prev.find((t) => t.id === newRecord.id);
+                if (
+                  oldTask &&
+                  oldTask.status !== 'done' &&
+                  newRecord.status === 'done' &&
+                  newRecord.completed_by === 'agent'
+                ) {
+                  toast.success(`TaskPilot completed: "${newRecord.title}"`, {
+                    description: 'Auto-executed by the AI agent',
+                  });
+                }
                 return prev.map((t) =>
                   t.id === newRecord.id ? newRecord : t
                 );
+              }
               case 'DELETE':
                 return prev.filter((t) => t.id !== oldRecord.id);
               default:

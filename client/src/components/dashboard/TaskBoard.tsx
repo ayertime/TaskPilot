@@ -17,6 +17,7 @@ import { TaskColumn } from './TaskColumn';
 import { TaskCard } from './TaskCard';
 import { TaskForm } from './TaskForm';
 import { TaskStats } from './TaskStats';
+import { TaskDetailModal } from './TaskDetailModal';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import type { Task, Category } from '@/types';
@@ -34,6 +35,8 @@ export function TaskBoard() {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [formDefaultStatus, setFormDefaultStatus] =
     useState<Task['status']>('todo');
+  const [detailTask, setDetailTask] = useState<Task | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [localTasks, setLocalTasks] = useState<Task[]>([]);
 
@@ -168,6 +171,11 @@ export function TaskBoard() {
     setFormOpen(true);
   }
 
+  function handleViewDetail(task: Task) {
+    setDetailTask(task);
+    setDetailOpen(true);
+  }
+
   function handleEditTask(task: Task) {
     setEditingTask(task);
     setFormOpen(true);
@@ -256,6 +264,7 @@ export function TaskBoard() {
               tasks={tasksByColumn[col.id]}
               categories={categories}
               onAddTask={() => handleAddTask(col.id)}
+              onViewTask={handleViewDetail}
               onEditTask={handleEditTask}
               onDeleteTask={handleDelete}
               onCompleteTask={handleComplete}
@@ -287,6 +296,24 @@ export function TaskBoard() {
         defaultStatus={formDefaultStatus}
         categories={categories}
         onSubmit={handleSubmit}
+      />
+
+      <TaskDetailModal
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        task={detailTask}
+        categories={categories}
+        subtasks={localTasks.filter(
+          (t) => detailTask && t.parent_task_id === detailTask.id,
+        )}
+        onUpdate={async (id, data) => {
+          try {
+            await updateTask(id, data);
+          } catch {
+            toast.error('Failed to update task');
+          }
+        }}
+        onComplete={handleComplete}
       />
     </>
   );
