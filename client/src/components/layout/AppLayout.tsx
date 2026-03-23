@@ -265,7 +265,7 @@ export function AppLayout() {
             sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
           }`}
         >
-          <nav className="p-3 space-y-1">
+          <nav className="p-4 space-y-1.5">
             {[
               { to: '/dashboard', icon: LayoutDashboard, label: 'Tasks' },
               { to: '/activity', icon: Activity, label: 'Activity' },
@@ -278,12 +278,12 @@ export function AppLayout() {
                   to={to}
                   onClick={() => setSidebarOpen(false)}
                   className={cn(
-                    buttonVariants({ variant: 'ghost' }),
-                    'w-full justify-start relative',
-                    isActive && 'bg-accent text-accent-foreground before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-4 before:w-[3px] before:rounded-full before:bg-primary'
+                    buttonVariants({ variant: 'ghost', size: 'lg' }),
+                    'w-full justify-start relative text-[15px] h-11',
+                    isActive && 'bg-accent text-accent-foreground before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-5 before:w-[3px] before:rounded-full before:bg-primary'
                   )}
                 >
-                  <Icon className="mr-2 h-4 w-4" />
+                  <Icon className="mr-3 h-5 w-5" />
                   {label}
                 </Link>
               );
@@ -292,29 +292,29 @@ export function AppLayout() {
 
           <Separator />
 
-          <div className="p-3 flex-1">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+          <div className="p-4 flex-1">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                 Categories
               </span>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-6 w-6"
+                className="h-7 w-7"
                 onClick={() => setCategoryFormOpen(true)}
               >
-                <Plus className="h-3.5 w-3.5" />
+                <Plus className="h-4 w-4" />
               </Button>
             </div>
 
-            <div className="space-y-0.5">
+            <div className="space-y-1">
               {categories.map((cat) => (
                 <div
                   key={cat.id}
-                  className="group flex items-center gap-2 px-2 py-1.5 rounded-md text-sm hover:bg-accent transition-colors"
+                  className="group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm hover:bg-accent transition-colors"
                 >
                   <div
-                    className="w-2 h-2 rounded-full shrink-0 ring-2 ring-offset-1 ring-offset-background"
+                    className="w-2.5 h-2.5 rounded-full shrink-0 ring-2 ring-offset-1 ring-offset-background"
                     style={{ backgroundColor: cat.color, '--tw-ring-color': cat.color + '40' } as React.CSSProperties}
                   />
                   <span className="truncate flex-1">{cat.name}</span>
@@ -322,12 +322,12 @@ export function AppLayout() {
                     onClick={() => handleDeleteCategory(cat.id)}
                     className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
                   >
-                    <X className="h-3 w-3" />
+                    <X className="h-3.5 w-3.5" />
                   </button>
                 </div>
               ))}
               {categories.length === 0 && (
-                <p className="text-xs text-muted-foreground px-2 py-1">
+                <p className="text-sm text-muted-foreground px-3 py-2">
                   No categories yet
                 </p>
               )}
