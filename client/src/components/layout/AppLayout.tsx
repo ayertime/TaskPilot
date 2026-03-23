@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useCategories } from '@/hooks/useCategories';
 import { useProfile } from '@/hooks/useProfile';
 import { applyTheme, applyAccentColor } from '@/lib/theme';
+import { requestNotificationPermission } from '@/lib/notifications';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -60,6 +61,15 @@ export function AppLayout() {
       updateProfile({ has_seen_tutorial: true });
     }
   }
+
+  // Request notification permission on first load
+  useEffect(() => {
+    if (!profile) return;
+    const disabled = localStorage.getItem('taskpilot_notifications_enabled') === '0';
+    if (!disabled && 'Notification' in window && Notification.permission === 'default') {
+      requestNotificationPermission();
+    }
+  }, [profile]);
 
   // Ctrl+K to toggle chat panel
   const handleKeyDown = useCallback((e: KeyboardEvent) => {

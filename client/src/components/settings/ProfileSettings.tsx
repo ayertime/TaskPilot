@@ -18,7 +18,8 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
-import { CheckCircle2, XCircle, Mail, CalendarDays, RefreshCw, PlayCircle } from 'lucide-react';
+import { CheckCircle2, XCircle, Mail, CalendarDays, RefreshCw, PlayCircle, Bell } from 'lucide-react';
+import { isNotificationsEnabled, setNotificationsEnabled, requestNotificationPermission } from '@/lib/notifications';
 import { toast } from 'sonner';
 
 export function ProfileSettings() {
@@ -37,6 +38,7 @@ export function ProfileSettings() {
   const [oauthLoading, setOauthLoading] = useState(true);
   const [syncEnabled, setSyncEnabled] = useState(false);
   const [syncInterval, setSyncInterval] = useState('5h');
+  const [notificationsOn, setNotificationsOn] = useState(() => isNotificationsEnabled());
 
   // Check OAuth connection status
   useEffect(() => {
@@ -317,6 +319,44 @@ export function ProfileSettings() {
               Connect your Google account above to enable Smart Sync.
             </p>
           )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Notifications</CardTitle>
+          <CardDescription>
+            Get notified when the AI agent completes tasks in the background.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label className="text-sm font-medium flex items-center gap-2">
+                <Bell className="h-4 w-4" />
+                Browser notifications
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                {!('Notification' in window)
+                  ? 'Your browser does not support notifications.'
+                  : Notification.permission === 'denied'
+                    ? 'Notifications are blocked by your browser. Update your browser settings to enable them.'
+                    : 'Show a notification when the agent completes a task while you\'re on another tab.'}
+              </p>
+            </div>
+            <Switch
+              checked={notificationsOn}
+              disabled={!('Notification' in window) || Notification.permission === 'denied'}
+              onCheckedChange={async (checked: boolean) => {
+                if (checked && Notification.permission === 'default') {
+                  const granted = await requestNotificationPermission();
+                  if (!granted) return;
+                }
+                setNotificationsEnabled(checked);
+                setNotificationsOn(checked);
+              }}
+            />
+          </div>
         </CardContent>
       </Card>
 

@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { apiFetch } from '@/lib/api';
 import { toast } from 'sonner';
+import { sendBrowserNotification } from '@/lib/notifications';
 import type { Task } from '@/types';
 
 export function useTasks() {
@@ -41,6 +42,10 @@ export function useTasks() {
                   toast.success(`TaskPilot completed: "${newRecord.title}"`, {
                     description: 'Auto-executed by the AI agent',
                   });
+                  sendBrowserNotification(
+                    `TaskPilot completed: "${newRecord.title}"`,
+                    { body: 'Auto-executed by the AI agent', tag: newRecord.id },
+                  );
                 }
                 return prev.map((t) =>
                   t.id === newRecord.id ? newRecord : t
