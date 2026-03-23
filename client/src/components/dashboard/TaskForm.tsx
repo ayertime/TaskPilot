@@ -124,9 +124,9 @@ export function TaskForm({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col gap-0 p-0 overflow-hidden">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden">
         {/* ── Header ── */}
-        <div className="px-6 pt-6 pb-4 bg-gradient-to-b from-primary/5 to-transparent">
+        <div className="px-4 sm:px-6 pt-5 sm:pt-6 pb-3 sm:pb-4 bg-gradient-to-b from-primary/5 to-transparent">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2.5 text-lg">
               <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -138,7 +138,7 @@ export function TaskForm({
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
-          <div className="flex-1 overflow-y-auto space-y-4 px-6 pb-2">
+          <div className="flex-1 overflow-y-auto space-y-4 px-4 sm:px-6 pb-2">
             {/* ── Task Info ── */}
             <div className="space-y-3">
               <div className="space-y-1.5">
@@ -168,7 +168,7 @@ export function TaskForm({
 
             {/* ── Settings ── */}
             <div className="rounded-xl border bg-muted/20 p-3 space-y-3">
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 <div className="space-y-1.5">
                   <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Priority</Label>
                   <Select value={priority} onValueChange={(v) => { if (v) setPriority(v); }}>
@@ -256,7 +256,7 @@ export function TaskForm({
                 <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Agent Action</span>
               </div>
 
-              <div className="grid grid-cols-3 gap-1.5">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
                 {[
                   { value: '', label: 'None', icon: null },
                   { value: 'email', label: 'Email', icon: <Mail className="h-3.5 w-3.5" /> },
@@ -370,7 +370,7 @@ export function TaskForm({
           </div>
 
           {/* ── Footer (always visible) ── */}
-          <div className="flex justify-end gap-2 px-6 py-4 border-t bg-muted/10">
+          <div className="flex justify-end gap-2 px-4 sm:px-6 py-3 sm:py-4 border-t bg-muted/10">
             <Button
               type="button"
               variant="ghost"
