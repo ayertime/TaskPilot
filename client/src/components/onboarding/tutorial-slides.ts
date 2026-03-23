@@ -4,8 +4,8 @@ import {
   LayoutDashboard,
   Zap,
   Mail,
-  Search,
   CalendarPlus,
+  Calendar,
   Clock,
   CheckCircle2,
   Sparkles,
@@ -62,13 +62,13 @@ export const TUTORIAL_SLIDES: TutorialSlideData[] = [
     id: 'integrations',
     type: 'feature',
     icons: [
-      { icon: Mail, color: 'text-emerald-500' },
-      { icon: Search, color: 'text-purple-500' },
+      { icon: Mail, color: 'text-blue-500' },
+      { icon: Calendar, color: 'text-green-500' },
       { icon: Activity, color: 'text-rose-500' },
     ],
-    title: 'Email, Research & More',
+    title: 'Email, Calendar & Activity',
     description:
-      'Send emails via Gmail or Outlook, research any topic on the web, and track everything in your activity log.',
+      'View your inbox and sent emails, see calendar events alongside tasks with due dates, and track every agent action in real time.',
   },
   {
     id: 'how-it-works',
