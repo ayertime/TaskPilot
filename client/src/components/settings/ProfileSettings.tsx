@@ -87,7 +87,7 @@ export function ProfileSettings() {
 
   if (loading) {
     return (
-      <div className="max-w-2xl mx-auto space-y-6">
+      <div className="space-y-6">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-64 w-full rounded-lg" />
         <Skeleton className="h-64 w-full rounded-lg" />
@@ -96,7 +96,7 @@ export function ProfileSettings() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="space-y-6">
       <h1 className="text-2xl font-bold">Settings</h1>
 
       <Card>
