@@ -31,7 +31,7 @@ function StatCard({
       transition={{ duration: 0.4, delay }}
       className={`relative overflow-hidden rounded-lg border border-border/50 p-3 ${gradient} ${
         glow
-          ? 'border-red-400/50 dark:border-red-700/50 shadow-[0_0_12px_rgba(239,68,68,0.15)] animate-[slow-pulse_3s_ease-in-out_infinite]'
+          ? 'border-red-500/60 dark:border-red-600/50 shadow-[0_0_14px_rgba(220,38,38,0.25)] animate-[slow-pulse_3s_ease-in-out_infinite]'
           : ''
       }`}
     >

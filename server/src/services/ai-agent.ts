@@ -41,6 +41,8 @@ interface AgentOptions {
   userClient: SupabaseClient;
   userMessage: string;
   onEvent: (event: SSEEvent) => void;
+  /** When false, skip saving messages to chat_messages (used by scheduler). Defaults to true. */
+  saveToHistory?: boolean;
 }
 
 export type SSEEvent =
@@ -100,7 +102,7 @@ export async function runAgent(options: AgentOptions): Promise<{
   assistantText: string;
   toolCalls: Array<{ name: string; input: Record<string, unknown>; result: string }>;
 }> {
-  const { userId, userClient, userMessage, onEvent } = options;
+  const { userId, userClient, userMessage, onEvent, saveToHistory = true } = options;
 
   // Check daily budget
   const budget = checkBudget();
@@ -121,34 +123,37 @@ export async function runAgent(options: AgentOptions): Promise<{
   const displayName = profile?.display_name || profile?.full_name || 'User';
   const timezone = profile?.timezone || 'UTC';
 
-  // Load chat history
-  const { data: history } = await supabaseAdmin
-    .from('chat_messages')
-    .select('role, content')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: true })
-    .limit(50);
-
-  // Build messages array
+  // Build messages array (skip loading chat history for scheduler calls)
   const messages: Anthropic.MessageParam[] = [];
 
-  if (history) {
-    for (const msg of history) {
-      messages.push({
-        role: msg.role as 'user' | 'assistant',
-        content: msg.content,
-      });
+  if (saveToHistory) {
+    const { data: history } = await supabaseAdmin
+      .from('chat_messages')
+      .select('role, content')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: true })
+      .limit(50);
+
+    if (history) {
+      for (const msg of history) {
+        messages.push({
+          role: msg.role as 'user' | 'assistant',
+          content: msg.content,
+        });
+      }
     }
   }
 
   messages.push({ role: 'user', content: userMessage });
 
-  // Save user message to DB
-  await supabaseAdmin.from('chat_messages').insert({
-    user_id: userId,
-    role: 'user',
-    content: userMessage,
-  });
+  // Save user message to DB (skip for scheduler-initiated calls)
+  if (saveToHistory) {
+    await supabaseAdmin.from('chat_messages').insert({
+      user_id: userId,
+      role: 'user',
+      content: userMessage,
+    });
+  }
 
   const systemPrompt = buildSystemPrompt(displayName, timezone);
   const allToolCalls: Array<{ name: string; input: Record<string, unknown>; result: string }> = [];
@@ -245,13 +250,15 @@ export async function runAgent(options: AgentOptions): Promise<{
 
   onEvent({ type: 'done' });
 
-  // Save assistant response to DB
-  await supabaseAdmin.from('chat_messages').insert({
-    user_id: userId,
-    role: 'assistant',
-    content: finalText,
-    tool_calls: allToolCalls.length > 0 ? allToolCalls : null,
-  });
+  // Save assistant response to DB (skip for scheduler-initiated calls)
+  if (saveToHistory) {
+    await supabaseAdmin.from('chat_messages').insert({
+      user_id: userId,
+      role: 'assistant',
+      content: finalText,
+      tool_calls: allToolCalls.length > 0 ? allToolCalls : null,
+    });
+  }
 
   return { assistantText: finalText, toolCalls: allToolCalls };
 }

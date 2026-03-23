@@ -123,6 +123,7 @@ Supabase (PostgreSQL)
 - Slide-out panel activated via Ctrl+K
 - Real-time streaming responses via Server-Sent Events
 - Persistent chat history (last 50 messages for context)
+- Scheduler-initiated agent calls are excluded from chat history (`saveToHistory: false`) to keep the chat clean
 - Suggested prompt carousel for common actions
 - Clear history option
 - **Live tool visualization**: When the agent uses tools, the UI shows animated cards with tool-specific icons, contextual details (e.g., search queries, email recipients), spinning loaders while executing, green checkmarks on completion, and expandable result panels
@@ -277,14 +278,26 @@ The scheduler is the core differentiating feature of TaskPilot.
 - Daily summary with action breakdown by type
 - Provides full transparency into what the agent did and why
 
-### 3.8 Welcome Back Modal
+### 3.8 New-User Tutorial
+
+- Auto-playing animated slideshow modal for first-time users
+- 7 slides using real content from the landing page (features, icons, how-it-works steps)
+- Auto-advances every 4.5 seconds, pausable on hover
+- Smooth cross-fade transitions and staggered element reveals via Motion
+- Progress bar, dot navigation, arrow key support, and skip button
+- Final slide with CTA buttons: "Create a Task" and "Open AI Chat (Ctrl+K)"
+- First-time detection via localStorage + `has_seen_tutorial` column in profiles table
+- Re-watchable from Settings > Help > "Watch Again"
+- No conflict with Welcome Back Modal (mutually exclusive by design)
+
+### 3.9 Welcome Back Modal
 
 - Appears when user returns after 1+ hour away (tracked via localStorage)
 - Shows away duration, overdue tasks, agent activity, top priority tasks, and tasks due in 24 hours
 - "All clear" state with green checkmark if nothing pending
 - Dismissed per session (sessionStorage) to prevent repeat display
 
-### 3.9 Smart Sync (Email & Calendar Integration)
+### 3.10 Smart Sync (Email & Calendar Integration)
 
 - Automatically reads Gmail inbox and Google Calendar on a configurable interval
 - AI agent analyzes emails and creates tasks only for actionable ones (ignores newsletters, marketing, notifications)
@@ -293,7 +306,7 @@ The scheduler is the core differentiating feature of TaskPilot.
 - User-configurable: toggle on/off and set sync interval in Settings
 - On-demand sync available via chat ("check my email", "what's on my calendar")
 
-### 3.10 Dashboard and Analytics
+### 3.11 Dashboard and Analytics
 
 - **Live Clock**: User's current time and date displayed in header, updated every second, uses profile timezone
 - **Task Stats Bar**: Animated counters for total, in progress, completed, and overdue
@@ -301,7 +314,7 @@ The scheduler is the core differentiating feature of TaskPilot.
 - **Real-time overdue detection**: Stats bar re-evaluates every 30 seconds so overdue counts update without a page refresh
 - **Productivity Dashboard**: Completion rates, agent vs. user task completion, trends
 
-### 3.11 UI/UX
+### 3.12 UI/UX
 
 - Responsive design (mobile and desktop)
 - Landing page at `/` for unauthenticated visitors
@@ -310,6 +323,10 @@ The scheduler is the core differentiating feature of TaskPilot.
 - Toast notifications via Sonner
 - Keyboard shortcut (Ctrl+K) for quick chat access
 - Sidebar navigation uses proper `Link` components for instant page switching
+- List view alongside Kanban board with view toggle (persisted to localStorage)
+- Tinted neutral color palette (blue-hued OKLCH) for polished, non-template appearance
+- Glassmorphism header and sidebar with backdrop blur
+- Markdown rendering in AI chat messages
 
 ---
 
@@ -322,6 +339,7 @@ The scheduler is the core differentiating feature of TaskPilot.
 - theme, accent_color, timezone
 - provider, provider_token, provider_refresh_token
 - sync_enabled, sync_interval
+- has_seen_tutorial
 
 **tasks** — Core task data
 - id, user_id, category_id, parent_task_id
@@ -390,6 +408,7 @@ All endpoints except /api/health require JWT authentication.
 | 4 | AI agent with 24 tools, chat panel, SSE streaming |
 | 5 | Proactive scheduler, activity log, task detail modal, onboarding |
 | 6 | Google OAuth, Gmail/Calendar integration, Smart Sync, token refresh, time countdown, welcome-back modal, dark mode fix, task form redesign |
+| 7 | UI polish (tinted neutrals, glassmorphism, list view), new-user tutorial, chat cleanup (scheduler messages hidden), drag-and-drop performance fixes |
 
 ### 6.2 Deployment
 

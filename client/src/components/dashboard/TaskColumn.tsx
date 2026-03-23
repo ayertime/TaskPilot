@@ -57,7 +57,7 @@ export function TaskColumn({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: columnDelay[id] ?? 0 }}
-      className={`flex flex-col rounded-lg bg-muted/30 border border-border/50 transition-all duration-200 ${
+      className={`flex flex-col rounded-lg bg-muted/30 border border-border/50 transition-[border-color,background-color,box-shadow] duration-200 ${
         isOver ? 'border-primary/30 bg-primary/[0.03] ring-1 ring-primary/10' : ''
       }`}
     >

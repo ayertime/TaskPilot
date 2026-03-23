@@ -147,8 +147,8 @@ export function TaskCard({
 
   return (
     <Card
-      className={`border-l-[3px] ${priority.border} hover:shadow-sm hover:-translate-y-[1px] transition-all duration-200 cursor-pointer group ${
-        isOverdue ? 'bg-red-50 dark:bg-red-950/30 border-red-400/50 dark:border-red-700/50 shadow-[0_0_0_1px_rgba(239,68,68,0.2),0_0_8px_rgba(239,68,68,0.12)] animate-[slow-pulse_3s_ease-in-out_infinite]' : ''
+      className={`border-l-[3px] ${priority.border} hover:shadow-sm hover:-translate-y-[1px] transition-[box-shadow,border-color] duration-200 cursor-pointer group ${
+        isOverdue ? 'bg-red-100 dark:bg-red-950/50 border-red-500/60 dark:border-red-600/50 shadow-[0_0_0_1px_rgba(220,38,38,0.3),0_0_10px_rgba(220,38,38,0.2)] animate-[slow-pulse_3s_ease-in-out_infinite]' : ''
       }`}
       onClick={onView || onEdit}
     >

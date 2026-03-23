@@ -17,6 +17,9 @@ export function useProfile() {
       theme?: 'light' | 'dark' | 'system';
       accent_color?: string;
       timezone?: string;
+      has_seen_tutorial?: boolean;
+      sync_enabled?: boolean;
+      sync_interval?: string;
     }) =>
       apiFetch('/api/profile', {
         method: 'PATCH',

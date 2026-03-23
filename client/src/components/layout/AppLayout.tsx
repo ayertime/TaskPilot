@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { CategoryForm } from './CategoryForm';
 import { ChatPanel } from '@/components/chat/ChatPanel';
+import { TutorialModal } from '@/components/onboarding/TutorialModal';
 import {
   LogOut,
   Settings,
@@ -34,12 +35,31 @@ import { toast } from 'sonner';
 export function AppLayout() {
   const { user, signOut } = useAuth();
   const { categories, createCategory, deleteCategory } = useCategories();
-  const { profile } = useProfile();
+  const { profile, updateProfile } = useProfile();
   const location = useLocation();
   const navigate = useNavigate();
   const [categoryFormOpen, setCategoryFormOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [tutorialOpen, setTutorialOpen] = useState(false);
+
+  // Show tutorial for first-time users
+  useEffect(() => {
+    if (!profile) return;
+    const hasSeenLocal = localStorage.getItem('taskpilot_tutorial_completed') === '1';
+    if (!hasSeenLocal && !profile.has_seen_tutorial) {
+      setTutorialOpen(true);
+    }
+  }, [profile]);
+
+  function handleTutorialDismiss(open: boolean) {
+    setTutorialOpen(open);
+    if (!open) {
+      localStorage.setItem('taskpilot_tutorial_completed', '1');
+      localStorage.setItem('taskpilot_last_active', String(Date.now()));
+      updateProfile({ has_seen_tutorial: true });
+    }
+  }
 
   // Ctrl+K to toggle chat panel
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -307,7 +327,7 @@ export function AppLayout() {
 
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
-          <Outlet context={{ categories }} />
+          <Outlet context={{ categories, onShowTutorial: () => setTutorialOpen(true) }} />
         </main>
       </div>
 
@@ -318,6 +338,12 @@ export function AppLayout() {
       />
 
       <ChatPanel open={chatOpen} onOpenChange={setChatOpen} />
+
+      <TutorialModal
+        open={tutorialOpen}
+        onOpenChange={handleTutorialDismiss}
+        onOpenChat={() => { handleTutorialDismiss(false); setChatOpen(true); }}
+      />
     </div>
   );
 }

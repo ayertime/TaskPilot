@@ -19,7 +19,6 @@ export function SortableTaskCard(props: SortableTaskCardProps) {
     listeners,
     setNodeRef,
     transform,
-    transition,
     isDragging,
   } = useSortable({
     id: props.task.id,
@@ -27,8 +26,8 @@ export function SortableTaskCard(props: SortableTaskCardProps) {
   });
 
   const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
+    transform: CSS.Translate.toString(transform),
+    transition: isDragging ? undefined : 'transform 150ms ease',
     opacity: isDragging ? 0.4 : 1,
   };
 

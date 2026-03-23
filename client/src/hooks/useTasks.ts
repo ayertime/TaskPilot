@@ -126,6 +126,16 @@ export function useTasks() {
         method: 'PATCH',
         body: JSON.stringify({ tasks: reordered }),
       }),
+    onMutate: (reordered) => {
+      // Optimistically update the query cache so localTasks sync doesn't flash back
+      queryClient.setQueryData<Task[]>(['tasks'], (prev = []) => {
+        const updates = new Map(reordered.map((r) => [r.id, r]));
+        return prev.map((t) => {
+          const update = updates.get(t.id);
+          return update ? { ...t, status: update.status, position: update.position } : t;
+        });
+      });
+    },
   });
 
   return {

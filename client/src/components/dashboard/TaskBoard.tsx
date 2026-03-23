@@ -29,6 +29,7 @@ import type { Task, Category } from '@/types';
 
 interface AppContext {
   categories: Category[];
+  onShowTutorial?: () => void;
 }
 
 export function TaskBoard() {
@@ -121,7 +122,7 @@ export function TaskBoard() {
   }, [tasks, activeId]);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   );
 
   const columns: { id: Task['status']; title: string }[] = [

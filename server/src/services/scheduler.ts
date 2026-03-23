@@ -139,12 +139,13 @@ async function executeTask(task: {
     },
   );
 
-  // Run the agent to execute the task
+  // Run the agent to execute the task (don't save to chat history)
   await runAgent({
     userId: user_id,
     userClient,
     userMessage: prompt,
-    onEvent: () => {}, // No streaming needed for background execution
+    onEvent: () => {},
+    saveToHistory: false,
   });
 
   // Log the auto-execution
@@ -377,6 +378,7 @@ async function syncUserEmails(userId: string) {
     userClient,
     userMessage: prompt,
     onEvent: () => {},
+    saveToHistory: false,
   });
 }
 
@@ -436,6 +438,7 @@ async function syncUserCalendar(userId: string) {
     userClient,
     userMessage: prompt,
     onEvent: () => {},
+    saveToHistory: false,
   });
 }
 

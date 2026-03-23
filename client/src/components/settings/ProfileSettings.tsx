@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useOutletContext } from 'react-router';
 import { useProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/hooks/useAuth';
 import { apiFetch } from '@/lib/api';
@@ -17,12 +18,13 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
-import { CheckCircle2, XCircle, Mail, CalendarDays, RefreshCw } from 'lucide-react';
+import { CheckCircle2, XCircle, Mail, CalendarDays, RefreshCw, PlayCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 export function ProfileSettings() {
   const { profile, loading, updateProfile } = useProfile();
   const { signInWithGoogle } = useAuth();
+  const { onShowTutorial } = useOutletContext<{ onShowTutorial?: () => void }>();
   const [displayName, setDisplayName] = useState('');
   const [theme, setTheme] = useState('system');
   const [accentColor, setAccentColor] = useState('#6366f1');
@@ -315,6 +317,28 @@ export function ProfileSettings() {
               Connect your Google account above to enable Smart Sync.
             </p>
           )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Help</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <p className="text-sm font-medium flex items-center gap-2">
+                <PlayCircle className="h-4 w-4" />
+                Product Tour
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Watch the intro tutorial to learn about TaskPilot's features.
+              </p>
+            </div>
+            <Button variant="outline" size="sm" onClick={onShowTutorial}>
+              Watch Again
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
