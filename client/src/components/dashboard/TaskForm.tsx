@@ -251,8 +251,14 @@ export function TaskForm({
                   Category
                 </Label>
                 <Select
-                  value={categoryId || 'none'}
-                  onValueChange={(v) => setCategoryId(!v || v === 'none' ? '' : v)}
+                  value={categories.find((c) => c.id === categoryId)?.name || 'none'}
+                  onValueChange={(v) => {
+                    if (v === 'none') setCategoryId('');
+                    else {
+                      const cat = categories.find((c) => c.name === v);
+                      if (cat) setCategoryId(cat.id);
+                    }
+                  }}
                 >
                   <SelectTrigger className="h-10 bg-muted/30 border-border/40">
                     <SelectValue placeholder="None" />
@@ -260,7 +266,7 @@ export function TaskForm({
                   <SelectContent>
                     <SelectItem value="none">None</SelectItem>
                     {categories.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id}>
+                      <SelectItem key={cat.id} value={cat.name}>
                         {cat.name}
                       </SelectItem>
                     ))}
