@@ -8,7 +8,7 @@ import { Bot, Activity } from 'lucide-react';
 import type { AgentActivity } from '@/types';
 
 export function ActivityLog() {
-  const { activities, loading } = useActivity();
+  const { activities, loading, agentWorking } = useActivity();
   const { tasks } = useTasks();
 
   if (loading) {
@@ -43,6 +43,19 @@ export function ActivityLog() {
             Everything TaskPilot has done for you
           </p>
         </div>
+        {agentWorking && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="ml-auto flex items-center gap-2 px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-full"
+          >
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500" />
+            </span>
+            <span className="text-xs font-medium text-amber-600 dark:text-amber-400">Agent Working</span>
+          </motion.div>
+        )}
       </motion.div>
 
       <ProductivityDashboard tasks={tasks} />

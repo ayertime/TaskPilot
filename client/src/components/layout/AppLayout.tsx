@@ -30,6 +30,8 @@ import {
   MessageSquare,
   Activity,
   Menu,
+  Mail,
+  Calendar,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -268,6 +270,8 @@ export function AppLayout() {
           <nav className="p-4 space-y-1.5">
             {[
               { to: '/dashboard', icon: LayoutDashboard, label: 'Tasks' },
+              { to: '/email', icon: Mail, label: 'Email' },
+              { to: '/calendar', icon: Calendar, label: 'Calendar' },
               { to: '/activity', icon: Activity, label: 'Activity' },
               { to: '/settings', icon: Settings, label: 'Settings' },
             ].map(({ to, icon: Icon, label }) => {

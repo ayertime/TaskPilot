@@ -13,7 +13,7 @@ export default async function activityRoutes(app: FastifyInstance) {
 
     const { data, error } = await supabaseAdmin
       .from('agent_activity')
-      .select('*, tasks(title)')
+      .select('*, tasks(title), metadata')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(limit);

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { apiFetch } from '@/lib/api';
@@ -10,6 +10,7 @@ interface ActivityResponse {
 
 export function useActivity() {
   const queryClient = useQueryClient();
+  const [agentWorking, setAgentWorking] = useState(false);
 
   const { data, isLoading: loading } = useQuery({
     queryKey: ['activity'],
@@ -26,7 +27,14 @@ export function useActivity() {
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'agent_activity' },
-        () => {
+        (payload) => {
+          const newRecord = payload.new as AgentActivity;
+          // Show working indicator for agent steps, clear it for final actions
+          if (newRecord.action_type === 'agent_step') {
+            setAgentWorking(true);
+          } else {
+            setAgentWorking(false);
+          }
           // Refetch on new activity since we need the joined task title
           queryClient.invalidateQueries({ queryKey: ['activity'] });
         },
@@ -38,9 +46,17 @@ export function useActivity() {
     };
   }, [queryClient]);
 
+  // Auto-clear working indicator after 30s (safety net)
+  useEffect(() => {
+    if (!agentWorking) return;
+    const timer = setTimeout(() => setAgentWorking(false), 30000);
+    return () => clearTimeout(timer);
+  }, [agentWorking]);
+
   return {
     activities: data || [],
     loading,
+    agentWorking,
     refetch: () => queryClient.invalidateQueries({ queryKey: ['activity'] }),
   };
 }

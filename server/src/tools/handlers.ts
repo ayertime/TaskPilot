@@ -323,6 +323,16 @@ async function handleReadEmails(
         ? `Searched emails: "${input.query}"`
         : `Read ${result.emails.length} recent email(s)`,
       result: result.message,
+      metadata: {
+        query: input.query || null,
+        count: result.emails.length,
+        emails: result.emails.slice(0, 5).map((e: any) => ({
+          from: e.from,
+          subject: e.subject,
+          snippet: e.snippet,
+          date: e.date,
+        })),
+      },
     });
   }
 
@@ -348,6 +358,16 @@ async function handleReadCalendar(
         ? `Searched calendar: "${input.query}"`
         : `Read ${result.events.length} upcoming event(s)`,
       result: result.message,
+      metadata: {
+        query: input.query || null,
+        count: result.events.length,
+        events: result.events.slice(0, 5).map((e: any) => ({
+          title: e.title,
+          start: e.start,
+          end: e.end,
+          location: e.location,
+        })),
+      },
     });
   }
 
@@ -358,6 +378,14 @@ async function handleSendEmail(
   input: Record<string, unknown>,
   ctx: ToolContext,
 ): Promise<string> {
+  // Log progress: composing
+  await supabaseAdmin.from('agent_activity').insert({
+    user_id: ctx.userId,
+    action_type: 'agent_step',
+    description: `Composing email to ${input.to}...`,
+    metadata: { step: 'composing', to: input.to, subject: input.subject },
+  });
+
   const result = await sendEmail(ctx.userId, {
     to: input.to as string,
     subject: input.subject as string,
@@ -366,12 +394,20 @@ async function handleSendEmail(
     bcc: input.bcc as string | undefined,
   });
 
-  // Log activity
+  // Log final activity with full metadata
   await supabaseAdmin.from('agent_activity').insert({
     user_id: ctx.userId,
     action_type: 'send_email',
     description: `Sent email to ${input.to}: "${input.subject}"`,
     result: result.message,
+    metadata: {
+      to: input.to,
+      cc: input.cc || null,
+      bcc: input.bcc || null,
+      subject: input.subject,
+      body: input.body,
+      success: result.success,
+    },
   });
 
   return JSON.stringify(result);
@@ -381,6 +417,14 @@ async function handleCreateCalendarEvent(
   input: Record<string, unknown>,
   ctx: ToolContext,
 ): Promise<string> {
+  // Log progress: creating
+  await supabaseAdmin.from('agent_activity').insert({
+    user_id: ctx.userId,
+    action_type: 'agent_step',
+    description: `Creating calendar event: "${input.title}"...`,
+    metadata: { step: 'creating', title: input.title },
+  });
+
   const result = await createCalendarEvent(ctx.userId, {
     title: input.title as string,
     start_time: input.start_time as string,
@@ -395,6 +439,16 @@ async function handleCreateCalendarEvent(
     action_type: 'create_calendar_event',
     description: `Created calendar event: "${input.title}"`,
     result: result.message,
+    metadata: {
+      title: input.title,
+      start_time: input.start_time,
+      end_time: input.end_time,
+      description: input.description || null,
+      location: input.location || null,
+      attendees: input.attendees || null,
+      event_id: result.event_id || null,
+      success: result.success,
+    },
   });
 
   return JSON.stringify(result);
@@ -415,6 +469,10 @@ async function handleWebSearch(
       action_type: 'web_search',
       description: `Web search: "${input.query}"`,
       result: `Found ${(input.num_results as number) || 5} results`,
+      metadata: {
+        query: input.query,
+        num_results: (input.num_results as number) || 5,
+      },
     });
   }
 

@@ -11,6 +11,8 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { TaskBoard } from '@/components/dashboard/TaskBoard';
 import { ProfileSettings } from '@/components/settings/ProfileSettings';
 import { ActivityLog } from '@/components/activity/ActivityLog';
+import { EmailView } from '@/components/email/EmailView';
+import { CalendarView } from '@/components/calendar/CalendarView';
 
 const router = createBrowserRouter([
   { path: '/', element: <LandingPage /> },
@@ -23,6 +25,8 @@ const router = createBrowserRouter([
         element: <AppLayout />,
         children: [
           { path: '/dashboard', element: <TaskBoard /> },
+          { path: '/email', element: <EmailView /> },
+          { path: '/calendar', element: <CalendarView /> },
           { path: '/activity', element: <ActivityLog /> },
           { path: '/settings', element: <ProfileSettings /> },
         ],

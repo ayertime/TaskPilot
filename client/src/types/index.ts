@@ -65,5 +65,31 @@ export interface AgentActivity {
   action_type: string;
   description: string;
   result: string | null;
+  metadata: Record<string, unknown> | null;
   created_at: string;
+}
+
+export interface Email {
+  id: string;
+  threadId: string;
+  from: string;
+  to: string;
+  subject: string;
+  snippet: string;
+  body: string;
+  date: string;
+  isUnread: boolean;
+  labels: string[];
+}
+
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  start: string;
+  end: string;
+  description: string | null;
+  location: string | null;
+  attendees: string[];
+  status: string;
+  htmlLink: string;
 }
