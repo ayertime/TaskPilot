@@ -14,7 +14,6 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from '@/components/ui/select';
 import { Bot, Mail, CalendarPlus, Search, FileText, Bell, Sparkles, Clock, Zap, Circle, Loader2, CheckCircle2 } from 'lucide-react';
 import type { Task, Category } from '@/types';
@@ -255,12 +254,24 @@ export function TaskForm({
                   onValueChange={(v) => setCategoryId(!v || v === 'none' ? '' : v)}
                 >
                   <SelectTrigger className="h-10 bg-muted/30 border-border/40">
-                    <SelectValue placeholder="None" />
+                    {(() => {
+                      const cat = categories.find((c) => c.id === categoryId);
+                      if (!cat) return <span className="text-muted-foreground">None</span>;
+                      return (
+                        <span className="flex items-center gap-2">
+                          <span
+                            className="w-2.5 h-2.5 rounded-full ring-1 ring-white/10 shrink-0"
+                            style={{ backgroundColor: cat.color }}
+                          />
+                          {cat.name}
+                        </span>
+                      );
+                    })()}
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">None</SelectItem>
                     {categories.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id}>
+                      <SelectItem key={cat.id} value={cat.id} textValue={cat.name}>
                         <div className="flex items-center gap-2">
                           <div
                             className="w-2.5 h-2.5 rounded-full ring-1 ring-white/10"
