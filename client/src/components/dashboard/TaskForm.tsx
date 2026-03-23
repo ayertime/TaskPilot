@@ -261,13 +261,7 @@ export function TaskForm({
                     <SelectItem value="none">None</SelectItem>
                     {categories.map((cat) => (
                       <SelectItem key={cat.id} value={cat.id}>
-                        <span className="flex items-center gap-2">
-                          <span
-                            className="w-2.5 h-2.5 rounded-full ring-1 ring-white/10 shrink-0"
-                            style={{ backgroundColor: cat.color }}
-                          />
-                          {cat.name}
-                        </span>
+                        {cat.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
