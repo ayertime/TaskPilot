@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { apiFetch } from '@/lib/api';
@@ -8,11 +8,39 @@ import type { Task } from '@/types';
 
 export function useTasks() {
   const queryClient = useQueryClient();
+  const [, setTick] = useState(0);
 
   const { data: tasks = [], isLoading: loading } = useQuery({
     queryKey: ['tasks'],
     queryFn: () => apiFetch('/api/tasks') as Promise<Task[]>,
   });
+
+  // Instant overdue transitions: set a timer for the next due date about to pass
+  useEffect(() => {
+    const now = Date.now();
+    const upcoming = tasks
+      .filter((t) => t.due_date && t.status !== 'done')
+      .map((t) => new Date(t.due_date!).getTime() - now)
+      .filter((ms) => ms > 0 && ms < 3_600_000); // within the next hour
+
+    if (upcoming.length === 0) return;
+
+    const next = Math.min(...upcoming);
+    const timer = setTimeout(() => setTick((n) => n + 1), next + 500);
+    return () => clearTimeout(timer);
+  }, [tasks]);
+
+  // Refetch on visibility change (mobile app resume)
+  useEffect(() => {
+    function handleVisibility() {
+      if (document.visibilityState === 'visible') {
+        queryClient.invalidateQueries({ queryKey: ['tasks'] });
+        queryClient.invalidateQueries({ queryKey: ['activity'] });
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, [queryClient]);
 
   // Subscribe to Supabase Realtime for live updates
   useEffect(() => {
