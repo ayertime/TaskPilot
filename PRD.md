@@ -277,6 +277,30 @@ The scheduler is the core differentiating feature of TaskPilot.
 - Links to related tasks
 - Daily summary with action breakdown by type
 - Provides full transparency into what the agent did and why
+- **Expandable activity details**: Click any activity to see full context (email content, calendar event details, search queries) stored in a JSONB metadata column
+- **Live agent working indicator**: Pulsing "Agent Working" badge appears in real time when the agent is executing actions
+- **Progress steps**: Agent logs intermediate steps (e.g., "Composing email...") before final actions, visible in real time via Supabase Realtime
+
+### 3.7.1 In-App Email View
+
+- Dedicated Email page accessible from sidebar navigation
+- **Inbox tab**: View recent emails from connected Gmail account
+- **Sent tab**: View sent emails
+- Expandable email cards showing full headers (from, to, date) and body
+- Unread email indicators with "New" badge
+- Graceful fallback message when email account is not connected
+- Uses existing Gmail API integration (no additional API costs)
+
+### 3.7.2 In-App Calendar View
+
+- Dedicated Calendar page accessible from sidebar navigation
+- **Unified view**: Google Calendar events and TaskPilot tasks with due dates displayed together
+- Events and tasks sorted by time, grouped by day (Today, Tomorrow, or date)
+- **Event cards**: Time column, duration, color bars, location, attendees, and deep links to Google Calendar
+- **Task cards**: Priority-colored bars (red=urgent, orange=high, yellow=medium, blue=low), "Task" badge, overdue indicators
+- "Now" badge on currently active events
+- Past events shown with reduced opacity
+- Graceful fallback when Google Calendar is not connected (tasks still display)
 
 ### 3.8 New-User Tutorial
 
@@ -332,7 +356,18 @@ The scheduler is the core differentiating feature of TaskPilot.
 - Runtime caching: `NetworkFirst` for Supabase and API routes, cache-first for static assets
 - Apple PWA meta tags for iOS support
 
-### 3.14 UI/UX
+### 3.14 Mobile Real-Time Updates
+
+- **Visibility change detection**: When the app returns to foreground (phone unlocked, tab switched back), all task and activity queries are automatically refetched
+- **Instant overdue transitions**: `setTimeout` timers fire at the exact moment each task's due date passes, updating the UI without requiring a refresh
+- **Refetch on window focus**: TanStack Query configured with `refetchOnWindowFocus: 'always'` for immediate data freshness
+
+### 3.15 Task Cleanup
+
+- **Clear completed button**: Manual bulk-delete of all completed tasks from the dashboard
+- **Midnight auto-cleanup**: Cron job at 00:00 UTC permanently deletes all tasks with status `done`
+
+### 3.16 UI/UX
 
 - Responsive design (mobile and desktop)
 - Landing page at `/` for unauthenticated visitors
@@ -341,7 +376,7 @@ The scheduler is the core differentiating feature of TaskPilot.
 - Toast notifications via Sonner
 - Browser notifications for background agent activity
 - Keyboard shortcut (Ctrl+K) for quick chat access
-- Sidebar navigation uses proper `Link` components for instant page switching
+- Sidebar navigation with Tasks, Email, Calendar, Activity, and Settings pages
 - List view alongside Kanban board with view toggle (persisted to localStorage)
 - Tinted neutral color palette (blue-hued OKLCH) for polished, non-template appearance
 - Glassmorphism header and sidebar with backdrop blur
@@ -375,7 +410,7 @@ The scheduler is the core differentiating feature of TaskPilot.
 - id, user_id, role, content, tool_calls
 
 **agent_activity** — Audit log of agent actions
-- id, user_id, task_id, action_type, description, result
+- id, user_id, task_id, action_type, description, result, metadata (JSONB)
 
 ### 4.2 Security
 
@@ -407,6 +442,10 @@ The scheduler is the core differentiating feature of TaskPilot.
 | DELETE | /api/chat/history | Clear chat history |
 | GET | /api/activity | Get activity log |
 | GET | /api/activity/summary | Today's activity summary |
+| DELETE | /api/tasks/completed | Clear all completed tasks |
+| GET | /api/emails | Read inbox emails via Gmail API |
+| GET | /api/emails/sent | Read sent emails via Gmail API |
+| GET | /api/calendar | Read calendar events via Google Calendar API |
 | GET | /api/profile | Get user profile |
 | PATCH | /api/profile | Update profile |
 | GET | /api/profile/oauth-status | Check OAuth connection status |
@@ -430,6 +469,7 @@ All endpoints except /api/health require JWT authentication.
 | 6 | Google OAuth, Gmail/Calendar integration, Smart Sync, token refresh, time countdown, welcome-back modal, dark mode fix, task form redesign |
 | 7 | UI polish (tinted neutrals, glassmorphism, list view), new-user tutorial, chat cleanup (scheduler messages hidden), drag-and-drop performance fixes |
 | 8 | Browser notifications (Notification API), PWA (vite-plugin-pwa, installable on all devices), polished README, deployment (Vercel + Railway) |
+| 9 | Real-time agent monitoring (live progress steps, expandable activity details), in-app Email and Calendar views, tasks on calendar, mobile real-time updates, clear completed tasks, UI polish (task form redesign, sidebar, landing page mobile fixes) |
 
 ### 6.2 Deployment
 
