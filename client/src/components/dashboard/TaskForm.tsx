@@ -172,11 +172,11 @@ export function TaskForm({
                 <div className="space-y-1.5">
                   <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Priority</Label>
                   <Select value={priority} onValueChange={(v) => { if (v) setPriority(v); }}>
-                    <SelectTrigger className="h-9">
+                    <SelectTrigger className="h-9 min-w-0">
                       <SelectValue>
-                        <span className="flex items-center gap-2">
-                          <span className={`w-2 h-2 rounded-full ${priorityConfig[priority as keyof typeof priorityConfig]?.color}`} />
-                          {priorityConfig[priority as keyof typeof priorityConfig]?.label}
+                        <span className="flex items-center gap-1.5 truncate">
+                          <span className={`w-2 h-2 rounded-full shrink-0 ${priorityConfig[priority as keyof typeof priorityConfig]?.color}`} />
+                          <span className="truncate">{priorityConfig[priority as keyof typeof priorityConfig]?.label}</span>
                         </span>
                       </SelectValue>
                     </SelectTrigger>
