@@ -172,9 +172,9 @@ export function TaskForm({
                 <div className="space-y-1.5">
                   <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Priority</Label>
                   <Select value={priority} onValueChange={(v) => { if (v) setPriority(v); }}>
-                    <SelectTrigger className="h-9 min-w-0">
+                    <SelectTrigger className="h-9 w-full overflow-hidden">
                       <SelectValue>
-                        <span className="flex items-center gap-1.5 truncate">
+                        <span className="flex items-center gap-1.5 min-w-0">
                           <span className={`w-2 h-2 rounded-full shrink-0 ${priorityConfig[priority as keyof typeof priorityConfig]?.color}`} />
                           <span className="truncate">{priorityConfig[priority as keyof typeof priorityConfig]?.label}</span>
                         </span>
@@ -196,7 +196,7 @@ export function TaskForm({
                 <div className="space-y-1.5">
                   <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Status</Label>
                   <Select value={status} onValueChange={(v) => { if (v) setStatus(v); }}>
-                    <SelectTrigger className="h-9">
+                    <SelectTrigger className="h-9 w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -213,7 +213,7 @@ export function TaskForm({
                     value={categoryId || 'none'}
                     onValueChange={(v) => setCategoryId(!v || v === 'none' ? '' : v)}
                   >
-                    <SelectTrigger className="h-9">
+                    <SelectTrigger className="h-9 w-full">
                       <SelectValue placeholder="None" />
                     </SelectTrigger>
                     <SelectContent>
