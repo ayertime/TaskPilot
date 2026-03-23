@@ -1,5 +1,6 @@
 import { motion } from 'motion/react';
 import { useCalendarEvents } from '@/hooks/useCalendarEvents';
+import { useTasks } from '@/hooks/useTasks';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -9,15 +10,37 @@ import {
   Clock,
   MapPin,
   Users,
-  AlertCircle,
   CalendarX2,
   ExternalLink,
+  CheckSquare,
 } from 'lucide-react';
 import { format, isToday, isTomorrow, isPast, differenceInMinutes } from 'date-fns';
-import type { CalendarEvent } from '@/types';
+import type { CalendarEvent, Task } from '@/types';
+
+// Unified item that can be either a calendar event or a task
+type CalendarItem =
+  | { type: 'event'; data: CalendarEvent }
+  | { type: 'task'; data: Task };
 
 export function CalendarView() {
-  const { data: events, isLoading, error } = useCalendarEvents();
+  const { data: events, isLoading: eventsLoading, error } = useCalendarEvents();
+  const { tasks } = useTasks();
+
+  // Tasks with due dates become calendar items
+  const taskItems: CalendarItem[] = tasks
+    .filter((t) => t.due_date && t.status !== 'done')
+    .map((t) => ({ type: 'task', data: t }));
+
+  const eventItems: CalendarItem[] = (events || []).map((e) => ({ type: 'event', data: e }));
+
+  // Merge and sort all items by date
+  const allItems = [...eventItems, ...taskItems].sort((a, b) => {
+    const dateA = a.type === 'event' ? a.data.start : (a.data as Task).due_date!;
+    const dateB = b.type === 'event' ? b.data.start : (b.data as Task).due_date!;
+    return new Date(dateA).getTime() - new Date(dateB).getTime();
+  });
+
+  const hasContent = allItems.length > 0;
 
   return (
     <div className="space-y-6">
@@ -32,12 +55,12 @@ export function CalendarView() {
         <div>
           <h1 className="text-2xl font-bold">Calendar</h1>
           <p className="text-sm text-muted-foreground">
-            Upcoming events from your connected calendar
+            Events and tasks with due dates
           </p>
         </div>
       </motion.div>
 
-      {isLoading && (
+      {eventsLoading && (
         <div className="space-y-3">
           {[1, 2, 3, 4, 5].map((i) => (
             <Skeleton key={i} className="h-24 w-full rounded-lg" />
@@ -45,23 +68,7 @@ export function CalendarView() {
         </div>
       )}
 
-      {error && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="flex flex-col items-center justify-center py-16 text-center"
-        >
-          <div className="w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center mb-4">
-            <AlertCircle className="w-8 h-8 text-amber-500" />
-          </div>
-          <h3 className="text-lg font-semibold mb-1">Connect your calendar</h3>
-          <p className="text-sm text-muted-foreground max-w-sm">
-            Sign in with Google to view your calendar events here. Go to Settings to connect your account.
-          </p>
-        </motion.div>
-      )}
-
-      {!isLoading && !error && (!events || events.length === 0) && (
+      {!eventsLoading && !hasContent && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -70,17 +77,19 @@ export function CalendarView() {
           <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
             <CalendarX2 className="w-8 h-8 text-muted-foreground" />
           </div>
-          <h3 className="text-lg font-semibold mb-1">No upcoming events</h3>
-          <p className="text-sm text-muted-foreground">
-            Your calendar is clear for the next 7 days
+          <h3 className="text-lg font-semibold mb-1">No upcoming events or tasks</h3>
+          <p className="text-sm text-muted-foreground max-w-sm">
+            {error
+              ? 'Connect your Google account in Settings to see calendar events, or create tasks with due dates.'
+              : 'Create tasks with due dates and they\'ll appear here.'}
           </p>
         </motion.div>
       )}
 
-      {events && events.length > 0 && (
+      {hasContent && (
         <ScrollArea className="h-[calc(100vh-14rem)]">
           <div className="space-y-2 pr-4">
-            {groupEventsByDay(events).map(([day, dayEvents], groupIndex) => (
+            {groupItemsByDay(allItems).map(([day, dayItems], groupIndex) => (
               <motion.div
                 key={day}
                 initial={{ opacity: 0, y: 10 }}
@@ -91,9 +100,13 @@ export function CalendarView() {
                   {day}
                 </h2>
                 <div className="space-y-2 mb-4">
-                  {dayEvents.map((event, i) => (
-                    <EventCard key={event.id} event={event} index={i} />
-                  ))}
+                  {dayItems.map((item, i) =>
+                    item.type === 'event' ? (
+                      <EventCard key={item.data.id} event={item.data} index={i} />
+                    ) : (
+                      <TaskCard key={item.data.id} task={item.data} index={i} />
+                    )
+                  )}
                 </div>
               </motion.div>
             ))}
@@ -101,6 +114,78 @@ export function CalendarView() {
         </ScrollArea>
       )}
     </div>
+  );
+}
+
+function TaskCard({ task, index }: { task: Task; index: number }) {
+  const dueDate = new Date(task.due_date!);
+  const isOverdue = isPast(dueDate) && task.status !== 'done';
+
+  const priorityColor: Record<string, string> = {
+    urgent: 'bg-red-500',
+    high: 'bg-orange-500',
+    medium: 'bg-yellow-500',
+    low: 'bg-blue-500',
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: -10 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: index * 0.03 }}
+    >
+      <Card className={`transition-all hover:shadow-md ${isOverdue ? 'border-red-500/30 bg-red-500/5' : 'border-primary/20 bg-primary/5'}`}>
+        <CardContent className="p-3">
+          <div className="flex items-start gap-3">
+            {/* Time column */}
+            <div className="w-16 shrink-0 text-center">
+              <p className="text-sm font-semibold tabular-nums">
+                {format(dueDate, 'h:mm a')}
+              </p>
+              <p className="text-[10px] text-muted-foreground">Due</p>
+            </div>
+
+            {/* Color bar - uses priority color */}
+            <div className={`w-1 self-stretch rounded-full shrink-0 ${priorityColor[task.priority] || 'bg-primary'}`} />
+
+            {/* Content */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <CheckSquare className="w-3.5 h-3.5 text-primary shrink-0" />
+                <p className="text-sm font-medium truncate">{task.title}</p>
+                <Badge variant="outline" className="text-[9px] px-1.5 py-0 shrink-0 border-primary/30 text-primary">
+                  Task
+                </Badge>
+                {isOverdue && (
+                  <Badge variant="destructive" className="text-[9px] px-1 py-0 shrink-0">
+                    Overdue
+                  </Badge>
+                )}
+              </div>
+
+              <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1.5">
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Clock className="w-3 h-3" />
+                  <span>Due {format(dueDate, 'h:mm a')}</span>
+                </div>
+                <Badge variant="secondary" className="text-[9px] px-1.5 py-0">
+                  {task.priority}
+                </Badge>
+                <Badge variant="secondary" className="text-[9px] px-1.5 py-0">
+                  {task.status === 'in_progress' ? 'In Progress' : 'To Do'}
+                </Badge>
+              </div>
+
+              {task.description && (
+                <p className="text-xs text-muted-foreground mt-1.5 line-clamp-2">
+                  {task.description}
+                </p>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 }
 
@@ -189,11 +274,12 @@ function EventCard({ event, index }: { event: CalendarEvent; index: number }) {
   );
 }
 
-function groupEventsByDay(events: CalendarEvent[]): [string, CalendarEvent[]][] {
-  const groups: Record<string, CalendarEvent[]> = {};
+function groupItemsByDay(items: CalendarItem[]): [string, CalendarItem[]][] {
+  const groups: Record<string, CalendarItem[]> = {};
 
-  for (const event of events) {
-    const date = new Date(event.start);
+  for (const item of items) {
+    const dateStr = item.type === 'event' ? item.data.start : (item.data as Task).due_date!;
+    const date = new Date(dateStr);
     let label: string;
     if (isToday(date)) {
       label = 'Today';
@@ -203,7 +289,7 @@ function groupEventsByDay(events: CalendarEvent[]): [string, CalendarEvent[]][] 
       label = format(date, 'EEEE, MMMM d');
     }
     if (!groups[label]) groups[label] = [];
-    groups[label].push(event);
+    groups[label].push(item);
   }
 
   return Object.entries(groups);
