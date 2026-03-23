@@ -16,6 +16,8 @@ export default defineConfig({
         description: 'AI-powered task management with an autonomous agent',
         theme_color: '#6366f1',
         background_color: '#0a0a0f',
+        start_url: '/dashboard',
+        scope: '/',
         display: 'standalone',
         icons: [
           {
