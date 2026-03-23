@@ -314,19 +314,39 @@ The scheduler is the core differentiating feature of TaskPilot.
 - **Real-time overdue detection**: Stats bar re-evaluates every 30 seconds so overdue counts update without a page refresh
 - **Productivity Dashboard**: Completion rates, agent vs. user task completion, trends
 
-### 3.12 UI/UX
+### 3.12 Browser Notifications
+
+- Uses the browser Notification API (not web push / VAPID)
+- Fires `new Notification()` when the AI agent completes a task via realtime handler
+- Only shows browser notification when tab is NOT focused (`!document.hasFocus()`)
+- In-app Sonner toast handles the focused case
+- Permission requested on first app load (only if not already denied)
+- User can toggle notifications on/off in Settings (localStorage-based, no DB column)
+- Shows helper text if browser has blocked notifications
+
+### 3.13 Progressive Web App (PWA)
+
+- Installable on any device (phone, tablet, desktop) via `vite-plugin-pwa`
+- Service worker with `autoUpdate` registration (silent updates)
+- Manifest with app name, theme color, and icons (192x192, 512x512)
+- Runtime caching: `NetworkFirst` for Supabase and API routes, cache-first for static assets
+- Apple PWA meta tags for iOS support
+
+### 3.14 UI/UX
 
 - Responsive design (mobile and desktop)
 - Landing page at `/` for unauthenticated visitors
 - Dark mode with system preference detection
 - Smooth animations via Motion library
 - Toast notifications via Sonner
+- Browser notifications for background agent activity
 - Keyboard shortcut (Ctrl+K) for quick chat access
 - Sidebar navigation uses proper `Link` components for instant page switching
 - List view alongside Kanban board with view toggle (persisted to localStorage)
 - Tinted neutral color palette (blue-hued OKLCH) for polished, non-template appearance
 - Glassmorphism header and sidebar with backdrop blur
 - Markdown rendering in AI chat messages
+- Installable PWA for native app experience
 
 ---
 
@@ -409,14 +429,15 @@ All endpoints except /api/health require JWT authentication.
 | 5 | Proactive scheduler, activity log, task detail modal, onboarding |
 | 6 | Google OAuth, Gmail/Calendar integration, Smart Sync, token refresh, time countdown, welcome-back modal, dark mode fix, task form redesign |
 | 7 | UI polish (tinted neutrals, glassmorphism, list view), new-user tutorial, chat cleanup (scheduler messages hidden), drag-and-drop performance fixes |
+| 8 | Browser notifications (Notification API), PWA (vite-plugin-pwa, installable on all devices), polished README, deployment (Vercel + Railway) |
 
 ### 6.2 Deployment
 
-| Component | Platform |
-|-----------|----------|
-| Frontend | Vercel |
-| Backend | Railway (persistent process for scheduler) |
-| Database | Supabase (hosted PostgreSQL) |
+| Component | Platform | URL |
+|-----------|----------|-----|
+| Frontend | Vercel | https://task-pilot-self.vercel.app |
+| Backend | Railway (persistent process for scheduler) | https://taskpilot-production-b46b.up.railway.app |
+| Database | Supabase (hosted PostgreSQL) | — |
 
 ### 6.3 Environment Variables
 
