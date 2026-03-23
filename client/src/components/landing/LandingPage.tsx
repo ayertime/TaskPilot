@@ -297,8 +297,8 @@ export function LandingPage() {
               key={feature.title}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
+              viewport={{ once: true, amount: 0 }}
+              transition={{ delay: i * 0.05, duration: 0.3 }}
             >
               <Card className="h-full border-border/50 hover:shadow-sm hover:-translate-y-0.5 transition-all">
                 <CardContent className="p-5">
@@ -332,8 +332,8 @@ export function LandingPage() {
                 key={cap}
                 initial={{ opacity: 0, x: -10 }}
                 whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.03 }}
+                viewport={{ once: true, amount: 0 }}
+                transition={{ delay: i * 0.02, duration: 0.25 }}
                 className="flex items-center gap-2"
               >
                 <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
@@ -375,8 +375,8 @@ export function LandingPage() {
               key={item.step}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.15 }}
+              viewport={{ once: true, amount: 0 }}
+              transition={{ delay: i * 0.1, duration: 0.3 }}
               className="text-center"
             >
               <div className="relative w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
@@ -399,7 +399,8 @@ export function LandingPage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: true, amount: 0 }}
+            transition={{ duration: 0.3 }}
           >
             <h2 className="text-3xl font-bold mb-3">
               Ready to put your tasks on auto-pilot?
