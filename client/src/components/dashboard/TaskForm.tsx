@@ -116,14 +116,6 @@ export function TaskForm({
     });
   }
 
-  const actionIcons: Record<string, React.ReactNode> = {
-    email: <Mail className="h-4 w-4" />,
-    calendar_event: <CalendarPlus className="h-4 w-4" />,
-    research: <Search className="h-4 w-4" />,
-    document: <FileText className="h-4 w-4" />,
-    reminder: <Bell className="h-4 w-4" />,
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col">

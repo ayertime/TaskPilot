@@ -11,13 +11,13 @@ interface TutorialSlideProps {
 const stagger = (delay: number) => ({
   initial: { opacity: 0, y: 12 },
   animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.4, delay, ease: [0.25, 0.46, 0.45, 0.94] },
+  transition: { duration: 0.4, delay, ease: [0.25, 0.46, 0.45, 0.94] as const },
 });
 
 const iconPop = {
   initial: { scale: 0, rotate: -180 },
   animate: { scale: 1, rotate: 0 },
-  transition: { type: 'spring', stiffness: 200, damping: 15 },
+  transition: { type: 'spring' as const, stiffness: 200, damping: 15 },
 };
 
 export function TutorialSlide({ slide, onCreateTask, onOpenChat }: TutorialSlideProps) {
