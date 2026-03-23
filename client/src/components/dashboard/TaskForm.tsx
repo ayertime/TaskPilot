@@ -9,13 +9,6 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Bot, Mail, CalendarPlus, Search, FileText, Bell, Sparkles, Clock, Zap, Circle, Loader2, CheckCircle2 } from 'lucide-react';
 import type { Task, Category } from '@/types';
 
@@ -250,22 +243,18 @@ export function TaskForm({
                 <Label className="text-[11px] uppercase tracking-widest text-muted-foreground/60 font-medium">
                   Category
                 </Label>
-                <Select
-                  value={categoryId || 'none'}
-                  onValueChange={(v) => setCategoryId(!v || v === 'none' ? '' : v)}
+                <select
+                  value={categoryId}
+                  onChange={(e) => setCategoryId(e.target.value)}
+                  className="h-10 w-full rounded-lg bg-muted/30 border border-border/40 px-3 text-sm text-foreground appearance-none cursor-pointer"
                 >
-                  <SelectTrigger className="h-10 bg-muted/30 border-border/40">
-                    <SelectValue placeholder="None" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">None</SelectItem>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  <option value="">None</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="space-y-2">
