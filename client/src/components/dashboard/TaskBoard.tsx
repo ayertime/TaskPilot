@@ -33,7 +33,7 @@ interface AppContext {
 }
 
 export function TaskBoard() {
-  const { tasks, loading, createTask, updateTask, deleteTask, completeTask, reorderTasks } =
+  const { tasks, loading, createTask, updateTask, deleteTask, completeTask, clearCompleted, reorderTasks } =
     useTasks();
   const { categories } = useOutletContext<AppContext>();
 
@@ -300,6 +300,15 @@ export function TaskBoard() {
     }
   }
 
+  async function handleClearCompleted() {
+    try {
+      await clearCompleted();
+      toast.success('Completed tasks cleared');
+    } catch {
+      toast.error('Failed to clear completed tasks');
+    }
+  }
+
   async function handleStatusChange(id: string, status: Task['status']) {
     try {
       await updateTask(id, { status });
@@ -356,6 +365,7 @@ export function TaskBoard() {
           onDeleteTask={handleDelete}
           onCompleteTask={handleComplete}
           onStatusChange={handleStatusChange}
+          onClearCompleted={handleClearCompleted}
         />
       ) : (
       <DndContext
@@ -379,6 +389,7 @@ export function TaskBoard() {
               onDeleteTask={handleDelete}
               onCompleteTask={handleComplete}
               onStatusChange={handleStatusChange}
+              onClearCompleted={col.id === 'done' ? handleClearCompleted : undefined}
             />
           ))}
         </div>

@@ -96,6 +96,26 @@ export default async function taskRoutes(app: FastifyInstance) {
     }
   });
 
+  // DELETE /api/tasks/completed — bulk-delete all done tasks
+  app.delete('/completed', async (req, reply) => {
+    try {
+      const userId = (req as any).userId as string;
+      const { error } = await supabaseAdmin
+        .from('tasks')
+        .delete()
+        .eq('user_id', userId)
+        .eq('status', 'done');
+
+      if (error) {
+        reply.code(400).send({ error: error.message });
+        return;
+      }
+      reply.code(204).send();
+    } catch {
+      reply.code(500).send({ error: 'Failed to clear completed tasks' });
+    }
+  });
+
   // PATCH /api/tasks/reorder (must be before /:id)
   app.patch('/reorder', async (req, reply) => {
     try {

@@ -8,7 +8,7 @@ import { motion } from 'motion/react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { SortableTaskCard } from './SortableTaskCard';
-import { Plus } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import type { Task, Category } from '@/types';
 
 interface TaskColumnProps {
@@ -22,6 +22,7 @@ interface TaskColumnProps {
   onDeleteTask: (id: string) => void;
   onCompleteTask: (id: string) => void;
   onStatusChange: (id: string, status: Task['status']) => void;
+  onClearCompleted?: () => void;
 }
 
 const columnDelay: Record<string, number> = {
@@ -47,6 +48,7 @@ export function TaskColumn({
   onDeleteTask,
   onCompleteTask,
   onStatusChange,
+  onClearCompleted,
 }: TaskColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id });
 
@@ -70,14 +72,27 @@ export function TaskColumn({
             {tasks.length}
           </span>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7"
-          onClick={onAddTask}
-        >
-          <Plus className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-1">
+          {id === 'done' && tasks.length > 0 && onClearCompleted && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-muted-foreground hover:text-red-500"
+              onClick={onClearCompleted}
+              title="Clear completed"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={onAddTask}
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       <ScrollArea className="flex-1">

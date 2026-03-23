@@ -39,6 +39,7 @@ interface TaskListViewProps {
   onDeleteTask: (id: string) => void;
   onCompleteTask: (id: string) => void;
   onStatusChange: (id: string, status: Task['status']) => void;
+  onClearCompleted?: () => void;
 }
 
 type SortField = 'title' | 'priority' | 'due_date' | 'created_at';
@@ -74,6 +75,7 @@ export function TaskListView({
   onDeleteTask,
   onCompleteTask,
   onStatusChange,
+  onClearCompleted,
 }: TaskListViewProps) {
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
@@ -160,22 +162,32 @@ export function TaskListView({
         return (
           <div key={status}>
             {/* Group header */}
-            <button
-              onClick={() => toggleCollapse(status)}
-              className="w-full flex items-center gap-2 px-3 py-1.5 bg-muted/20 border-b border-border/30 hover:bg-muted/40 transition-colors"
-            >
-              {isCollapsed ? (
-                <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-              ) : (
-                <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+            <div className="flex items-center justify-between px-3 py-1.5 bg-muted/20 border-b border-border/30">
+              <button
+                onClick={() => toggleCollapse(status)}
+                className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+              >
+                {isCollapsed ? (
+                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                )}
+                <span className={`text-xs font-semibold ${config.color}`}>
+                  {config.label}
+                </span>
+                <span className="text-[10px] text-muted-foreground tabular-nums">
+                  {group.length}
+                </span>
+              </button>
+              {status === 'done' && group.length > 0 && onClearCompleted && (
+                <button
+                  onClick={onClearCompleted}
+                  className="text-[10px] text-muted-foreground hover:text-red-500 transition-colors"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
               )}
-              <span className={`text-xs font-semibold ${config.color}`}>
-                {config.label}
-              </span>
-              <span className="text-[10px] text-muted-foreground tabular-nums">
-                {group.length}
-              </span>
-            </button>
+            </div>
 
             {/* Rows */}
             {!isCollapsed &&

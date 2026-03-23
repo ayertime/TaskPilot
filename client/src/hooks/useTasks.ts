@@ -171,6 +171,16 @@ export function useTasks() {
     },
   });
 
+  const clearCompletedMutation = useMutation({
+    mutationFn: () =>
+      apiFetch('/api/tasks/completed', { method: 'DELETE' }),
+    onSuccess: () => {
+      queryClient.setQueryData<Task[]>(['tasks'], (prev = []) =>
+        prev.filter((t) => t.status !== 'done')
+      );
+    },
+  });
+
   return {
     tasks,
     loading,
@@ -180,6 +190,7 @@ export function useTasks() {
       updateMutation.mutateAsync({ id, data }),
     deleteTask: (id: string) => deleteMutation.mutateAsync(id),
     completeTask: (id: string) => completeMutation.mutateAsync(id),
+    clearCompleted: () => clearCompletedMutation.mutateAsync(),
     reorderTasks: (
       reordered: { id: string; status: Task['status']; position: number }[]
     ) => reorderMutation.mutateAsync(reordered),

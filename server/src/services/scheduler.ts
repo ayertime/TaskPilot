@@ -445,6 +445,25 @@ async function syncUserCalendar(userId: string) {
 /**
  * Start the scheduler. Call this from server startup.
  */
+async function clearCompletedTasks() {
+  try {
+    const { error, count } = await supabaseAdmin
+      .from('tasks')
+      .delete()
+      .eq('status', 'done');
+
+    if (error) {
+      console.error('[Scheduler] Failed to clear completed tasks:', error);
+      return;
+    }
+    if (count && count > 0) {
+      console.log(`[Scheduler] Midnight cleanup: deleted ${count} completed tasks`);
+    }
+  } catch (err) {
+    console.error('[Scheduler] Error in clearCompletedTasks:', err);
+  }
+}
+
 export function startScheduler() {
   // Run every minute — process overdue tasks
   cron.schedule('* * * * *', () => {
@@ -456,5 +475,10 @@ export function startScheduler() {
     syncInboxAndCalendar();
   });
 
-  console.log('[Scheduler] Proactive agent scheduler started (tasks: every 1m, sync check: every 30m)');
+  // Midnight cleanup — delete all completed tasks
+  cron.schedule('0 0 * * *', () => {
+    clearCompletedTasks();
+  });
+
+  console.log('[Scheduler] Proactive agent scheduler started (tasks: every 1m, sync check: every 30m, cleanup: midnight)');
 }
