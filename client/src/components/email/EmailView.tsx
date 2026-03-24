@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useEmails } from '@/hooks/useEmails';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -10,18 +8,132 @@ import {
   Mail,
   Send,
   Inbox,
-  ChevronDown,
+  ChevronRight,
   AlertCircle,
   MailOpen,
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, isToday, isYesterday } from 'date-fns';
 import type { Email } from '@/types';
+
+// --- Utilities ---
+
+const avatarPalette = [
+  'bg-blue-500/15 text-blue-400',
+  'bg-emerald-500/15 text-emerald-400',
+  'bg-violet-500/15 text-violet-400',
+  'bg-amber-500/15 text-amber-400',
+  'bg-rose-500/15 text-rose-400',
+  'bg-cyan-500/15 text-cyan-400',
+  'bg-fuchsia-500/15 text-fuchsia-400',
+  'bg-teal-500/15 text-teal-400',
+];
+
+function hashStr(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = s.charCodeAt(i) + ((h << 5) - h);
+  return Math.abs(h);
+}
+
+function parseSender(from: string): { name: string; email: string } {
+  const match = from.match(/^(.+?)\s*<(.+?)>$/);
+  if (match) return { name: match[1].trim(), email: match[2] };
+  return { name: from, email: from };
+}
+
+function getInitials(name: string): string {
+  return name
+    .replace(/<[^>]+>/g, '')
+    .split(/[\s@.]+/)
+    .filter((w) => w.length > 0)
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join('')
+    .toUpperCase();
+}
+
+function formatEmailDate(dateStr: string): string {
+  const date = new Date(dateStr);
+  if (isToday(date)) return format(date, 'h:mm a');
+  if (isYesterday(date)) return 'Yesterday';
+  if (date.getFullYear() === new Date().getFullYear()) return format(date, 'MMM d');
+  return format(date, 'MMM d, yyyy');
+}
+
+function renderLineUrls(line: string): React.ReactNode[] {
+  const urlRegex = /(https?:\/\/[^\s<>\[\](){}]+)/g;
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match;
+  let key = 0;
+
+  while ((match = urlRegex.exec(line)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(line.slice(lastIndex, match.index));
+    }
+    const url = match[1].replace(/[.,;:!?)]+$/, '');
+    let display: string;
+    try {
+      display = new URL(url).hostname.replace(/^www\./, '');
+    } catch {
+      display = url.length > 40 ? url.slice(0, 37) + '\u2026' : url;
+    }
+    parts.push(
+      <a
+        key={key++}
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={(e) => e.stopPropagation()}
+        className="text-blue-400 hover:text-blue-300 underline underline-offset-2 decoration-blue-400/30 hover:decoration-blue-300/60 transition-colors"
+      >
+        {display}
+      </a>,
+    );
+    lastIndex = match.index + match[0].length;
+  }
+
+  if (lastIndex < line.length) {
+    parts.push(line.slice(lastIndex));
+  }
+
+  return parts.length > 0 ? parts : [line];
+}
+
+function renderEmailBody(body: string) {
+  let text = body;
+  let isTruncated = false;
+  if (text.trimEnd().endsWith('[truncated]')) {
+    isTruncated = true;
+    text = text.trimEnd().slice(0, -11).trimEnd();
+  }
+
+  const lines = text.replace(/\n{3,}/g, '\n\n').split('\n');
+
+  return (
+    <>
+      {lines.map((line, i) =>
+        !line.trim() ? (
+          <div key={i} className="h-2.5" />
+        ) : (
+          <div key={i}>{renderLineUrls(line)}</div>
+        ),
+      )}
+      {isTruncated && (
+        <p className="mt-3 pt-3 border-t border-border/30 text-[11px] text-muted-foreground/60 italic">
+          Message truncated
+        </p>
+      )}
+    </>
+  );
+}
+
+// --- Components ---
 
 export function EmailView() {
   const [folder, setFolder] = useState<'inbox' | 'sent'>('inbox');
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -66,9 +178,19 @@ function EmailList({ folder }: { folder: 'inbox' | 'sent' }) {
 
   if (isLoading) {
     return (
-      <div className="space-y-3">
+      <div className="rounded-xl border border-border/50 bg-card overflow-hidden divide-y divide-border/20">
         {[1, 2, 3, 4, 5].map((i) => (
-          <Skeleton key={i} className="h-20 w-full rounded-lg" />
+          <div key={i} className="flex items-center gap-3.5 px-4 py-3.5">
+            <Skeleton className="h-9 w-9 rounded-full shrink-0" />
+            <div className="flex-1 space-y-2">
+              <div className="flex items-center justify-between">
+                <Skeleton className="h-3.5 w-36" />
+                <Skeleton className="h-3 w-12" />
+              </div>
+              <Skeleton className="h-3 w-3/4" />
+              <Skeleton className="h-2.5 w-1/2" />
+            </div>
+          </div>
         ))}
       </div>
     );
@@ -79,13 +201,13 @@ function EmailList({ folder }: { folder: 'inbox' | 'sent' }) {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="flex flex-col items-center justify-center py-16 text-center"
+        className="flex flex-col items-center justify-center py-20 text-center"
       >
-        <div className="w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center mb-4">
-          <AlertCircle className="w-8 h-8 text-amber-500" />
+        <div className="w-14 h-14 rounded-2xl bg-amber-500/10 flex items-center justify-center mb-4">
+          <AlertCircle className="w-7 h-7 text-amber-500" />
         </div>
-        <h3 className="text-lg font-semibold mb-1">Connect your email</h3>
-        <p className="text-sm text-muted-foreground max-w-sm">
+        <h3 className="text-base font-semibold mb-1">Connect your email</h3>
+        <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">
           Sign in with Google or Microsoft to view your emails here. Go to Settings to connect your account.
         </p>
       </motion.div>
@@ -97,12 +219,12 @@ function EmailList({ folder }: { folder: 'inbox' | 'sent' }) {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="flex flex-col items-center justify-center py-16 text-center"
+        className="flex flex-col items-center justify-center py-20 text-center"
       >
-        <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-          <MailOpen className="w-8 h-8 text-muted-foreground" />
+        <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mb-4">
+          <MailOpen className="w-7 h-7 text-muted-foreground" />
         </div>
-        <h3 className="text-lg font-semibold mb-1">No emails</h3>
+        <h3 className="text-base font-semibold mb-1">No emails</h3>
         <p className="text-sm text-muted-foreground">
           {folder === 'inbox' ? 'Your inbox is empty' : 'No sent emails found'}
         </p>
@@ -112,93 +234,141 @@ function EmailList({ folder }: { folder: 'inbox' | 'sent' }) {
 
   return (
     <ScrollArea className="h-[calc(100vh-16rem)]">
-      <div className="space-y-2 pr-4">
+      <div className="rounded-xl border border-border/50 bg-card overflow-hidden divide-y divide-border/20 mr-4">
         {emails.map((email, i) => (
-          <EmailCard key={email.id} email={email} index={i} />
+          <EmailRow key={email.id} email={email} index={i} />
         ))}
       </div>
     </ScrollArea>
   );
 }
 
-function EmailCard({ email, index }: { email: Email; index: number }) {
+function EmailRow({ email, index }: { email: Email; index: number }) {
   const [expanded, setExpanded] = useState(false);
+  const sender = parseSender(email.from);
+  const initials = getInitials(sender.name);
+  const colorClass = avatarPalette[hashStr(sender.name) % avatarPalette.length];
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.03 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ delay: index * 0.02 }}
+      className={expanded ? 'bg-muted/10' : ''}
     >
-      <Card
-        className={`cursor-pointer transition-all hover:shadow-md ${email.isUnread ? 'border-blue-500/30 bg-blue-500/5' : ''}`}
+      {/* Row */}
+      <div
+        role="button"
+        tabIndex={0}
         onClick={() => setExpanded(!expanded)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setExpanded(!expanded);
+          }
+        }}
+        className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors hover:bg-muted/30 ${
+          email.isUnread && !expanded ? 'bg-blue-500/[0.04]' : ''
+        }`}
       >
-        <CardContent className="p-3">
-          <div className="flex items-start gap-3">
-            <div className={`mt-1 w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${email.isUnread ? 'bg-blue-500/10' : 'bg-muted'}`}>
-              <Mail className={`w-4 h-4 ${email.isUnread ? 'text-blue-500' : 'text-muted-foreground'}`} />
-            </div>
+        {/* Unread indicator */}
+        <div className="w-2 flex items-center justify-center shrink-0">
+          {email.isUnread && <div className="w-2 h-2 rounded-full bg-blue-500" />}
+        </div>
 
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between gap-2">
-                <span className={`text-sm truncate ${email.isUnread ? 'font-semibold' : ''}`}>
-                  {email.from}
-                </span>
-                <div className="flex items-center gap-2 shrink-0">
-                  {email.isUnread && (
-                    <Badge className="text-[9px] px-1 py-0 bg-blue-500">New</Badge>
-                  )}
-                  <span className="text-[10px] text-muted-foreground">
-                    {email.date && format(new Date(email.date), 'MMM d')}
-                  </span>
-                  <ChevronDown
-                    className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${expanded ? 'rotate-180' : ''}`}
-                  />
-                </div>
-              </div>
+        {/* Sender avatar */}
+        <div
+          className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 text-[11px] font-semibold tracking-tight ${colorClass}`}
+        >
+          {initials || '?'}
+        </div>
 
-              <p className={`text-sm mt-0.5 truncate ${email.isUnread ? 'font-medium' : ''}`}>
-                {email.subject || '(no subject)'}
-              </p>
-
-              {!expanded && email.snippet && (
-                <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                  {email.snippet}
-                </p>
-              )}
-
-              <AnimatePresence>
-                {expanded && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="overflow-hidden"
-                  >
-                    <div className="mt-3 pt-3 border-t border-border/50">
-                      <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs mb-2">
-                        <span className="text-muted-foreground">From:</span>
-                        <span>{email.from}</span>
-                        <span className="text-muted-foreground">To:</span>
-                        <span className="truncate">{email.to}</span>
-                        <span className="text-muted-foreground">Date:</span>
-                        <span>{email.date && format(new Date(email.date), 'MMM d, yyyy h:mm a')}</span>
-                      </div>
-                      {email.body && (
-                        <div className="p-3 bg-muted/50 rounded-lg text-xs leading-relaxed whitespace-pre-wrap max-h-64 overflow-y-auto">
-                          {email.body}
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-baseline justify-between gap-3">
+            <span
+              className={`text-sm truncate ${
+                email.isUnread ? 'font-semibold text-foreground' : 'text-foreground/80'
+              }`}
+            >
+              {sender.name}
+            </span>
+            <span className="text-[11px] text-muted-foreground/60 shrink-0 tabular-nums">
+              {email.date ? formatEmailDate(email.date) : ''}
+            </span>
           </div>
-        </CardContent>
-      </Card>
+          <p
+            className={`text-[13px] truncate mt-0.5 ${
+              email.isUnread ? 'font-medium text-foreground/90' : 'text-foreground/60'
+            }`}
+          >
+            {email.subject || '(no subject)'}
+          </p>
+          {!expanded && email.snippet && (
+            <p className="text-xs text-muted-foreground/50 truncate mt-0.5 leading-relaxed">
+              {email.snippet}
+            </p>
+          )}
+        </div>
+
+        {/* Chevron */}
+        <ChevronRight
+          className={`w-4 h-4 text-muted-foreground/30 shrink-0 transition-transform duration-200 ${
+            expanded ? 'rotate-90' : ''
+          }`}
+        />
+      </div>
+
+      {/* Expanded reading pane */}
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="px-4 pb-4 pt-1">
+              <div className="rounded-lg border border-border/30 bg-background/60 overflow-hidden">
+                {/* Metadata header */}
+                <div className="px-4 py-3 border-b border-border/20 text-xs space-y-1">
+                  <div className="flex gap-2.5">
+                    <span className="text-muted-foreground/60 w-9 shrink-0 text-right">From</span>
+                    <span className="text-foreground/90 min-w-0">
+                      <span className="font-medium">{sender.name}</span>
+                      {sender.email !== sender.name && (
+                        <span className="text-muted-foreground/50 ml-1">
+                          &lt;{sender.email}&gt;
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                  <div className="flex gap-2.5">
+                    <span className="text-muted-foreground/60 w-9 shrink-0 text-right">To</span>
+                    <span className="text-foreground/90 truncate">{email.to}</span>
+                  </div>
+                  <div className="flex gap-2.5">
+                    <span className="text-muted-foreground/60 w-9 shrink-0 text-right">Date</span>
+                    <span className="text-foreground/90">
+                      {email.date
+                        ? format(new Date(email.date), "MMM d, yyyy 'at' h:mm a")
+                        : '\u2014'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Body */}
+                {email.body && (
+                  <div className="px-4 py-3.5 text-[13px] text-foreground/75 leading-relaxed max-h-80 overflow-y-auto">
+                    {renderEmailBody(email.body)}
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
