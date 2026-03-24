@@ -21,6 +21,7 @@ import { CategoryForm } from './CategoryForm';
 import { ChatPanel } from '@/components/chat/ChatPanel';
 import { TutorialModal } from '@/components/onboarding/TutorialModal';
 import { BriefingOnboarding } from '@/components/onboarding/BriefingOnboarding';
+import { BriefingModal } from '@/components/onboarding/BriefingModal';
 import {
   LogOut,
   Settings,
@@ -47,6 +48,7 @@ export function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [tutorialOpen, setTutorialOpen] = useState(false);
   const [briefingOnboardingOpen, setBriefingOnboardingOpen] = useState(false);
+  const [briefingModalOpen, setBriefingModalOpen] = useState(false);
 
   // Show tutorial for first-time users
   useEffect(() => {
@@ -71,6 +73,25 @@ export function AppLayout() {
       }
     }
   }
+
+  // Show morning briefing on first app open of the day (6am–9am in user's timezone)
+  useEffect(() => {
+    if (!profile || tutorialOpen || briefingOnboardingOpen) return;
+    if (!profile.briefing_topics || profile.briefing_topics.length === 0) return;
+
+    const tz = profile.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const now = new Date();
+    const userTime = new Date(now.toLocaleString('en-US', { timeZone: tz }));
+    const hour = userTime.getHours();
+    if (hour < 6 || hour > 9) return;
+
+    const todayKey = userTime.toDateString();
+    const lastShown = localStorage.getItem('taskpilot_briefing_last_shown');
+    if (lastShown === todayKey) return;
+
+    localStorage.setItem('taskpilot_briefing_last_shown', todayKey);
+    setBriefingModalOpen(true);
+  }, [profile, tutorialOpen, briefingOnboardingOpen]);
 
   // Request notification permission on first load
   useEffect(() => {
@@ -374,6 +395,12 @@ export function AppLayout() {
           await updateProfile({ briefing_topics: topics });
         }}
         onSkip={() => setBriefingOnboardingOpen(false)}
+      />
+
+      <BriefingModal
+        open={briefingModalOpen}
+        onOpenChange={setBriefingModalOpen}
+        onOpenChat={() => { setBriefingModalOpen(false); setChatOpen(true); }}
       />
     </div>
   );

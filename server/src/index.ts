@@ -8,6 +8,7 @@ import chatRoutes from './routes/chat';
 import activityRoutes from './routes/activity';
 import emailRoutes from './routes/emails';
 import calendarRoutes from './routes/calendar';
+import briefingRoutes from './routes/briefing';
 import { startScheduler } from './services/scheduler';
 
 dotenv.config();
@@ -36,6 +37,7 @@ async function start() {
   await app.register(activityRoutes, { prefix: '/api/activity' });
   await app.register(emailRoutes, { prefix: '/api/emails' });
   await app.register(calendarRoutes, { prefix: '/api/calendar' });
+  await app.register(briefingRoutes, { prefix: '/api/briefing' });
 
   // Start server
   await app.listen({ port: PORT, host: '0.0.0.0' });
