@@ -100,7 +100,7 @@ export function LoginPage() {
             <CardDescription>Sign in to your account or create a new one</CardDescription>
           </CardHeader>
           <CardContent>
-            {/* OAuth Buttons */}
+            {/* OAuth Buttons — set visible to true when provider is ready */}
             <div className="space-y-3">
               <Button
                 variant="outline"
@@ -116,6 +116,8 @@ export function LoginPage() {
                 <span className="ml-3">Continue with Google</span>
               </Button>
 
+              {/* Microsoft — change false to true when ready */}
+              {false && (
               <Button
                 variant="outline"
                 className="w-full h-11 justify-start px-4 relative opacity-60 cursor-not-allowed"
@@ -130,7 +132,10 @@ export function LoginPage() {
                 <span className="ml-3">Continue with Microsoft</span>
                 <span className="absolute right-3 text-[10px] font-medium text-muted-foreground">Coming Soon</span>
               </Button>
+              )}
 
+              {/* Yahoo — change false to true when ready */}
+              {false && (
               <Button
                 variant="outline"
                 className="w-full h-11 justify-start px-4 relative opacity-60 cursor-not-allowed"
@@ -142,7 +147,10 @@ export function LoginPage() {
                 <span className="ml-3">Continue with Yahoo</span>
                 <span className="absolute right-3 text-[10px] font-medium text-muted-foreground">Coming Soon</span>
               </Button>
+              )}
 
+              {/* Slack — change false to true when ready */}
+              {false && (
               <Button
                 variant="outline"
                 className="w-full h-11 justify-start px-4 relative opacity-60 cursor-not-allowed"
@@ -157,6 +165,7 @@ export function LoginPage() {
                 <span className="ml-3">Continue with Slack</span>
                 <span className="absolute right-3 text-[10px] font-medium text-muted-foreground">Coming Soon</span>
               </Button>
+              )}
             </div>
 
             <div className="relative my-6">
