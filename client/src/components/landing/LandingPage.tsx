@@ -107,22 +107,7 @@ export function LandingPage() {
       <header className="border-b border-border/50 bg-card/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-sm shadow-primary/20">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="w-5 h-5 text-primary-foreground"
-              >
-                <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                <path d="M2 17l10 5 10-5" />
-                <path d="M2 12l10 5 10-5" />
-              </svg>
-            </div>
+            <img src="/favicon.svg" alt="TaskPilot" className="w-8 h-8" />
             <span className="text-lg font-semibold tracking-tight">TaskPilot</span>
           </div>
 
@@ -443,22 +428,7 @@ export function LandingPage() {
       <footer className="border-t bg-muted/20">
         <div className="max-w-6xl mx-auto px-6 py-8 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="w-3.5 h-3.5 text-primary-foreground"
-              >
-                <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                <path d="M2 17l10 5 10-5" />
-                <path d="M2 12l10 5 10-5" />
-              </svg>
-            </div>
+            <img src="/favicon.svg" alt="TaskPilot" className="w-6 h-6" />
             <span className="text-sm font-semibold">TaskPilot</span>
           </div>
           <p className="text-xs text-muted-foreground">

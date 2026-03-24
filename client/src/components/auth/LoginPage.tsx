@@ -71,22 +71,7 @@ export function LoginPage() {
         {/* Logo / Branding */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-sm shadow-primary/20">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="w-6 h-6 text-primary-foreground"
-              >
-                <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                <path d="M2 17l10 5 10-5" />
-                <path d="M2 12l10 5 10-5" />
-              </svg>
-            </div>
+            <img src="/favicon.svg" alt="TaskPilot" className="w-10 h-10" />
             <h1 className="text-3xl font-bold text-foreground">TaskPilot</h1>
           </div>
           <p className="text-muted-foreground">

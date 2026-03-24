@@ -207,22 +207,7 @@ export function AppLayout() {
             >
               <Menu className="h-5 w-5" />
             </Button>
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-sm shadow-primary/20">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="w-5 h-5 text-primary-foreground"
-              >
-                <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                <path d="M2 17l10 5 10-5" />
-                <path d="M2 12l10 5 10-5" />
-              </svg>
-            </div>
+            <img src="/favicon.svg" alt="TaskPilot" className="w-8 h-8" />
             <span className="text-lg font-semibold tracking-tight">TaskPilot</span>
           </div>
 
