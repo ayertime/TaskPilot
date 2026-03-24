@@ -23,6 +23,7 @@ import {
   ArrowRight,
   RotateCcw,
   Sparkles,
+  Mail,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import type { Task, Category } from '@/types';
@@ -168,6 +169,14 @@ export function TaskCard({
               <p className="text-xs text-muted-foreground truncate mt-1">
                 {task.description}
               </p>
+            )}
+            {task.action_type === 'email' && task.action_metadata && (
+              <div className="flex items-center gap-1 mt-1.5 text-[10px] text-blue-500 dark:text-blue-400">
+                <Mail className="h-3 w-3 shrink-0" />
+                <span className="truncate">
+                  {(task.action_metadata as Record<string, string>).from || (task.action_metadata as Record<string, string>).to || 'Email'}
+                </span>
+              </div>
             )}
           </div>
 
