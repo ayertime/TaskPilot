@@ -16,6 +16,8 @@ import {
   Activity,
   ArrowRight,
   CheckCircle2,
+  Inbox,
+  Sunrise,
 } from 'lucide-react';
 
 const features = [
@@ -55,6 +57,20 @@ const features = [
     color: 'text-purple-500',
   },
   {
+    icon: Inbox,
+    title: 'Smart Inbox Scanner',
+    description:
+      'TaskPilot scans your emails for action items and auto-creates tasks — with smart reply drafts ready to send.',
+    color: 'text-cyan-500',
+  },
+  {
+    icon: Sunrise,
+    title: 'Morning Briefing',
+    description:
+      'Start your day with a personalized briefing — your tasks, calendar, overnight activity, and news topics you care about.',
+    color: 'text-amber-400',
+  },
+  {
     icon: Activity,
     title: 'Activity Log',
     description:
@@ -73,9 +89,12 @@ const capabilities = [
   'Analyze productivity patterns',
   'Suggest what to work on next',
   'Auto-execute scheduled tasks',
+  'Scan inbox for action items',
+  'Draft smart email replies',
+  'Personalized morning briefings',
+  'Auto-categorize tasks',
   'Export tasks as CSV or markdown',
   'Check weather for outdoor planning',
-  'Translate text between languages',
 ];
 
 export function LandingPage() {
@@ -287,7 +306,7 @@ export function LandingPage() {
             Everything you need, automated
           </h2>
           <p className="text-muted-foreground max-w-xl mx-auto">
-            26 AI-powered tools that turn your to-do list into a done list.
+            27 AI-powered tools that turn your to-do list into a done list.
           </p>
         </div>
 
@@ -320,7 +339,7 @@ export function LandingPage() {
       <section className="bg-gradient-to-b from-muted/30 to-transparent border-t">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-20">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-3">26 tools, one chat</h2>
+            <h2 className="text-3xl font-bold mb-3">27 tools, one chat</h2>
             <p className="text-muted-foreground max-w-xl mx-auto">
               Just tell TaskPilot what you need. It figures out which tools to use.
             </p>
