@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   Sparkles,
   Activity,
+  Inbox,
 } from 'lucide-react';
 
 export interface TutorialSlideData {
@@ -69,6 +70,15 @@ export const TUTORIAL_SLIDES: TutorialSlideData[] = [
     title: 'Email, Calendar & Activity',
     description:
       'View your inbox and sent emails, see calendar events alongside tasks with due dates, and track every agent action in real time.',
+  },
+  {
+    id: 'smart-inbox',
+    type: 'feature',
+    icon: Inbox,
+    iconColor: 'text-cyan-500',
+    title: 'Smart Inbox Scanner',
+    description:
+      'TaskPilot automatically scans your emails for action items and creates tasks on your board. Someone asks you for something? It becomes a To Do — with the sender and due date right on the card.',
   },
   {
     id: 'how-it-works',
