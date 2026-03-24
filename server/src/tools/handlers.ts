@@ -50,6 +50,8 @@ export async function executeTool(
       return handleGenerateDocument(input, ctx);
     case 'summarize_url':
       return handleSummarizeUrl(input);
+    case 'scan_emails_for_tasks':
+      return handleScanEmailsForTasks(input, ctx);
 
     // ── Scheduling & Reminders ─────────────────────────────────────
     case 'set_reminder':
@@ -543,6 +545,67 @@ async function handleSummarizeUrl(
       error: `Failed to fetch URL: ${err instanceof Error ? err.message : 'Unknown error'}`,
     });
   }
+}
+
+async function handleScanEmailsForTasks(
+  input: Record<string, unknown>,
+  ctx: ToolContext,
+): Promise<string> {
+  const result = await readEmails(ctx.userId, {
+    query: input.query as string | undefined,
+    maxResults: input.max_results as number | undefined,
+    unreadOnly: !input.query, // default to unread if no query specified
+  });
+
+  if (!result.success) {
+    return JSON.stringify(result);
+  }
+
+  if (!result.emails || result.emails.length === 0) {
+    return JSON.stringify({
+      success: true,
+      emails: [],
+      message: 'No emails found to scan. The inbox is clear of actionable items.',
+    });
+  }
+
+  // Log the scan activity
+  await supabaseAdmin.from('agent_activity').insert({
+    user_id: ctx.userId,
+    action_type: 'scan_emails',
+    description: `Scanned ${result.emails.length} email(s) for action items`,
+    result: `Found ${result.emails.length} emails to analyze`,
+    metadata: {
+      query: input.query || 'unread',
+      count: result.emails.length,
+    },
+  });
+
+  // Return emails with instructions for the agent to analyze and create tasks
+  return JSON.stringify({
+    success: true,
+    emails: result.emails.map((e) => ({
+      from: e.from,
+      subject: e.subject,
+      body: e.body,
+      date: e.date,
+      snippet: e.snippet,
+    })),
+    message: `Found ${result.emails.length} email(s). Analyze each email for action items — look for:
+- Requests or asks ("Can you...", "Please...", "Could you...")
+- Deadlines or due dates mentioned
+- Meeting requests or follow-ups needed
+- Deliverables or assignments
+
+For each action item found, use create_task to create a task with:
+- A clear title summarizing the action needed
+- The email context in the description (who sent it, what they need)
+- An appropriate priority (urgent if deadline is soon, high if from a boss/client, medium otherwise)
+- A due_date if one is mentioned or can be inferred
+- category_id if it fits an existing category
+
+Skip emails that are purely informational (newsletters, notifications, receipts) unless they require action. Tell the user what tasks you created and from which emails.`,
+  });
 }
 
 // ── Scheduling & Reminders Handlers ──────────────────────────────────

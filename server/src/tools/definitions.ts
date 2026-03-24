@@ -350,6 +350,27 @@ const summarize_url: Tool = {
   },
 };
 
+const scan_emails_for_tasks: Tool = {
+  name: 'scan_emails_for_tasks',
+  description:
+    'Scan the user\'s recent emails and identify action items that should become tasks. Reads emails, then you should analyze them and create tasks for any actionable items found. Use this when the user asks to turn emails into tasks or wants to catch up on action items from their inbox.',
+  input_schema: {
+    type: 'object' as const,
+    properties: {
+      query: {
+        type: 'string',
+        description:
+          'Gmail search query to filter emails (e.g. "is:important", "from:boss@company.com"). Leave empty for recent unread emails.',
+      },
+      max_results: {
+        type: 'number',
+        description: 'Number of emails to scan (default 10, max 20)',
+      },
+    },
+    required: [],
+  },
+};
+
 // ── Scheduling & Reminders (3) ───────────────────────────────────────
 
 const set_reminder: Tool = {
@@ -602,6 +623,7 @@ export const allTools: Tool[] = [
   web_search,
   generate_document,
   summarize_url,
+  scan_emails_for_tasks,
   // Scheduling & Reminders
   set_reminder,
   create_recurring_task,
