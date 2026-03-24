@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
+import { API_URL } from '@/lib/api';
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -27,7 +28,6 @@ export function useAuth() {
         if (event === 'SIGNED_IN' && session?.provider_token) {
           try {
             const token = session.access_token;
-            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
             await fetch(`${API_URL}/api/profile/oauth-tokens`, {
               method: 'POST',
               headers: {

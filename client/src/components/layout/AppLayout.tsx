@@ -25,7 +25,6 @@ import { BriefingModal } from '@/components/onboarding/BriefingModal';
 import {
   LogOut,
   Settings,
-  User,
   LayoutDashboard,
   Plus,
   X,
@@ -36,6 +35,38 @@ import {
   Calendar,
 } from 'lucide-react';
 import { toast } from 'sonner';
+
+function ClockDisplay({ timezone }: { timezone?: string }) {
+  const [currentTime, setCurrentTime] = useState(() => new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const tz = (() => {
+    try {
+      if (timezone) {
+        Intl.DateTimeFormat(undefined, { timeZone: timezone });
+        return timezone;
+      }
+    } catch { /* invalid timezone, fall back */ }
+    return undefined;
+  })();
+
+  const formattedTime = currentTime.toLocaleTimeString([], {
+    hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true, timeZone: tz,
+  });
+  const formattedDate = currentTime.toLocaleDateString([], {
+    weekday: 'short', month: 'short', day: 'numeric', timeZone: tz,
+  });
+
+  return (
+    <div className="hidden sm:flex flex-col items-end mr-1 text-right">
+      <span className="text-sm font-medium leading-none tabular-nums">{formattedTime}</span>
+      <span className="text-[11px] text-muted-foreground leading-tight">{formattedDate}</span>
+    </div>
+  );
+}
 
 export function AppLayout() {
   const { user, signOut } = useAuth();
@@ -115,37 +146,7 @@ export function AppLayout() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
-  // Live clock
-  const [currentTime, setCurrentTime] = useState(() => new Date());
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const timeZone = (() => {
-    try {
-      if (profile?.timezone) {
-        Intl.DateTimeFormat(undefined, { timeZone: profile.timezone });
-        return profile.timezone;
-      }
-    } catch { /* invalid timezone, fall back */ }
-    return undefined;
-  })();
-
-  const formattedTime = currentTime.toLocaleTimeString([], {
-    hour: 'numeric',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: true,
-    timeZone,
-  });
-
-  const formattedDate = currentTime.toLocaleDateString([], {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    timeZone,
-  });
+  // Clock state is in its own component to avoid re-rendering the whole layout every second
 
   const displayName =
     user?.user_metadata?.full_name || user?.email || 'User';
@@ -203,19 +204,17 @@ export function AppLayout() {
               variant="ghost"
               size="icon"
               className="md:hidden h-8 w-8"
+              aria-label="Toggle sidebar"
               onClick={() => setSidebarOpen((prev) => !prev)}
             >
               <Menu className="h-5 w-5" />
             </Button>
-            <img src="/favicon.svg" alt="TaskPilot" className="w-8 h-8" />
+            <img src="/favicon.svg" alt="" className="w-8 h-8" />
             <span className="text-lg font-semibold tracking-tight">TaskPilot</span>
           </div>
 
           <div className="flex items-center gap-2">
-          <div className="hidden sm:flex flex-col items-end mr-1 text-right">
-            <span className="text-sm font-medium leading-none tabular-nums">{formattedTime}</span>
-            <span className="text-[11px] text-muted-foreground leading-tight">{formattedDate}</span>
-          </div>
+          <ClockDisplay timezone={profile?.timezone} />
           <Button
             variant="outline"
             size="sm"
@@ -247,10 +246,6 @@ export function AppLayout() {
               </div>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => navigate('/settings')}>
-                <User className="mr-2 h-4 w-4" />
-                Profile
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate('/settings')}>
                 <Settings className="mr-2 h-4 w-4" />
                 Settings
               </DropdownMenuItem>
@@ -269,9 +264,10 @@ export function AppLayout() {
       <div className="flex h-[calc(100vh-3.5rem)] md:h-[calc(100vh-4rem)]">
         {/* Mobile sidebar overlay */}
         {sidebarOpen && (
-          <div
+          <button
             className="fixed inset-0 z-40 bg-black/50 md:hidden"
             onClick={() => setSidebarOpen(false)}
+            aria-label="Close sidebar"
           />
         )}
 
@@ -319,6 +315,7 @@ export function AppLayout() {
                 variant="ghost"
                 size="icon"
                 className="h-7 w-7"
+                aria-label="Add category"
                 onClick={() => setCategoryFormOpen(true)}
               >
                 <Plus className="h-4 w-4" />
@@ -338,6 +335,7 @@ export function AppLayout() {
                   <span className="truncate flex-1">{cat.name}</span>
                   <button
                     onClick={() => handleDeleteCategory(cat.id)}
+                    aria-label={`Delete category ${cat.name}`}
                     className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
                   >
                     <X className="h-3.5 w-3.5" />

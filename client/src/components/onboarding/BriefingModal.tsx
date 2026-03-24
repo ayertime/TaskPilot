@@ -8,10 +8,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Sunrise, X, MessageSquare } from 'lucide-react';
-import { apiFetch } from '@/lib/api';
+import { apiFetch, API_URL } from '@/lib/api';
 import { supabase } from '@/lib/supabase';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 interface BriefingModalProps {
   open: boolean;

@@ -63,7 +63,8 @@ export default async function chatRoutes(app: FastifyInstance) {
       .from('chat_messages')
       .select('*')
       .eq('user_id', userId)
-      .order('created_at', { ascending: true });
+      .order('created_at', { ascending: true })
+      .limit(100);
 
     if (error) throw error;
     return { messages: data || [] };

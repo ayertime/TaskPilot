@@ -1,9 +1,8 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { API_URL } from '@/lib/api';
 import type { ChatMessage } from '@/types';
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 interface ToolCall {
   name: string;

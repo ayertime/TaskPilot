@@ -116,40 +116,37 @@ export async function runAgent(options: AgentOptions): Promise<{
     return { assistantText: msg, toolCalls: [] };
   }
 
-  // Load user profile for system prompt
-  const { data: profile } = await supabaseAdmin
-    .from('profiles')
-    .select('display_name, full_name, timezone')
-    .eq('id', userId)
-    .single();
+  // Load profile, categories, and chat history in parallel
+  const [{ data: profile }, { data: categories }, { data: history }] = await Promise.all([
+    supabaseAdmin
+      .from('profiles')
+      .select('display_name, full_name, timezone')
+      .eq('id', userId)
+      .single(),
+    supabaseAdmin
+      .from('categories')
+      .select('id, name')
+      .eq('user_id', userId),
+    saveToHistory
+      ? supabaseAdmin
+          .from('chat_messages')
+          .select('role, content')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: true })
+          .limit(50)
+      : Promise.resolve({ data: null }),
+  ]);
 
   const displayName = profile?.display_name || profile?.full_name || 'User';
   const timezone = profile?.timezone || 'UTC';
 
-  // Load user's categories for auto-categorization
-  const { data: categories } = await supabaseAdmin
-    .from('categories')
-    .select('id, name')
-    .eq('user_id', userId);
-
-  // Build messages array (skip loading chat history for scheduler calls)
   const messages: Anthropic.MessageParam[] = [];
-
-  if (saveToHistory) {
-    const { data: history } = await supabaseAdmin
-      .from('chat_messages')
-      .select('role, content')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: true })
-      .limit(50);
-
-    if (history) {
-      for (const msg of history) {
-        messages.push({
-          role: msg.role as 'user' | 'assistant',
-          content: msg.content,
-        });
-      }
+  if (history) {
+    for (const msg of history) {
+      messages.push({
+        role: msg.role as 'user' | 'assistant',
+        content: msg.content,
+      });
     }
   }
 

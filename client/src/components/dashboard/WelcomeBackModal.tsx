@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import type { Task } from '@/types';
+import { priorityConfig } from '@/lib/priority';
 
 interface WelcomeBackModalProps {
   open: boolean;
@@ -32,13 +33,6 @@ const priorityOrder: Record<string, number> = {
   high: 1,
   medium: 2,
   low: 3,
-};
-
-const priorityColors: Record<string, string> = {
-  urgent: 'text-red-500',
-  high: 'text-orange-500',
-  medium: 'text-yellow-500',
-  low: 'text-blue-500',
 };
 
 export function WelcomeBackModal({
@@ -138,7 +132,7 @@ export function WelcomeBackModal({
                         Due {formatDistanceToNow(new Date(task.due_date!), { addSuffix: true })}
                       </p>
                     </div>
-                    <Badge variant="outline" className={`text-[10px] shrink-0 ml-2 ${priorityColors[task.priority]}`}>
+                    <Badge variant="outline" className={`text-[10px] shrink-0 ml-2 ${priorityConfig[task.priority].color}`}>
                       {task.priority}
                     </Badge>
                   </div>
@@ -197,7 +191,7 @@ export function WelcomeBackModal({
                     className="flex items-center justify-between rounded-lg border px-3 py-2"
                   >
                     <p className="text-sm font-medium truncate flex-1 min-w-0">{task.title}</p>
-                    <Badge variant="outline" className={`text-[10px] shrink-0 ml-2 ${priorityColors[task.priority]}`}>
+                    <Badge variant="outline" className={`text-[10px] shrink-0 ml-2 ${priorityConfig[task.priority].color}`}>
                       {task.priority}
                     </Badge>
                   </div>
@@ -225,7 +219,7 @@ export function WelcomeBackModal({
                         Due {formatDistanceToNow(new Date(task.due_date!), { addSuffix: true })}
                       </p>
                     </div>
-                    <Badge variant="outline" className={`text-[10px] shrink-0 ml-2 ${priorityColors[task.priority]}`}>
+                    <Badge variant="outline" className={`text-[10px] shrink-0 ml-2 ${priorityConfig[task.priority].color}`}>
                       {task.priority}
                     </Badge>
                   </div>

@@ -124,25 +124,10 @@ async function executeTask(task: {
       .eq('id', task.id);
   }
 
-  // Create a minimal Supabase client for the user context
-  const { createClient } = await import('@supabase/supabase-js');
-  const userClient = createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_ANON_KEY!,
-    {
-      global: {
-        headers: {
-          // Use service role for scheduler-initiated actions
-          Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
-        },
-      },
-    },
-  );
-
   // Run the agent to execute the task (don't save to chat history)
   await runAgent({
     userId: user_id,
-    userClient,
+    userClient: supabaseAdmin,
     userMessage: prompt,
     onEvent: () => {},
     saveToHistory: false,
@@ -311,8 +296,7 @@ async function syncInboxAndCalendar() {
       if (now - lastSync < interval) continue;
 
       try {
-        await syncUserEmails(profile.id);
-        await syncUserCalendar(profile.id);
+        await Promise.all([syncUserEmails(profile.id), syncUserCalendar(profile.id)]);
         lastSyncTimes.set(profile.id, now);
         console.log(`[Sync] Synced user ${profile.id} (interval: ${profile.sync_interval || '5h'})`);
       } catch (err) {
@@ -353,20 +337,6 @@ async function syncUserEmails(userId: string) {
   const newEmails = result.emails.filter((e) => !existingEmailIds.has(e.id));
   if (newEmails.length === 0) return;
 
-  // Use the agent to decide which emails need action and create tasks
-  const { createClient } = await import('@supabase/supabase-js');
-  const userClient = createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_ANON_KEY!,
-    {
-      global: {
-        headers: {
-          Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
-        },
-      },
-    },
-  );
-
   const emailSummaries = newEmails.map((e) =>
     `- From: ${e.from} | Subject: "${e.subject}" | Snippet: "${e.snippet}" | Gmail ID: ${e.id}`
   ).join('\n');
@@ -375,7 +345,7 @@ async function syncUserEmails(userId: string) {
 
   await runAgent({
     userId,
-    userClient,
+    userClient: supabaseAdmin,
     userMessage: prompt,
     onEvent: () => {},
     saveToHistory: false,
@@ -413,20 +383,6 @@ async function syncUserCalendar(userId: string) {
   const newEvents = result.events.filter((e) => !existingEventIds.has(e.id));
   if (newEvents.length === 0) return;
 
-  // Use the agent to create tasks from calendar events
-  const { createClient } = await import('@supabase/supabase-js');
-  const userClient = createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_ANON_KEY!,
-    {
-      global: {
-        headers: {
-          Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
-        },
-      },
-    },
-  );
-
   const eventSummaries = newEvents.map((e) =>
     `- "${e.title}" | Start: ${e.start} | End: ${e.end}${e.location ? ` | Location: ${e.location}` : ''}${e.attendees?.length ? ` | Attendees: ${e.attendees.join(', ')}` : ''} | GCal ID: ${e.id}`
   ).join('\n');
@@ -435,7 +391,7 @@ async function syncUserCalendar(userId: string) {
 
   await runAgent({
     userId,
-    userClient,
+    userClient: supabaseAdmin,
     userMessage: prompt,
     onEvent: () => {},
     saveToHistory: false,
@@ -465,31 +421,17 @@ async function generateMorningBriefings() {
       const hour = userTime.getHours();
       if (hour < 6 || hour > 10) continue;
 
-      const { createClient } = await import('@supabase/supabase-js');
-      const userClient = createClient(
-        process.env.SUPABASE_URL!,
-        process.env.SUPABASE_ANON_KEY!,
-        {
-          global: {
-            headers: {
-              Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
-            },
-          },
-        },
-      );
-
-      const topicNames = topics.join(', ');
       const prompt = `Good morning! Please generate my personalized morning briefing. Use the generate_morning_briefing tool — it will pull my pending tasks, today's calendar events, overnight agent activity, and my news topics. Then use web_search to get the latest news for each topic. Present everything in a clean, scannable format with my day at a glance first.`;
 
       try {
         await runAgent({
           userId: user.id,
-          userClient,
+          userClient: supabaseAdmin,
           userMessage: prompt,
           onEvent: () => {},
           saveToHistory: true, // Save so user sees it in chat
         });
-        console.log(`[Scheduler] Morning briefing sent for user ${user.id} (topics: ${topicNames})`);
+        console.log(`[Scheduler] Morning briefing sent for user ${user.id} (topics: ${topics.join(', ')})`);
       } catch (err) {
         console.error(`[Scheduler] Failed to generate briefing for user ${user.id}:`, err);
       }
@@ -504,17 +446,22 @@ async function generateMorningBriefings() {
  */
 async function clearCompletedTasks() {
   try {
+    // Delete tasks completed more than 7 days ago to avoid wiping fresh completions
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 7);
+
     const { error, count } = await supabaseAdmin
       .from('tasks')
       .delete()
-      .eq('status', 'done');
+      .eq('status', 'done')
+      .lte('updated_at', cutoff.toISOString());
 
     if (error) {
       console.error('[Scheduler] Failed to clear completed tasks:', error);
       return;
     }
     if (count && count > 0) {
-      console.log(`[Scheduler] Midnight cleanup: deleted ${count} completed tasks`);
+      console.log(`[Scheduler] Midnight cleanup: deleted ${count} completed tasks older than 7 days`);
     }
   } catch (err) {
     console.error('[Scheduler] Error in clearCompletedTasks:', err);

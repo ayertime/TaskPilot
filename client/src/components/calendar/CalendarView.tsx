@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { format, isToday, isTomorrow, isPast, differenceInMinutes } from 'date-fns';
 import type { CalendarEvent, Task } from '@/types';
+import { priorityConfig } from '@/lib/priority';
 
 // Unified item that can be either a calendar event or a task
 type CalendarItem =
@@ -121,12 +122,6 @@ function TaskCard({ task, index }: { task: Task; index: number }) {
   const dueDate = new Date(task.due_date!);
   const isOverdue = isPast(dueDate) && task.status !== 'done';
 
-  const priorityColor: Record<string, string> = {
-    urgent: 'bg-red-500',
-    high: 'bg-orange-500',
-    medium: 'bg-yellow-500',
-    low: 'bg-blue-500',
-  };
 
   return (
     <motion.div
@@ -146,7 +141,7 @@ function TaskCard({ task, index }: { task: Task; index: number }) {
             </div>
 
             {/* Color bar - uses priority color */}
-            <div className={`w-1 self-stretch rounded-full shrink-0 ${priorityColor[task.priority] || 'bg-primary'}`} />
+            <div className={`w-1 self-stretch rounded-full shrink-0 ${priorityConfig[task.priority].dot}`} />
 
             {/* Content */}
             <div className="flex-1 min-w-0">

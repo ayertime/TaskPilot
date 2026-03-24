@@ -45,7 +45,7 @@ function WelcomeSlide({ slide }: { slide: TutorialSlideData }) {
         transition={{ type: 'spring', stiffness: 200, damping: 12 }}
         className="mb-6"
       >
-        <img src="/favicon.svg" alt="TaskPilot" className="w-16 h-16" />
+        <img src="/favicon.svg" alt="" className="w-16 h-16" />
       </motion.div>
 
       <motion.h2

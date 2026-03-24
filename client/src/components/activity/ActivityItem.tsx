@@ -120,7 +120,10 @@ export function ActivityItem({ activity }: ActivityItemProps) {
     >
       <Card
         className={`transition-all ${hasDetails ? 'cursor-pointer hover:shadow-md' : 'hover:shadow-sm'} ${isStep ? 'opacity-70 border-dashed' : ''}`}
+        role={hasDetails ? 'button' : undefined}
+        tabIndex={hasDetails ? 0 : undefined}
         onClick={() => hasDetails && setExpanded(!expanded)}
+        onKeyDown={hasDetails ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpanded(!expanded); } } : undefined}
       >
         <CardContent className="p-3 flex items-start gap-3">
           <div

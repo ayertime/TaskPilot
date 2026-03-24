@@ -82,7 +82,7 @@ export function LoginPage() {
         {/* Logo / Branding */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-2 mb-2">
-            <img src="/favicon.svg" alt="TaskPilot" className="w-10 h-10" />
+            <img src="/favicon.svg" alt="" className="w-10 h-10" />
             <h1 className="text-3xl font-bold text-foreground">TaskPilot</h1>
           </div>
           <p className="text-muted-foreground">

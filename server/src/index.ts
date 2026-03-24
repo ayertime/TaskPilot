@@ -19,7 +19,7 @@ const PORT = Number(process.env.PORT) || 3001;
 async function start() {
   // CORS
   await app.register(cors, {
-    origin: true,
+    origin: process.env.CLIENT_URL || 'http://localhost:5173',
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   });

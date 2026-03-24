@@ -509,6 +509,24 @@ async function handleSummarizeUrl(
 ): Promise<string> {
   const url = input.url as string;
 
+  // Validate URL to prevent SSRF
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+      return JSON.stringify({ error: 'Only http and https URLs are supported' });
+    }
+    // Block private/internal IPs
+    const hostname = parsed.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0' ||
+        hostname.startsWith('10.') || hostname.startsWith('192.168.') || hostname.startsWith('169.254.') ||
+        hostname.startsWith('172.16.') || hostname.startsWith('172.17.') || hostname.startsWith('172.18.') ||
+        hostname.startsWith('172.19.') || hostname.startsWith('172.2') || hostname.startsWith('172.3')) {
+      return JSON.stringify({ error: 'Cannot fetch internal or private URLs' });
+    }
+  } catch {
+    return JSON.stringify({ error: 'Invalid URL' });
+  }
+
   try {
     const res = await fetch(url, {
       headers: { 'User-Agent': 'TaskPilot/1.0' },

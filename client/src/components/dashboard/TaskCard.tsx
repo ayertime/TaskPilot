@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import type { Task, Category } from '@/types';
+import { priorityConfig } from '@/lib/priority';
 
 function timeRemaining(dueDate: string, isDone: boolean, now: number): { text: string; color: string; blink: boolean; needsSeconds: boolean } | null {
   if (isDone) return null;
@@ -94,32 +95,6 @@ interface TaskCardProps {
   onStatusChange: (status: Task['status']) => void;
 }
 
-const priorityConfig: Record<
-  Task['priority'],
-  { border: string; label: string; color: string }
-> = {
-  low: {
-    border: 'border-l-blue-400',
-    label: 'Low',
-    color: 'text-blue-600 dark:text-blue-400',
-  },
-  medium: {
-    border: 'border-l-yellow-400',
-    label: 'Medium',
-    color: 'text-yellow-600 dark:text-yellow-400',
-  },
-  high: {
-    border: 'border-l-orange-500',
-    label: 'High',
-    color: 'text-orange-600 dark:text-orange-400',
-  },
-  urgent: {
-    border: 'border-l-red-500',
-    label: 'Urgent',
-    color: 'text-red-600 dark:text-red-400',
-  },
-};
-
 export function TaskCard({
   task,
   categories,
@@ -141,7 +116,8 @@ export function TaskCard({
     const interval = diff > 0 && diff <= 60000 ? 1000 : 30000;
     const timer = setInterval(() => setNow(Date.now()), interval);
     return () => clearInterval(timer);
-  }, [task.due_date, task.status, now]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [task.due_date, task.status]);
 
   const isOverdue =
     task.due_date && task.status !== 'done' && new Date(task.due_date).getTime() < now;
@@ -184,6 +160,7 @@ export function TaskCard({
             <DropdownMenuTrigger
               className="h-7 w-7 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity inline-flex items-center justify-center rounded-md hover:bg-accent"
               onClick={(e) => e.stopPropagation()}
+              aria-label="Task actions"
             >
               <MoreHorizontal className="h-4 w-4" />
             </DropdownMenuTrigger>

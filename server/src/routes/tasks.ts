@@ -204,15 +204,12 @@ export default async function taskRoutes(app: FastifyInstance) {
     try {
       const { id } = req.params as { id: string };
       const userId = (req as any).userId;
-      console.log('[DELETE] task id:', id, 'user:', userId);
 
-      const { error, status, statusText } = await supabaseAdmin
+      const { error } = await supabaseAdmin
         .from('tasks')
         .delete()
         .eq('id', id)
         .eq('user_id', userId);
-
-      console.log('[DELETE] supabase response:', { error, status, statusText });
 
       if (error) {
         reply.code(400).send({ error: error.message });

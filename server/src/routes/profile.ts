@@ -30,7 +30,7 @@ export default async function profileRoutes(app: FastifyInstance) {
       const supabase = createUserClient((req as any).accessToken!);
       const { data, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, display_name, full_name, custom_avatar_url, theme, accent_color, timezone, provider, sync_enabled, sync_interval, has_seen_tutorial, briefing_topics, created_at, updated_at')
         .eq('id', (req as any).userId!)
         .single();
 
@@ -68,13 +68,11 @@ export default async function profileRoutes(app: FastifyInstance) {
     try {
       const result = oauthTokensSchema.safeParse(req.body);
       if (!result.success) {
-        console.log('[OAuth] Invalid token data:', result.error.issues);
         reply.code(400).send({ error: 'Invalid token data' });
         return;
       }
 
       const userId = (req as any).userId as string;
-      console.log('[OAuth] Saving tokens for user:', userId, 'provider:', result.data.provider);
 
       const { error } = await supabaseAdmin
         .from('profiles')
@@ -86,12 +84,10 @@ export default async function profileRoutes(app: FastifyInstance) {
         .eq('id', userId);
 
       if (error) {
-        console.log('[OAuth] Supabase error:', error.message);
         reply.code(400).send({ error: error.message });
         return;
       }
 
-      console.log('[OAuth] Tokens saved successfully');
       return { success: true };
     } catch (err) {
       console.error('[OAuth] Exception:', err);

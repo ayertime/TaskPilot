@@ -44,6 +44,7 @@ export function TaskBoard() {
   const [detailTask, setDetailTask] = useState<Task | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const noop = useCallback(() => {}, []);
   const [localTasks, setLocalTasks] = useState<Task[]>([]);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -400,10 +401,10 @@ export function TaskBoard() {
               <TaskCard
                 task={activeTask}
                 categories={categories}
-                onEdit={() => {}}
-                onDelete={() => {}}
-                onComplete={() => {}}
-                onStatusChange={() => {}}
+                onEdit={noop}
+                onDelete={noop}
+                onComplete={noop}
+                onStatusChange={noop}
               />
             </div>
           )}

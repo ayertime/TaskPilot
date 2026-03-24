@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import type { Task, Category } from '@/types';
+import { priorityConfig } from '@/lib/priority';
 
 interface TaskDetailModalProps {
   open: boolean;
@@ -33,13 +34,6 @@ interface TaskDetailModalProps {
   onUpdate: (id: string, data: Partial<Task>) => void;
   onComplete: (id: string) => void;
 }
-
-const priorityColors: Record<Task['priority'], string> = {
-  low: 'text-blue-600 dark:text-blue-400',
-  medium: 'text-yellow-600 dark:text-yellow-400',
-  high: 'text-orange-600 dark:text-orange-400',
-  urgent: 'text-red-600 dark:text-red-400',
-};
 
 const statusLabels: Record<Task['status'], string> = {
   todo: 'To Do',
@@ -111,7 +105,7 @@ export function TaskDetailModal({
           <Badge variant="outline">{statusLabels[task.status]}</Badge>
           <Badge
             variant="outline"
-            className={priorityColors[task.priority]}
+            className={priorityConfig[task.priority].color}
           >
             {task.priority}
           </Badge>
@@ -314,7 +308,7 @@ export function TaskDetailModal({
                     </span>
                     <Badge
                       variant="outline"
-                      className={`text-[10px] ${priorityColors[sub.priority]}`}
+                      className={`text-[10px] ${priorityConfig[sub.priority].color}`}
                     >
                       {sub.priority}
                     </Badge>

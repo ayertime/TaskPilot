@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import type { Task, Category } from '@/types';
+import { priorityConfig } from '@/lib/priority';
 
 interface TaskListViewProps {
   tasks: Task[];
@@ -52,12 +53,19 @@ const priorityOrder: Record<string, number> = {
   low: 3,
 };
 
-const priorityDot: Record<string, string> = {
-  urgent: 'bg-red-500',
-  high: 'bg-orange-500',
-  medium: 'bg-yellow-400',
-  low: 'bg-blue-400',
-};
+
+function SortHeader({ field, label, className, sortField, onToggle }: { field: SortField; label: string; className?: string; sortField: SortField; onToggle: (field: SortField) => void }) {
+  const active = sortField === field;
+  return (
+    <button
+      onClick={() => onToggle(field)}
+      className={`flex items-center gap-1 text-[11px] uppercase tracking-wider font-semibold text-muted-foreground hover:text-foreground transition-colors ${className ?? ''}`}
+    >
+      {label}
+      <ArrowUpDown className={`h-3 w-3 ${active ? 'text-primary' : 'opacity-40'}`} />
+    </button>
+  );
+}
 
 const statusConfig: Record<Task['status'], { label: string; color: string }> = {
   todo: { label: 'To Do', color: 'text-blue-600 dark:text-blue-400' },
@@ -123,19 +131,6 @@ export function TaskListView({
     return grouped;
   }, [tasks, sortField, sortDir]);
 
-  function SortHeader({ field, label, className }: { field: SortField; label: string; className?: string }) {
-    const active = sortField === field;
-    return (
-      <button
-        onClick={() => toggleSort(field)}
-        className={`flex items-center gap-1 text-[11px] uppercase tracking-wider font-semibold text-muted-foreground hover:text-foreground transition-colors ${className ?? ''}`}
-      >
-        {label}
-        <ArrowUpDown className={`h-3 w-3 ${active ? 'text-primary' : 'opacity-40'}`} />
-      </button>
-    );
-  }
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -146,9 +141,9 @@ export function TaskListView({
       {/* Table header */}
       <div className="grid grid-cols-[auto_1fr_100px_110px_100px_36px] items-center gap-2 px-3 py-2 border-b border-border/40 bg-muted/30">
         <div className="w-5" />
-        <SortHeader field="title" label="Task" />
-        <SortHeader field="priority" label="Priority" />
-        <SortHeader field="due_date" label="Due Date" />
+        <SortHeader field="title" label="Task" sortField={sortField} onToggle={toggleSort} />
+        <SortHeader field="priority" label="Priority" sortField={sortField} onToggle={toggleSort} />
+        <SortHeader field="due_date" label="Due Date" sortField={sortField} onToggle={toggleSort} />
         <div className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground">Category</div>
         <div />
       </div>
@@ -198,7 +193,10 @@ export function TaskListView({
                 return (
                   <div
                     key={task.id}
+                    role="button"
+                    tabIndex={0}
                     onClick={() => onViewTask(task)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onViewTask(task); } }}
                     className={`grid grid-cols-[auto_1fr_100px_110px_100px_36px] items-center gap-2 px-3 py-2 border-b border-border/20 hover:bg-muted/30 transition-colors cursor-pointer group ${
                       task.status === 'done' ? 'opacity-60' : ''
                     }`}
@@ -247,7 +245,7 @@ export function TaskListView({
 
                     {/* Priority */}
                     <div className="flex items-center gap-1.5">
-                      <div className={`w-2 h-2 rounded-full ${priorityDot[task.priority]}`} />
+                      <div className={`w-2 h-2 rounded-full ${priorityConfig[task.priority].dot}`} />
                       <span className="text-xs text-muted-foreground capitalize">{task.priority}</span>
                     </div>
 
@@ -281,7 +279,7 @@ export function TaskListView({
                     {/* Actions */}
                     <div onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>
-                        <DropdownMenuTrigger className="h-7 w-7 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity inline-flex items-center justify-center rounded-md hover:bg-accent">
+                        <DropdownMenuTrigger className="h-7 w-7 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity inline-flex items-center justify-center rounded-md hover:bg-accent" aria-label="Task actions">
                           <MoreHorizontal className="h-4 w-4" />
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">

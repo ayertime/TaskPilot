@@ -156,6 +156,7 @@ export function TutorialModal({
               <button
                 key={i}
                 onClick={() => goTo(i)}
+                aria-label={`Go to slide ${i + 1}`}
                 className="relative p-0.5"
               >
                 <div

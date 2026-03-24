@@ -107,7 +107,7 @@ export function LandingPage() {
       <header className="border-b border-border/50 bg-card/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src="/favicon.svg" alt="TaskPilot" className="w-8 h-8" />
+            <img src="/favicon.svg" alt="" className="w-8 h-8" />
             <span className="text-lg font-semibold tracking-tight">TaskPilot</span>
           </div>
 
@@ -428,7 +428,7 @@ export function LandingPage() {
       <footer className="border-t bg-muted/20">
         <div className="max-w-6xl mx-auto px-6 py-8 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src="/favicon.svg" alt="TaskPilot" className="w-6 h-6" />
+            <img src="/favicon.svg" alt="" className="w-6 h-6" />
             <span className="text-sm font-semibold">TaskPilot</span>
           </div>
           <p className="text-xs text-muted-foreground">
