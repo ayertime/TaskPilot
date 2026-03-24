@@ -465,11 +465,11 @@ export function ProfileSettings() {
         </CardHeader>
         <CardContent>
           <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive" className="gap-2" disabled={deleting}>
-                <Trash2 className="h-4 w-4" />
-                {deleting ? 'Deleting...' : 'Delete Account'}
-              </Button>
+            <AlertDialogTrigger
+              render={<Button variant="destructive" className="gap-2" disabled={deleting} />}
+            >
+              <Trash2 className="h-4 w-4" />
+              {deleting ? 'Deleting...' : 'Delete Account'}
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
