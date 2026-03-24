@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -66,6 +67,16 @@ export function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4 relative">
       {/* Background gradient */}
       <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_center,var(--color-primary)/0.04,transparent_70%)] pointer-events-none" />
+
+      <Button
+        variant="ghost"
+        size="sm"
+        className="absolute top-4 left-4 gap-1.5 text-muted-foreground hover:text-foreground"
+        onClick={() => navigate('/')}
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back
+      </Button>
 
       <div className="relative w-full max-w-md">
         {/* Logo / Branding */}
