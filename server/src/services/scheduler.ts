@@ -479,7 +479,7 @@ async function generateMorningBriefings() {
       );
 
       const topicNames = topics.join(', ');
-      const prompt = `Good morning! Please generate my personalized morning briefing. Use the generate_morning_briefing tool to get my topics, then use web_search to find the latest news for each topic. Present everything in a clean, scannable format.`;
+      const prompt = `Good morning! Please generate my personalized morning briefing. Use the generate_morning_briefing tool — it will pull my pending tasks, today's calendar events, overnight agent activity, and my news topics. Then use web_search to get the latest news for each topic. Present everything in a clean, scannable format with my day at a glance first.`;
 
       try {
         await runAgent({

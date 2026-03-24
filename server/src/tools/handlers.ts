@@ -986,6 +986,57 @@ async function handleGenerateMorningBriefing(
     .map((t) => topicLabels[t] || t)
     .join(', ');
 
+  // Fetch pending tasks (To Do + In Progress)
+  const { data: pendingTasks } = await supabaseAdmin
+    .from('tasks')
+    .select('title, priority, due_date, status, category_id')
+    .eq('user_id', ctx.userId)
+    .in('status', ['todo', 'in_progress'])
+    .order('priority', { ascending: false })
+    .limit(15);
+
+  const taskSummary = pendingTasks && pendingTasks.length > 0
+    ? pendingTasks.map((t) =>
+        `- [${t.status === 'in_progress' ? 'In Progress' : 'To Do'}] ${t.title} (${t.priority}${t.due_date ? `, due ${t.due_date}` : ''})`
+      ).join('\n')
+    : 'No pending tasks — your board is clear!';
+
+  // Fetch today's calendar events
+  const now = new Date();
+  const endOfDay = new Date(now);
+  endOfDay.setHours(23, 59, 59, 999);
+
+  let calendarSummary = 'No calendar events today.';
+  try {
+    const calResult = await readCalendarEvents(ctx.userId, {
+      timeMin: now.toISOString(),
+      timeMax: endOfDay.toISOString(),
+      maxResults: 10,
+    });
+    if (calResult.success && calResult.events && calResult.events.length > 0) {
+      calendarSummary = calResult.events.map((e) =>
+        `- ${e.title} (${new Date(e.start).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} – ${new Date(e.end).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}${e.location ? `, ${e.location}` : ''})`
+      ).join('\n');
+    }
+  } catch {
+    calendarSummary = 'Could not load calendar (Google account may not be connected).';
+  }
+
+  // Fetch overnight agent activity (last 12 hours)
+  const twelveHoursAgo = new Date(now.getTime() - 12 * 60 * 60 * 1000).toISOString();
+  const { data: overnightActivity } = await supabaseAdmin
+    .from('agent_activity')
+    .select('action_type, description, created_at')
+    .eq('user_id', ctx.userId)
+    .gte('created_at', twelveHoursAgo)
+    .neq('action_type', 'morning_briefing')
+    .order('created_at', { ascending: false })
+    .limit(10);
+
+  const activitySummary = overnightActivity && overnightActivity.length > 0
+    ? overnightActivity.map((a) => `- ${a.description}`).join('\n')
+    : 'No overnight activity.';
+
   // Log the briefing generation
   await supabaseAdmin.from('agent_activity').insert({
     user_id: ctx.userId,
@@ -999,6 +1050,23 @@ async function handleGenerateMorningBriefing(
     topics: selectedTopics,
     user_name: profile?.display_name || 'there',
     timezone: profile?.timezone || 'UTC',
-    message: `Generate a personalized morning briefing for the user. Their selected topics are: ${selectedTopics}. Use web_search to find the latest information for each topic, then present a clean, scannable briefing with sections for each topic. Start with a friendly greeting using their name. Keep each section to 2-3 bullet points. End with a motivational note or productivity tip for the day.`,
+    pending_tasks: taskSummary,
+    todays_calendar: calendarSummary,
+    overnight_activity: activitySummary,
+    message: `Generate a personalized morning briefing for the user. Structure it as:
+
+1. **Good morning greeting** using their name
+2. **Your Day at a Glance** — summarize their pending tasks and today's calendar events (data provided below)
+3. **Overnight Activity** — if the agent did anything overnight (created tasks from emails, etc.), highlight what's new
+4. **News & Updates** — for each of their selected topics (${selectedTopics}), use web_search to find the latest info. Keep each topic to 2-3 bullet points.
+5. **Tip of the Day** — end with a motivational note or productivity tip
+
+PENDING TASKS:\n${taskSummary}
+
+TODAY'S CALENDAR:\n${calendarSummary}
+
+OVERNIGHT AGENT ACTIVITY:\n${activitySummary}
+
+Present everything in a clean, scannable format with headers and bullet points.`,
   });
 }
