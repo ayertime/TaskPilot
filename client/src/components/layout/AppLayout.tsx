@@ -20,6 +20,7 @@ import {
 import { CategoryForm } from './CategoryForm';
 import { ChatPanel } from '@/components/chat/ChatPanel';
 import { TutorialModal } from '@/components/onboarding/TutorialModal';
+import { BriefingOnboarding } from '@/components/onboarding/BriefingOnboarding';
 import {
   LogOut,
   Settings,
@@ -45,6 +46,7 @@ export function AppLayout() {
   const [chatOpen, setChatOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [tutorialOpen, setTutorialOpen] = useState(false);
+  const [briefingOnboardingOpen, setBriefingOnboardingOpen] = useState(false);
 
   // Show tutorial for first-time users
   useEffect(() => {
@@ -55,12 +57,18 @@ export function AppLayout() {
     }
   }, [profile]);
 
+  const isFirstTimeTutorial = !profile?.has_seen_tutorial && localStorage.getItem('taskpilot_tutorial_completed') !== '1';
+
   function handleTutorialDismiss(open: boolean) {
     setTutorialOpen(open);
     if (!open) {
       localStorage.setItem('taskpilot_tutorial_completed', '1');
       localStorage.setItem('taskpilot_last_active', String(Date.now()));
       updateProfile({ has_seen_tutorial: true });
+      // Show briefing onboarding only for first-time users (not re-watches from Settings)
+      if (isFirstTimeTutorial) {
+        setBriefingOnboardingOpen(true);
+      }
     }
   }
 
@@ -357,6 +365,15 @@ export function AppLayout() {
         open={tutorialOpen}
         onOpenChange={handleTutorialDismiss}
         onOpenChat={() => { handleTutorialDismiss(false); setChatOpen(true); }}
+      />
+
+      <BriefingOnboarding
+        open={briefingOnboardingOpen}
+        onComplete={async (topics) => {
+          setBriefingOnboardingOpen(false);
+          await updateProfile({ briefing_topics: topics });
+        }}
+        onSkip={() => setBriefingOnboardingOpen(false)}
       />
     </div>
   );
