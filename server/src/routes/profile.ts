@@ -30,7 +30,7 @@ export default async function profileRoutes(app: FastifyInstance) {
       const supabase = createUserClient((req as any).accessToken!);
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, display_name, full_name, custom_avatar_url, theme, accent_color, timezone, provider, sync_enabled, sync_interval, has_seen_tutorial, briefing_topics, created_at, updated_at')
+        .select('id, email, display_name, full_name, custom_avatar_url, theme, accent_color, timezone, provider, sync_enabled, sync_interval, has_seen_tutorial, briefing_topics, created_at, updated_at')
         .eq('id', (req as any).userId!)
         .single();
 
