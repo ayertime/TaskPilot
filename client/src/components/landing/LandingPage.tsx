@@ -20,6 +20,7 @@ import {
   Sunrise,
 } from 'lucide-react';
 
+// Toggle `visible` to show/hide features on the landing page
 const features = [
   {
     icon: Bot,
@@ -27,6 +28,7 @@ const features = [
     description:
       'Powered by Claude, your AI agent sends emails, creates calendar events, does research, and auto-completes tasks.',
     color: 'text-violet-500',
+    visible: true,
   },
   {
     icon: LayoutDashboard,
@@ -34,6 +36,7 @@ const features = [
     description:
       'Drag-and-drop tasks between To Do, In Progress, and Done columns with smooth animations.',
     color: 'text-blue-500',
+    visible: true,
   },
   {
     icon: Zap,
@@ -41,6 +44,7 @@ const features = [
     description:
       'Schedule tasks for automatic execution. TaskPilot will complete them even if you forget.',
     color: 'text-amber-500',
+    visible: true,
   },
   {
     icon: Mail,
@@ -48,6 +52,7 @@ const features = [
     description:
       'Send emails via Gmail or Outlook and create calendar events — all from a chat message.',
     color: 'text-emerald-500',
+    visible: true,
   },
   {
     icon: Search,
@@ -55,6 +60,7 @@ const features = [
     description:
       'Ask TaskPilot to research any topic. It searches the web, summarizes findings, and attaches them to tasks.',
     color: 'text-purple-500',
+    visible: true,
   },
   {
     icon: Inbox,
@@ -62,6 +68,7 @@ const features = [
     description:
       'TaskPilot scans your emails for action items and auto-creates tasks — with smart reply drafts ready to send.',
     color: 'text-cyan-500',
+    visible: true,
   },
   {
     icon: Sunrise,
@@ -69,6 +76,7 @@ const features = [
     description:
       'Start your day with a personalized briefing — your tasks, calendar, overnight activity, and news topics you care about.',
     color: 'text-amber-400',
+    visible: true,
   },
   {
     icon: Activity,
@@ -76,25 +84,27 @@ const features = [
     description:
       'See everything TaskPilot has done for you — emails sent, events created, tasks completed.',
     color: 'text-rose-500',
+    visible: true,
   },
 ];
 
+// Toggle `visible` to show/hide capabilities on the landing page
 const capabilities = [
-  'Create and manage tasks with AI',
-  'Send emails via Gmail or Microsoft',
-  'Create calendar events',
-  'Search the web for research',
-  'Generate documents and reports',
-  'Set reminders and recurring tasks',
-  'Analyze productivity patterns',
-  'Suggest what to work on next',
-  'Auto-execute scheduled tasks',
-  'Scan inbox for action items',
-  'Draft smart email replies',
-  'Personalized morning briefings',
-  'Auto-categorize tasks',
-  'Export tasks as CSV or markdown',
-  'Check weather for outdoor planning',
+  { label: 'Create and manage tasks with AI', visible: true },
+  { label: 'Send emails via Gmail or Microsoft', visible: true },
+  { label: 'Create calendar events', visible: true },
+  { label: 'Search the web for research', visible: true },
+  { label: 'Generate documents and reports', visible: true },
+  { label: 'Set reminders and recurring tasks', visible: true },
+  { label: 'Analyze productivity patterns', visible: true },
+  { label: 'Suggest what to work on next', visible: true },
+  { label: 'Auto-execute scheduled tasks', visible: true },
+  { label: 'Scan inbox for action items', visible: true },
+  { label: 'Draft smart email replies', visible: true },
+  { label: 'Personalized morning briefings', visible: true },
+  { label: 'Auto-categorize tasks', visible: true },
+  { label: 'Export tasks as CSV or markdown', visible: true },
+  { label: 'Check weather for outdoor planning', visible: true },
 ];
 
 export function LandingPage() {
@@ -306,12 +316,12 @@ export function LandingPage() {
             Everything you need, automated
           </h2>
           <p className="text-muted-foreground max-w-xl mx-auto">
-            27 AI-powered tools that turn your to-do list into a done list.
+            {capabilities.filter((c) => c.visible).length}+ AI-powered tools that turn your to-do list into a done list.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {features.map((feature, i) => (
+          {features.filter((f) => f.visible).map((feature, i) => (
             <motion.div
               key={feature.title}
               initial={{ opacity: 0, y: 20 }}
@@ -339,16 +349,16 @@ export function LandingPage() {
       <section className="bg-gradient-to-b from-muted/30 to-transparent border-t">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-20">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold mb-3">27 tools, one chat</h2>
+            <h2 className="text-3xl font-bold mb-3">{capabilities.filter((c) => c.visible).length}+ tools, one chat</h2>
             <p className="text-muted-foreground max-w-xl mx-auto">
               Just tell TaskPilot what you need. It figures out which tools to use.
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-w-3xl mx-auto">
-            {capabilities.map((cap, i) => (
+            {capabilities.filter((c) => c.visible).map((cap, i) => (
               <motion.div
-                key={cap}
+                key={cap.label}
                 initial={{ opacity: 0, x: -10 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true, amount: 0 }}
@@ -356,7 +366,7 @@ export function LandingPage() {
                 className="flex items-center gap-2"
               >
                 <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
-                <span className="text-sm">{cap}</span>
+                <span className="text-sm">{cap.label}</span>
               </motion.div>
             ))}
           </div>
