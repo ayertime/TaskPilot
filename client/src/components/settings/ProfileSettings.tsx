@@ -18,13 +18,24 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
-import { CheckCircle2, XCircle, Mail, CalendarDays, RefreshCw, PlayCircle, Bell, Sunrise } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { CheckCircle2, XCircle, Mail, CalendarDays, RefreshCw, PlayCircle, Bell, Sunrise, Trash2 } from 'lucide-react';
 import { isNotificationsEnabled, setNotificationsEnabled, requestNotificationPermission } from '@/lib/notifications';
 import { toast } from 'sonner';
 
 export function ProfileSettings() {
   const { profile, loading, updateProfile } = useProfile();
-  const { signInWithGoogle } = useAuth();
+  const { signInWithGoogle, signOut } = useAuth();
   const { onShowTutorial } = useOutletContext<{ onShowTutorial?: () => void }>();
   const [displayName, setDisplayName] = useState('');
   const [theme, setTheme] = useState('system');
@@ -40,6 +51,7 @@ export function ProfileSettings() {
   const [syncInterval, setSyncInterval] = useState('5h');
   const [notificationsOn, setNotificationsOn] = useState(() => isNotificationsEnabled());
   const [briefingTopics, setBriefingTopics] = useState<string[]>([]);
+  const [deleting, setDeleting] = useState(false);
 
   // Check OAuth connection status
   useEffect(() => {
@@ -441,6 +453,51 @@ export function ProfileSettings() {
               Watch Again
             </Button>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card className="border-red-500/30">
+        <CardHeader>
+          <CardTitle className="text-red-500">Danger Zone</CardTitle>
+          <CardDescription>
+            Permanently delete your account and all associated data. This action cannot be undone.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" className="gap-2" disabled={deleting}>
+                <Trash2 className="h-4 w-4" />
+                {deleting ? 'Deleting...' : 'Delete Account'}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently delete your account, all tasks, categories, chat history, and activity logs. This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-red-600 hover:bg-red-700"
+                  onClick={async () => {
+                    setDeleting(true);
+                    try {
+                      await apiFetch('/api/profile/account', { method: 'DELETE' });
+                      await signOut();
+                    } catch {
+                      toast.error('Failed to delete account');
+                      setDeleting(false);
+                    }
+                  }}
+                >
+                  Delete Account
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </CardContent>
       </Card>
 

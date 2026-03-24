@@ -95,6 +95,31 @@ export default async function profileRoutes(app: FastifyInstance) {
     }
   });
 
+  // DELETE /api/profile/account — Permanently delete user account and all data
+  app.delete('/account', async (req, reply) => {
+    const userId = (req as any).userId as string;
+    try {
+      // Delete child tables first (foreign key order)
+      await supabaseAdmin.from('chat_messages').delete().eq('user_id', userId);
+      await supabaseAdmin.from('agent_activity').delete().eq('user_id', userId);
+      await supabaseAdmin.from('tasks').delete().eq('user_id', userId);
+      await supabaseAdmin.from('categories').delete().eq('user_id', userId);
+      await supabaseAdmin.from('profiles').delete().eq('id', userId);
+
+      // Delete the auth user last
+      const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
+      if (error) {
+        reply.code(500).send({ error: 'Failed to delete auth account' });
+        return;
+      }
+
+      return { success: true };
+    } catch (err) {
+      console.error('[Account Delete] Error:', err);
+      reply.code(500).send({ error: 'Failed to delete account' });
+    }
+  });
+
   // PATCH /api/profile
   app.patch('/', async (req, reply) => {
     try {
