@@ -11,6 +11,7 @@ import {
   Sparkles,
   Activity,
   Inbox,
+  Sunrise,
 } from 'lucide-react';
 
 export interface TutorialSlideData {
@@ -79,6 +80,15 @@ export const TUTORIAL_SLIDES: TutorialSlideData[] = [
     title: 'Smart Inbox Scanner',
     description:
       'TaskPilot automatically scans your emails for action items and creates tasks on your board. Someone asks you for something? It becomes a To Do — with the sender and due date right on the card.',
+  },
+  {
+    id: 'morning-briefing',
+    type: 'feature',
+    icon: Sunrise,
+    iconColor: 'text-amber-400',
+    title: 'Personalized Morning Briefing',
+    description:
+      'Start your day with a custom briefing covering market news, sports, tech, weather, and more — tailored to your interests. It appears in your AI Chat every morning.',
   },
   {
     id: 'how-it-works',

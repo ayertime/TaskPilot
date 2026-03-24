@@ -12,6 +12,7 @@ export interface Profile {
   has_seen_tutorial: boolean;
   sync_enabled: boolean;
   sync_interval: string;
+  briefing_topics: string[];
   created_at: string;
   updated_at: string;
 }

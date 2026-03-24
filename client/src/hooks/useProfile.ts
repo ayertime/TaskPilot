@@ -20,6 +20,7 @@ export function useProfile() {
       has_seen_tutorial?: boolean;
       sync_enabled?: boolean;
       sync_interval?: string;
+      briefing_topics?: string[];
     }) =>
       apiFetch('/api/profile', {
         method: 'PATCH',

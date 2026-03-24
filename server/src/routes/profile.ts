@@ -12,6 +12,7 @@ const updateProfileSchema = z.object({
   sync_enabled: z.boolean().optional(),
   sync_interval: z.enum(['1h', '3h', '5h', '12h', '24h']).optional(),
   has_seen_tutorial: z.boolean().optional(),
+  briefing_topics: z.array(z.string()).optional(),
 });
 
 const oauthTokensSchema = z.object({

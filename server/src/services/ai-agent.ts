@@ -55,6 +55,7 @@ export type SSEEvent =
 function buildSystemPrompt(
   displayName: string,
   timezone: string,
+  categories: { id: string; name: string }[] = [],
 ): string {
   const now = new Date().toISOString();
   return `You are TaskPilot, an AI assistant that helps manage tasks AND takes real-world actions.
@@ -79,7 +80,9 @@ function buildSystemPrompt(
 - For translate_text, you handle the translation directly — the tool just provides the text.
 - For generate_document, first call the tool, then generate the content yourself and use update_task to save it.
 - For schedule_optimizer, focus_mode, suggest_tasks, estimate_time, and find_conflicts — the tool returns data for you to analyze and present insights.
+- For generate_morning_briefing, use the tool to get the user's topics, then use web_search for each topic to gather fresh news, and present a clean briefing with sections per topic.
 - Always be proactive: if the user mentions a deadline, suggest setting a reminder. If they mention a meeting, offer to create a calendar event.
+- When creating tasks, always try to assign a category_id if one fits. Available categories: ${categories.length > 0 ? categories.map((c) => `"${c.name}" (id: ${c.id})`).join(', ') : 'None yet — create one with create_category if appropriate.'}
 
 ## Content Policy
 You are strictly a task management and productivity assistant. You must refuse any request that falls outside this scope:
@@ -123,6 +126,12 @@ export async function runAgent(options: AgentOptions): Promise<{
   const displayName = profile?.display_name || profile?.full_name || 'User';
   const timezone = profile?.timezone || 'UTC';
 
+  // Load user's categories for auto-categorization
+  const { data: categories } = await supabaseAdmin
+    .from('categories')
+    .select('id, name')
+    .eq('user_id', userId);
+
   // Build messages array (skip loading chat history for scheduler calls)
   const messages: Anthropic.MessageParam[] = [];
 
@@ -155,7 +164,7 @@ export async function runAgent(options: AgentOptions): Promise<{
     });
   }
 
-  const systemPrompt = buildSystemPrompt(displayName, timezone);
+  const systemPrompt = buildSystemPrompt(displayName, timezone, categories || []);
   const allToolCalls: Array<{ name: string; input: Record<string, unknown>; result: string }> = [];
 
   // Tool-use loop

@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
-import { CheckCircle2, XCircle, Mail, CalendarDays, RefreshCw, PlayCircle, Bell } from 'lucide-react';
+import { CheckCircle2, XCircle, Mail, CalendarDays, RefreshCw, PlayCircle, Bell, Sunrise } from 'lucide-react';
 import { isNotificationsEnabled, setNotificationsEnabled, requestNotificationPermission } from '@/lib/notifications';
 import { toast } from 'sonner';
 
@@ -39,6 +39,7 @@ export function ProfileSettings() {
   const [syncEnabled, setSyncEnabled] = useState(false);
   const [syncInterval, setSyncInterval] = useState('5h');
   const [notificationsOn, setNotificationsOn] = useState(() => isNotificationsEnabled());
+  const [briefingTopics, setBriefingTopics] = useState<string[]>([]);
 
   // Check OAuth connection status
   useEffect(() => {
@@ -56,6 +57,7 @@ export function ProfileSettings() {
       setTimezone(profile.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone);
       setSyncEnabled(profile.sync_enabled ?? false);
       setSyncInterval(profile.sync_interval || '5h');
+      setBriefingTopics(profile.briefing_topics || []);
       applyTheme(profile.theme);
     }
   }, [profile]);
@@ -75,6 +77,7 @@ export function ProfileSettings() {
         timezone,
         sync_enabled: syncEnabled,
         sync_interval: syncInterval,
+        briefing_topics: briefingTopics,
       });
       applyAccentColor(accentColor);
       toast.success('Settings saved');
@@ -357,6 +360,65 @@ export function ProfileSettings() {
               }}
             />
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Morning Briefing</CardTitle>
+          <CardDescription>
+            Get a personalized daily briefing in AI Chat each morning. Pick your interests below.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="space-y-1.5">
+            <Label className="text-sm font-medium flex items-center gap-2">
+              <Sunrise className="h-4 w-4" />
+              Your interests
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              Select the topics you'd like in your morning briefing. The briefing is generated daily and appears in your AI Chat.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { id: 'market_news', label: 'Market & Finance' },
+              { id: 'world_news', label: 'World News' },
+              { id: 'tech', label: 'Tech & AI' },
+              { id: 'sports', label: 'Sports' },
+              { id: 'weather', label: 'Weather' },
+              { id: 'health', label: 'Health & Wellness' },
+              { id: 'science', label: 'Science' },
+              { id: 'entertainment', label: 'Entertainment' },
+            ].map((topic) => {
+              const isSelected = briefingTopics.includes(topic.id);
+              return (
+                <button
+                  key={topic.id}
+                  type="button"
+                  onClick={() =>
+                    setBriefingTopics((prev) =>
+                      isSelected
+                        ? prev.filter((t) => t !== topic.id)
+                        : [...prev, topic.id],
+                    )
+                  }
+                  className={`rounded-full px-3 py-1 text-xs font-medium border transition-colors ${
+                    isSelected
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-muted/50 text-muted-foreground border-border hover:border-primary/50'
+                  }`}
+                >
+                  {topic.label}
+                </button>
+              );
+            })}
+          </div>
+          {briefingTopics.length === 0 && (
+            <p className="text-xs text-amber-500">
+              Select at least one topic to receive morning briefings.
+            </p>
+          )}
         </CardContent>
       </Card>
 

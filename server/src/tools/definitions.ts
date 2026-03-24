@@ -604,6 +604,19 @@ const export_tasks: Tool = {
   },
 };
 
+// ── Briefing ─────────────────────────────────────────────────────────
+
+const generate_morning_briefing: Tool = {
+  name: 'generate_morning_briefing',
+  description:
+    'Generate a personalized morning briefing based on the user\'s selected interests (market news, sports, world news, tech, weather, etc.). Uses web_search under the hood to gather fresh information. The agent should present the briefing in a clean, scannable format.',
+  input_schema: {
+    type: 'object' as const,
+    properties: {},
+    required: [],
+  },
+};
+
 // ── Export ────────────────────────────────────────────────────────────
 
 export const allTools: Tool[] = [
@@ -640,4 +653,6 @@ export const allTools: Tool[] = [
   translate_text,
   check_weather,
   export_tasks,
+  // Briefing
+  generate_morning_briefing,
 ];

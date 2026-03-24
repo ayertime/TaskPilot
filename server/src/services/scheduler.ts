@@ -371,7 +371,7 @@ async function syncUserEmails(userId: string) {
     `- From: ${e.from} | Subject: "${e.subject}" | Snippet: "${e.snippet}" | Gmail ID: ${e.id}`
   ).join('\n');
 
-  const prompt = `You are reviewing the user's unread emails to find ones that need action. Here are the new unread emails:\n\n${emailSummaries}\n\nFor each email that clearly requires the user to take action (reply, follow up, complete a request, attend something, etc.), create a task using create_task with:\n- A clear title describing what needs to be done (e.g. "Reply to John about project deadline")\n- Priority based on urgency (urgent if time-sensitive, high if important, medium otherwise)\n- action_type: "email"\n- action_metadata: include the gmail_id, from, and subject fields\n\nDo NOT create tasks for newsletters, marketing emails, automated notifications, or informational emails that don't require action. Only create tasks for emails that genuinely need a human response or action. If none of the emails need action, simply say so.`;
+  const prompt = `You are reviewing the user's unread emails to find ones that need action. Here are the new unread emails:\n\n${emailSummaries}\n\nFor each email that clearly requires the user to take action (reply, follow up, complete a request, attend something, etc.), create a task using create_task with:\n- A clear title describing what needs to be done (e.g. "Reply to John about project deadline")\n- Priority based on urgency (urgent if time-sensitive, high if important, medium otherwise)\n- action_type: "email"\n- action_metadata: include the gmail_id, from, and subject fields\n- category_id if it fits an existing category\n\nAfter creating each task that requires a reply, use update_task to save a smart reply draft in the ai_result field. The draft should be a professional, helpful reply the user can review and send. Keep it concise and match the tone of the original email.\n\nDo NOT create tasks for newsletters, marketing emails, automated notifications, or informational emails that don't require action. Only create tasks for emails that genuinely need a human response or action. If none of the emails need action, simply say so.`;
 
   await runAgent({
     userId,
@@ -443,6 +443,63 @@ async function syncUserCalendar(userId: string) {
 }
 
 /**
+ * Generate morning briefings for users who have topics configured.
+ * Runs once at 7am UTC — the agent personalizes based on the user's timezone.
+ */
+async function generateMorningBriefings() {
+  try {
+    const { data: users } = await supabaseAdmin
+      .from('profiles')
+      .select('id, display_name, briefing_topics, timezone')
+      .not('briefing_topics', 'eq', '{}');
+
+    if (!users || users.length === 0) return;
+
+    for (const user of users) {
+      const topics = user.briefing_topics as string[];
+      if (!topics || topics.length === 0) continue;
+
+      // Check if it's roughly morning (6am-9am) in the user's timezone
+      const now = new Date();
+      const userTime = new Date(now.toLocaleString('en-US', { timeZone: user.timezone || 'UTC' }));
+      const hour = userTime.getHours();
+      if (hour < 6 || hour > 9) continue;
+
+      const { createClient } = await import('@supabase/supabase-js');
+      const userClient = createClient(
+        process.env.SUPABASE_URL!,
+        process.env.SUPABASE_ANON_KEY!,
+        {
+          global: {
+            headers: {
+              Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+            },
+          },
+        },
+      );
+
+      const topicNames = topics.join(', ');
+      const prompt = `Good morning! Please generate my personalized morning briefing. Use the generate_morning_briefing tool to get my topics, then use web_search to find the latest news for each topic. Present everything in a clean, scannable format.`;
+
+      try {
+        await runAgent({
+          userId: user.id,
+          userClient,
+          userMessage: prompt,
+          onEvent: () => {},
+          saveToHistory: true, // Save so user sees it in chat
+        });
+        console.log(`[Scheduler] Morning briefing sent for user ${user.id} (topics: ${topicNames})`);
+      } catch (err) {
+        console.error(`[Scheduler] Failed to generate briefing for user ${user.id}:`, err);
+      }
+    }
+  } catch (err) {
+    console.error('[Scheduler] Error in generateMorningBriefings:', err);
+  }
+}
+
+/**
  * Start the scheduler. Call this from server startup.
  */
 async function clearCompletedTasks() {
@@ -475,10 +532,15 @@ export function startScheduler() {
     syncInboxAndCalendar();
   });
 
+  // Morning briefings — run every hour, function checks if it's morning in each user's timezone
+  cron.schedule('0 * * * *', () => {
+    generateMorningBriefings();
+  });
+
   // Midnight cleanup — delete all completed tasks
   cron.schedule('0 0 * * *', () => {
     clearCompletedTasks();
   });
 
-  console.log('[Scheduler] Proactive agent scheduler started (tasks: every 1m, sync check: every 30m, cleanup: midnight)');
+  console.log('[Scheduler] Proactive agent scheduler started (tasks: every 1m, sync check: every 30m, briefings: hourly, cleanup: midnight)');
 }

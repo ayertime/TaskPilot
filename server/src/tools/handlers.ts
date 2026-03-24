@@ -84,6 +84,8 @@ export async function executeTool(
       return handleCheckWeather(input);
     case 'export_tasks':
       return handleExportTasks(input, ctx);
+    case 'generate_morning_briefing':
+      return handleGenerateMorningBriefing(ctx);
 
     default:
       return JSON.stringify({ error: `Unknown tool: ${toolName}` });
@@ -603,8 +605,12 @@ For each action item found, use create_task to create a task with:
 - An appropriate priority (urgent if deadline is soon, high if from a boss/client, medium otherwise)
 - A due_date if one is mentioned or can be inferred
 - category_id if it fits an existing category
+- action_type: "email"
+- action_metadata: include the from, and subject fields
 
-Skip emails that are purely informational (newsletters, notifications, receipts) unless they require action. Tell the user what tasks you created and from which emails.`,
+After creating each task that requires a reply, use update_task to save a smart reply draft in the ai_result field. The draft should be a professional, helpful reply the user can review and send. Keep it concise and match the tone of the original email.
+
+Skip emails that are purely informational (newsletters, notifications, receipts) unless they require action. Tell the user what tasks you created, from which emails, and mention that reply drafts are available.`,
   });
 }
 
@@ -941,5 +947,58 @@ async function handleExportTasks(
     content,
     task_count: rows.length,
     message: `Exported ${rows.length} tasks as ${format}. Present the content to the user.`,
+  });
+}
+
+// ── Morning Briefing Handler ──────────────────────────────────────────
+
+async function handleGenerateMorningBriefing(
+  ctx: ToolContext,
+): Promise<string> {
+  // Load user's briefing topics from profile
+  const { data: profile } = await supabaseAdmin
+    .from('profiles')
+    .select('briefing_topics, display_name, timezone')
+    .eq('id', ctx.userId)
+    .single();
+
+  const topics: string[] = profile?.briefing_topics || [];
+
+  if (topics.length === 0) {
+    return JSON.stringify({
+      success: false,
+      message: 'No briefing topics configured. Ask the user to pick their interests in Settings → Morning Briefing.',
+    });
+  }
+
+  const topicLabels: Record<string, string> = {
+    market_news: 'Market & Finance news (stocks, crypto, economy)',
+    world_news: 'World News headlines',
+    tech: 'Tech & AI news',
+    sports: 'Sports scores and headlines',
+    weather: 'Weather forecast',
+    health: 'Health & Wellness tips',
+    science: 'Science discoveries and news',
+    entertainment: 'Entertainment and pop culture news',
+  };
+
+  const selectedTopics = topics
+    .map((t) => topicLabels[t] || t)
+    .join(', ');
+
+  // Log the briefing generation
+  await supabaseAdmin.from('agent_activity').insert({
+    user_id: ctx.userId,
+    action_type: 'morning_briefing',
+    description: `Generating morning briefing with topics: ${topics.join(', ')}`,
+    result: 'in_progress',
+  });
+
+  return JSON.stringify({
+    success: true,
+    topics: selectedTopics,
+    user_name: profile?.display_name || 'there',
+    timezone: profile?.timezone || 'UTC',
+    message: `Generate a personalized morning briefing for the user. Their selected topics are: ${selectedTopics}. Use web_search to find the latest information for each topic, then present a clean, scannable briefing with sections for each topic. Start with a friendly greeting using their name. Keep each section to 2-3 bullet points. End with a motivational note or productivity tip for the day.`,
   });
 }
