@@ -83,7 +83,7 @@ export function AppLayout() {
     const now = new Date();
     const userTime = new Date(now.toLocaleString('en-US', { timeZone: tz }));
     const hour = userTime.getHours();
-    if (hour < 6 || hour > 9) return;
+    if (hour < 6 || hour > 10) return;
 
     const todayKey = userTime.toDateString();
     const lastShown = localStorage.getItem('taskpilot_briefing_last_shown');

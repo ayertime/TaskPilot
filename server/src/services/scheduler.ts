@@ -463,7 +463,7 @@ async function generateMorningBriefings() {
       const now = new Date();
       const userTime = new Date(now.toLocaleString('en-US', { timeZone: user.timezone || 'UTC' }));
       const hour = userTime.getHours();
-      if (hour < 6 || hour > 9) continue;
+      if (hour < 6 || hour > 10) continue;
 
       const { createClient } = await import('@supabase/supabase-js');
       const userClient = createClient(
