@@ -115,116 +115,268 @@ export function BriefingModal({ open, onOpenChange, onOpenChat }: BriefingModalP
     }
   }, [content]);
 
-  // Simple markdown-to-JSX: bold, headers, bullets
   function renderMarkdown(text: string) {
-    return text.split('\n').map((line, i) => {
-      // Headers
-      if (line.startsWith('### ')) {
-        return <h4 key={i} className="text-sm font-semibold mt-3 mb-1">{parseBold(line.slice(4))}</h4>;
-      }
-      if (line.startsWith('## ')) {
-        return <h3 key={i} className="text-base font-semibold mt-4 mb-1">{parseBold(line.slice(3))}</h3>;
-      }
+    const lines = text.split('\n');
+    const elements: React.ReactNode[] = [];
+    let i = 0;
+
+    while (i < lines.length) {
+      const line = lines[i];
+
+      // H1 headers — prominent section title
       if (line.startsWith('# ')) {
-        return <h2 key={i} className="text-lg font-bold mt-3 mb-1">{parseBold(line.slice(2))}</h2>;
-      }
-      // Bullets
-      if (line.startsWith('- ') || line.startsWith('* ')) {
-        return (
-          <div key={i} className="flex gap-2 ml-1 my-0.5">
-            <span className="text-primary mt-0.5 shrink-0">•</span>
-            <span>{parseBold(line.slice(2))}</span>
-          </div>
+        elements.push(
+          <h2 key={i} className="text-base font-bold tracking-tight mt-4 mb-2 text-foreground first:mt-0">
+            {parseBold(line.slice(2))}
+          </h2>,
         );
+        i++;
+        continue;
       }
-      // Empty lines
-      if (!line.trim()) return <div key={i} className="h-2" />;
+
+      // H2 headers — section dividers with accent bar
+      if (line.startsWith('## ')) {
+        elements.push(
+          <div key={i} className="flex items-center gap-2.5 mt-5 mb-2 first:mt-0">
+            <div className="w-[3px] h-4 rounded-full bg-gradient-to-b from-amber-400 to-orange-500" />
+            <h3 className="text-[13px] font-semibold uppercase tracking-widest text-foreground/70">
+              {parseBold(line.slice(3))}
+            </h3>
+          </div>,
+        );
+        i++;
+        continue;
+      }
+
+      // H3 headers — subsection
+      if (line.startsWith('### ')) {
+        elements.push(
+          <h4 key={i} className="text-sm font-semibold mt-3 mb-1 text-foreground/90">
+            {parseBold(line.slice(4))}
+          </h4>,
+        );
+        i++;
+        continue;
+      }
+
+      // Collect consecutive bullet items into a styled group
+      if (line.startsWith('- ') || line.startsWith('* ')) {
+        const bullets: string[] = [];
+        const startIdx = i;
+        while (i < lines.length && (lines[i].startsWith('- ') || lines[i].startsWith('* '))) {
+          bullets.push(lines[i].slice(2));
+          i++;
+        }
+        elements.push(
+          <div key={`bl-${startIdx}`} className="rounded-lg bg-muted/30 border border-border/30 px-3.5 py-2 my-2 space-y-1.5">
+            {bullets.map((bullet, j) => (
+              <div key={j} className="flex gap-2.5 items-start">
+                <div className="w-1.5 h-1.5 rounded-full bg-amber-500/70 mt-[7px] shrink-0" />
+                <span className="text-[13px] text-foreground/85 leading-relaxed">{parseBold(bullet)}</span>
+              </div>
+            ))}
+          </div>,
+        );
+        continue;
+      }
+
+      // Horizontal rule
+      if (line.trim() === '---' || line.trim() === '***') {
+        elements.push(
+          <div key={i} className="my-3 h-px bg-gradient-to-r from-transparent via-border to-transparent" />,
+        );
+        i++;
+        continue;
+      }
+
+      // Empty lines — compact spacer
+      if (!line.trim()) {
+        elements.push(<div key={i} className="h-1" />);
+        i++;
+        continue;
+      }
+
       // Regular text
-      return <p key={i} className="my-0.5">{parseBold(line)}</p>;
-    });
+      elements.push(
+        <p key={i} className="text-[13px] text-foreground/80 leading-relaxed my-0.5">
+          {parseBold(line)}
+        </p>,
+      );
+      i++;
+    }
+
+    return elements;
   }
 
   function parseBold(text: string): React.ReactNode {
     const parts = text.split(/\*\*(.*?)\*\*/g);
     return parts.map((part, i) =>
-      i % 2 === 1 ? <strong key={i}>{part}</strong> : part,
+      i % 2 === 1 ? <strong key={i} className="font-semibold text-foreground">{part}</strong> : part,
     );
   }
+
+  const dateStr = new Date().toLocaleDateString([], {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg p-0 overflow-hidden gap-0 max-h-[85vh]" showCloseButton={false}>
         <DialogTitle className="sr-only">Morning Briefing</DialogTitle>
 
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 pt-5 pb-3">
-          <div className="flex items-center gap-3">
-            <motion.div
-              initial={{ rotate: -20, opacity: 0 }}
-              animate={{ rotate: 0, opacity: 1 }}
-              transition={{ duration: 0.4 }}
-              className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-md shadow-amber-500/20"
-            >
-              <Sunrise className="h-5 w-5 text-white" />
-            </motion.div>
-            <div>
-              <h2 className="text-base font-semibold">Good Morning</h2>
-              <p className="text-xs text-muted-foreground">
-                {new Date().toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })}
-              </p>
+        {/* Header — warm gradient with texture */}
+        <div className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-amber-50 via-orange-50/80 to-amber-50/50 dark:from-amber-950/40 dark:via-orange-950/25 dark:to-amber-950/15" />
+          <div
+            className="absolute inset-0 opacity-[0.025] dark:opacity-[0.04]"
+            style={{
+              backgroundImage: 'radial-gradient(circle at 1px 1px, currentColor 0.5px, transparent 0)',
+              backgroundSize: '20px 20px',
+            }}
+          />
+
+          <div className="relative px-5 pt-5 pb-4">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3.5">
+                <motion.div
+                  initial={{ rotate: -30, scale: 0.8, opacity: 0 }}
+                  animate={{ rotate: 0, scale: 1, opacity: 1 }}
+                  transition={{ type: 'spring', stiffness: 200, damping: 12 }}
+                  className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/25"
+                >
+                  <Sunrise className="h-5 w-5 text-white" />
+                </motion.div>
+                <div>
+                  <motion.h2
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.1, duration: 0.3 }}
+                    className="text-lg font-semibold tracking-tight"
+                  >
+                    Good Morning
+                  </motion.h2>
+                  <motion.p
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.2, duration: 0.3 }}
+                    className="text-[13px] text-muted-foreground"
+                  >
+                    {dateStr}
+                  </motion.p>
+                </div>
+              </div>
+              <button
+                onClick={() => onOpenChange(false)}
+                aria-label="Close briefing"
+                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
           </div>
-          <button
-            onClick={() => onOpenChange(false)}
-            className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-          >
-            <X className="h-4 w-4" />
-          </button>
+
+          {/* Gradient fade into content */}
+          <div className="h-px bg-gradient-to-r from-transparent via-border/60 to-transparent" />
         </div>
 
         {/* Content */}
         <div
           ref={contentRef}
-          className="px-5 pb-2 overflow-y-auto max-h-[55vh] text-sm text-foreground/90 leading-relaxed"
+          className="px-5 py-3 overflow-y-auto max-h-[55vh] text-sm leading-relaxed"
         >
+          {/* Loading skeleton mimicking briefing structure */}
           {loading && (
-            <div className="space-y-3 py-2">
-              <Skeleton className="h-4 w-3/4" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-5/6" />
-              <Skeleton className="h-8 w-full mt-4" />
-              <Skeleton className="h-4 w-2/3" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-4/5" />
+            <div className="space-y-4 py-1">
+              <div>
+                <div className="flex items-center gap-2.5 mb-2.5">
+                  <Skeleton className="h-4 w-[3px] rounded-full" />
+                  <Skeleton className="h-3 w-20" />
+                </div>
+                <div className="rounded-lg border border-border/30 px-3.5 py-2.5 space-y-2">
+                  <Skeleton className="h-3 w-full" />
+                  <Skeleton className="h-3 w-4/5" />
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center gap-2.5 mb-2.5">
+                  <Skeleton className="h-4 w-[3px] rounded-full" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
+                <div className="rounded-lg border border-border/30 px-3.5 py-2.5 space-y-2">
+                  <div className="flex items-center gap-2.5">
+                    <Skeleton className="h-1.5 w-1.5 rounded-full shrink-0" />
+                    <Skeleton className="h-3 w-3/4" />
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <Skeleton className="h-1.5 w-1.5 rounded-full shrink-0" />
+                    <Skeleton className="h-3 w-5/6" />
+                  </div>
+                  <div className="flex items-center gap-2.5">
+                    <Skeleton className="h-1.5 w-1.5 rounded-full shrink-0" />
+                    <Skeleton className="h-3 w-2/3" />
+                  </div>
+                </div>
+              </div>
+              <div>
+                <div className="flex items-center gap-2.5 mb-2.5">
+                  <Skeleton className="h-4 w-[3px] rounded-full" />
+                  <Skeleton className="h-3 w-28" />
+                </div>
+                <div className="rounded-lg border border-border/30 px-3.5 py-2.5 space-y-2">
+                  <Skeleton className="h-3 w-full" />
+                  <Skeleton className="h-3 w-3/5" />
+                </div>
+              </div>
             </div>
           )}
 
-          {!loading && content && renderMarkdown(content)}
+          {/* Rendered briefing content */}
+          {!loading && content && (
+            <motion.div
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              {renderMarkdown(content)}
+            </motion.div>
+          )}
 
+          {/* Streaming indicator */}
           {generating && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground mt-3 mb-1">
-              <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-              Generating your briefing...
+            <div className="mt-4 mb-1 space-y-2">
+              <div className="h-px relative overflow-hidden rounded-full bg-border/30">
+                <motion.div
+                  className="absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-amber-500/60 to-transparent rounded-full"
+                  animate={{ left: ['-33%', '133%'] }}
+                  transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}
+                />
+              </div>
+              <p className="text-[11px] text-muted-foreground text-center tracking-wide">
+                Preparing your briefing...
+              </p>
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-5 py-3 border-t border-border/50">
+        <div className="flex items-center justify-between px-5 py-3 border-t border-border/40 bg-muted/15">
           <Button
             variant="ghost"
             size="sm"
-            className="text-xs text-muted-foreground gap-1.5"
+            className="text-xs text-muted-foreground gap-1.5 hover:text-foreground"
             onClick={() => {
               onOpenChange(false);
               onOpenChat?.();
             }}
           >
             <MessageSquare className="h-3.5 w-3.5" />
-            Open in Chat
+            Continue in Chat
           </Button>
           <Button
             size="sm"
+            className="px-5"
             onClick={() => onOpenChange(false)}
           >
             Got it
