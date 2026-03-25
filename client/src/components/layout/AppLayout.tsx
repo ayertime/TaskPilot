@@ -105,8 +105,9 @@ export function AppLayout() {
     }
   }
 
-  // Show morning briefing on first app open of the day (6am–9am in user's timezone)
+  // Morning briefing disabled to avoid API costs — re-enable by removing the early return
   useEffect(() => {
+    return;
     if (!profile || tutorialOpen || briefingOnboardingOpen) return;
     if (!profile.briefing_topics || profile.briefing_topics.length === 0) return;
 
