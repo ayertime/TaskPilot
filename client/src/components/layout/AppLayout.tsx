@@ -105,25 +105,24 @@ export function AppLayout() {
     }
   }
 
-  // Morning briefing disabled to avoid API costs — re-enable by removing the early return
-  useEffect(() => {
-    return;
-    if (!profile || tutorialOpen || briefingOnboardingOpen) return;
-    if (!profile.briefing_topics || profile.briefing_topics.length === 0) return;
-
-    const tz = profile.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
-    const now = new Date();
-    const userTime = new Date(now.toLocaleString('en-US', { timeZone: tz }));
-    const hour = userTime.getHours();
-    if (hour < 6 || hour > 10) return;
-
-    const todayKey = userTime.toDateString();
-    const lastShown = localStorage.getItem('taskpilot_briefing_last_shown');
-    if (lastShown === todayKey) return;
-
-    localStorage.setItem('taskpilot_briefing_last_shown', todayKey);
-    setBriefingModalOpen(true);
-  }, [profile, tutorialOpen, briefingOnboardingOpen]);
+  // Morning briefing disabled to avoid API costs — uncomment the body to re-enable
+  // useEffect(() => {
+  //   if (!profile || tutorialOpen || briefingOnboardingOpen) return;
+  //   if (!profile.briefing_topics || profile.briefing_topics.length === 0) return;
+  //
+  //   const tz = profile.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+  //   const now = new Date();
+  //   const userTime = new Date(now.toLocaleString('en-US', { timeZone: tz }));
+  //   const hour = userTime.getHours();
+  //   if (hour < 6 || hour > 10) return;
+  //
+  //   const todayKey = userTime.toDateString();
+  //   const lastShown = localStorage.getItem('taskpilot_briefing_last_shown');
+  //   if (lastShown === todayKey) return;
+  //
+  //   localStorage.setItem('taskpilot_briefing_last_shown', todayKey);
+  //   setBriefingModalOpen(true);
+  // }, [profile, tutorialOpen, briefingOnboardingOpen]);
 
   // Request notification permission on first load
   useEffect(() => {
