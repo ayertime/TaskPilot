@@ -127,7 +127,7 @@ function FeatureSlide({ slide }: { slide: TutorialSlideData }) {
           {...stagger(0.5)}
           className="flex gap-2 mt-5 w-full max-w-xs"
         >
-          {['To Do', 'In Progress', 'Done'].map((col, i) => (
+          {['Not Started', 'In Progress', 'Completed'].map((col, i) => (
             <div key={col} className="flex-1 rounded-lg bg-muted/30 border border-border/50 p-2">
               <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
                 {col}

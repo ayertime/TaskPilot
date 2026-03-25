@@ -633,7 +633,7 @@ function MobileTaskCard({ task, index }: { task: Task; index: number }) {
         </div>
         <div className="flex items-center gap-2 mt-1.5 text-xs text-muted-foreground">
           <span className={`${config.color} font-medium`}>{config.label}</span>
-          <span>{task.status === 'in_progress' ? 'In Progress' : 'To Do'}</span>
+          <span>{task.status === 'in_progress' ? 'In Progress' : 'Not Started'}</span>
         </div>
       </div>
     </motion.div>

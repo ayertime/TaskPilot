@@ -36,9 +36,9 @@ interface TaskDetailModalProps {
 }
 
 const statusLabels: Record<Task['status'], string> = {
-  todo: 'To Do',
+  todo: 'Not Started',
   in_progress: 'In Progress',
-  done: 'Done',
+  done: 'Completed',
 };
 
 export function TaskDetailModal({

@@ -127,9 +127,9 @@ export function TaskBoard() {
   );
 
   const columns: { id: Task['status']; title: string }[] = [
-    { id: 'todo', title: 'To Do' },
+    { id: 'todo', title: 'Not Started' },
     { id: 'in_progress', title: 'In Progress' },
-    { id: 'done', title: 'Done' },
+    { id: 'done', title: 'Completed' },
   ];
 
   const filteredTasks = useMemo(() => {

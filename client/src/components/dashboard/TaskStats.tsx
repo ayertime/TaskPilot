@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { CheckCircle2, Clock, AlertTriangle, ListTodo } from 'lucide-react';
+import { CheckCircle2, Clock, AlertTriangle, ListTodo, Circle } from 'lucide-react';
 import type { Task } from '@/types';
 
 interface TaskStatsProps {
@@ -64,6 +64,7 @@ export function TaskStats({ tasks }: TaskStatsProps) {
   const stats = useMemo(() => {
     return {
       total: tasks.length,
+      notStarted: tasks.filter((t) => t.status === 'todo').length,
       completed: tasks.filter((t) => t.status === 'done').length,
       overdue: tasks.filter(
         (t) => t.due_date && t.status !== 'done' && new Date(t.due_date) < now
@@ -73,7 +74,7 @@ export function TaskStats({ tasks }: TaskStatsProps) {
   }, [tasks, now]);
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+    <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
       <StatCard
         label="Total Tasks"
         value={stats.total}
@@ -83,12 +84,20 @@ export function TaskStats({ tasks }: TaskStatsProps) {
         delay={0}
       />
       <StatCard
+        label="Not Started"
+        value={stats.notStarted}
+        icon={Circle}
+        accentColor="text-slate-600 dark:text-slate-400"
+        gradient="bg-gradient-to-br from-card to-slate-500/[0.04] dark:to-slate-500/[0.06]"
+        delay={0.04}
+      />
+      <StatCard
         label="In Progress"
         value={stats.inProgress}
         icon={Clock}
         accentColor="text-amber-600 dark:text-amber-400"
         gradient="bg-gradient-to-br from-card to-amber-500/[0.04] dark:to-amber-500/[0.06]"
-        delay={0.05}
+        delay={0.08}
       />
       <StatCard
         label="Completed"
@@ -96,7 +105,7 @@ export function TaskStats({ tasks }: TaskStatsProps) {
         icon={CheckCircle2}
         accentColor="text-green-600 dark:text-green-400"
         gradient="bg-gradient-to-br from-card to-green-500/[0.04] dark:to-green-500/[0.06]"
-        delay={0.1}
+        delay={0.12}
       />
       <StatCard
         label="Overdue"
@@ -104,7 +113,7 @@ export function TaskStats({ tasks }: TaskStatsProps) {
         icon={AlertTriangle}
         accentColor="text-red-600 dark:text-red-400"
         gradient="bg-gradient-to-br from-card to-red-500/[0.04] dark:to-red-500/[0.06]"
-        delay={0.15}
+        delay={0.16}
         glow={stats.overdue > 0}
       />
     </div>

@@ -68,9 +68,9 @@ function SortHeader({ field, label, className, sortField, onToggle }: { field: S
 }
 
 const statusConfig: Record<Task['status'], { label: string; color: string }> = {
-  todo: { label: 'To Do', color: 'text-blue-600 dark:text-blue-400' },
+  todo: { label: 'Not Started', color: 'text-blue-600 dark:text-blue-400' },
   in_progress: { label: 'In Progress', color: 'text-amber-600 dark:text-amber-400' },
-  done: { label: 'Done', color: 'text-green-600 dark:text-green-400' },
+  done: { label: 'Completed', color: 'text-green-600 dark:text-green-400' },
 };
 
 const statusOrder: Task['status'][] = ['todo', 'in_progress', 'done'];

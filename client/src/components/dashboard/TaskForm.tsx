@@ -27,9 +27,9 @@ const priorityOptions = [
 ] as const;
 
 const statusOptions = [
-  { value: 'todo', label: 'To Do', icon: Circle },
+  { value: 'todo', label: 'Not Started', icon: Circle },
   { value: 'in_progress', label: 'In Progress', icon: Loader2 },
-  { value: 'done', label: 'Done', icon: CheckCircle2 },
+  { value: 'done', label: 'Completed', icon: CheckCircle2 },
 ] as const;
 
 const agentActions = [
