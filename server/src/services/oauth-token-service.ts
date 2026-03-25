@@ -1,4 +1,12 @@
 import { supabaseAdmin } from './supabase';
+import { encrypt, decrypt, isEncrypted } from './crypto';
+
+/**
+ * Decrypt a token value that may be plaintext (pre-migration) or encrypted.
+ */
+function decryptToken(value: string): string {
+  return isEncrypted(value) ? decrypt(value) : value;
+}
 
 /**
  * Get a valid OAuth access token for a user, refreshing if expired.
@@ -15,11 +23,13 @@ export async function getValidToken(
 
   if (!profile?.provider_token) return null;
 
+  const accessToken = decryptToken(profile.provider_token);
+
   // Try the existing token first with a lightweight API call
-  const isValid = await testToken(profile.provider, profile.provider_token);
+  const isValid = await testToken(profile.provider, accessToken);
 
   if (isValid) {
-    return { provider: profile.provider, accessToken: profile.provider_token };
+    return { provider: profile.provider, accessToken };
   }
 
   // Token expired — try to refresh
@@ -29,19 +39,20 @@ export async function getValidToken(
   }
 
   console.log('[OAuth] Token expired, refreshing for user:', userId);
-  const newToken = await refreshToken(profile.provider, profile.provider_refresh_token);
+  const refreshTokenValue = decryptToken(profile.provider_refresh_token);
+  const newToken = await refreshToken(profile.provider, refreshTokenValue);
 
   if (!newToken) {
     console.log('[OAuth] Token refresh failed for user:', userId);
     return null;
   }
 
-  // Save the new access token (and new refresh token if provided)
+  // Save the new access token (and new refresh token if provided) — encrypted
   const updateData: Record<string, string> = {
-    provider_token: newToken.accessToken,
+    provider_token: encrypt(newToken.accessToken),
   };
   if (newToken.refreshToken) {
-    updateData.provider_refresh_token = newToken.refreshToken;
+    updateData.provider_refresh_token = encrypt(newToken.refreshToken);
   }
 
   await supabaseAdmin

@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { authMiddleware } from '../middleware/auth';
 import { createUserClient, supabaseAdmin } from '../services/supabase';
+import { encrypt } from '../services/crypto';
 
 const updateProfileSchema = z.object({
   display_name: z.string().min(1).optional(),
@@ -79,8 +80,10 @@ export default async function profileRoutes(app: FastifyInstance) {
         .from('profiles')
         .update({
           provider: result.data.provider,
-          provider_token: result.data.provider_token,
-          provider_refresh_token: result.data.provider_refresh_token || null,
+          provider_token: encrypt(result.data.provider_token),
+          provider_refresh_token: result.data.provider_refresh_token
+            ? encrypt(result.data.provider_refresh_token)
+            : null,
         })
         .eq('id', userId);
 
