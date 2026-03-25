@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useOutletContext } from 'react-router';
 import { motion } from 'motion/react';
 import { useCalendarEvents } from '@/hooks/useCalendarEvents';
@@ -32,8 +32,6 @@ import {
   subWeeks,
   addDays,
   isSameDay,
-  getHours,
-  getMinutes,
   startOfDay,
   endOfDay,
 } from 'date-fns';
@@ -44,16 +42,6 @@ interface AppContext {
   categories: Category[];
   onOpenChat?: (prompt?: string) => void;
 }
-
-// --- Constants ---
-
-const HOUR_HEIGHT = 56;
-const START_HOUR = 0;
-const END_HOUR = 24;
-const WORK_START = 8;
-const WORK_END = 18;
-const HOURS = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i);
-const GRID_HEIGHT = HOURS.length * HOUR_HEIGHT;
 
 type CalendarItem =
   | { type: 'event'; data: CalendarEvent }
@@ -79,23 +67,6 @@ function getItemDate(item: CalendarItem): Date {
   if (item.type === 'event') return new Date(item.data.start);
   if (item.type === 'task') return new Date((item.data as Task).due_date!);
   return new Date((item.data as Email).date);
-}
-
-function getTopOffset(date: Date): number {
-  const totalMinutes = Math.max(getHours(date) * 60 + getMinutes(date), START_HOUR * 60);
-  return ((totalMinutes - START_HOUR * 60) / 60) * HOUR_HEIGHT;
-}
-
-function getBlockHeight(start: Date, end: Date): number {
-  const s = Math.max(getHours(start) * 60 + getMinutes(start), START_HOUR * 60);
-  const e = Math.min(getHours(end) * 60 + getMinutes(end), END_HOUR * 60);
-  return Math.max(((e - s) / 60) * HOUR_HEIGHT, 22);
-}
-
-function formatHour(hour: number): string {
-  if (hour === 0 || hour === 24) return '12 AM';
-  if (hour === 12) return '12 PM';
-  return hour < 12 ? `${hour} AM` : `${hour - 12} PM`;
 }
 
 // --- Main Component ---
@@ -230,14 +201,16 @@ export function CalendarView() {
 
       {/* Loading skeleton */}
       {isLoading && (
-        <div className="rounded-lg border border-border/50 overflow-hidden">
-          <div className="flex border-b border-border/30">
-            <div className="w-[52px] shrink-0" />
-            {Array.from({ length: 7 }, (_, i) => (
-              <Skeleton key={i} className="flex-1 h-14 border-l border-border/10 first:border-l-0" />
-            ))}
-          </div>
-          <Skeleton className="h-[500px] w-full" />
+        <div className="hidden md:grid grid-cols-7 gap-1.5" style={{ height: 'calc(100vh - 11rem)' }}>
+          {Array.from({ length: 7 }, (_, i) => (
+            <div key={i} className="rounded-lg border border-border/30 overflow-hidden">
+              <Skeleton className="h-20 w-full" />
+              <div className="p-1.5 space-y-1.5">
+                <Skeleton className="h-12 w-full rounded-md" />
+                <Skeleton className="h-12 w-full rounded-md" />
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
@@ -303,7 +276,7 @@ function EmptyState({ error, onOpenChat }: { error: unknown; onOpenChat?: (promp
   );
 }
 
-// --- Desktop Grid ---
+// --- Desktop Day Columns ---
 
 function WeekGrid({
   weekDays,
@@ -312,202 +285,89 @@ function WeekGrid({
   weekDays: Date[];
   itemsByDay: CalendarItem[][];
 }) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  const { emailsByDay, scheduleByDay } = useMemo(() => {
-    const emails: CalendarItem[][] = Array.from({ length: 7 }, () => []);
-    const schedule: CalendarItem[][] = Array.from({ length: 7 }, () => []);
-    for (let i = 0; i < 7; i++) {
-      for (const item of itemsByDay[i]) {
-        if (item.type === 'email') emails[i].push(item);
-        else schedule[i].push(item);
-      }
-    }
-    return { emailsByDay: emails, scheduleByDay: schedule };
-  }, [itemsByDay]);
-
-  const hasAnyEmails = emailsByDay.some((day) => day.length > 0);
-
-  useEffect(() => {
-    if (!scrollRef.current) return;
-    const hour = getHours(new Date());
-    const target = Math.max(START_HOUR, hour - 1);
-    scrollRef.current.scrollTop = (target - START_HOUR) * HOUR_HEIGHT;
-  }, []);
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.08 }}
-      className="rounded-lg border border-border/60 bg-card/50 overflow-hidden"
+      className="grid grid-cols-7 gap-1.5"
+      style={{ height: 'calc(100vh - 11rem)' }}
     >
-      {/* Day header row */}
-      <div className="flex border-b border-border/40 bg-muted/30">
-        <div className="w-[52px] shrink-0" />
-        {weekDays.map((day, i) => {
-          const today = isToday(day);
-          return (
-            <div
-              key={i}
-              className={`flex-1 py-2 text-center border-l border-border/20 first:border-l-0 ${
-                today ? 'bg-primary/[0.06]' : ''
-              }`}
-            >
-              <p
-                className={`text-[10px] font-semibold uppercase tracking-widest ${
-                  today ? 'text-primary' : 'text-muted-foreground/60'
-                }`}
-              >
-                {format(day, 'EEE')}
-              </p>
-              <div className="mt-0.5 inline-flex items-center justify-center">
-                {today ? (
-                  <span className="w-7 h-7 rounded-full bg-primary text-primary-foreground text-xs font-bold inline-flex items-center justify-center">
-                    {format(day, 'd')}
-                  </span>
-                ) : (
-                  <span className="text-sm font-medium text-foreground/60">
-                    {format(day, 'd')}
-                  </span>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* All-day email row */}
-      {hasAnyEmails && (
-        <div className="flex border-b border-border/30">
-          <div className="w-[52px] shrink-0 border-r border-border/20 flex items-start justify-end pr-1.5 pt-1">
-            <span className="text-[9px] font-semibold text-muted-foreground/40 uppercase tracking-wider">Mail</span>
-          </div>
-          {weekDays.map((_day, i) => {
-            const dayEmails = emailsByDay[i];
-            return (
-              <div
-                key={i}
-                className="flex-1 border-l border-border/20 first:border-l-0 py-0.5 px-0.5 space-y-px"
-              >
-                {dayEmails.slice(0, 3).map((item) => {
-                  const email = item.data as Email;
-                  const sender = getEmailSender(email.from);
-                  const replied = !!email.hasReplied;
-                  const subject = email.subject || '(no subject)';
-                  return (
-                    <div
-                      key={email.id}
-                      className={`rounded-sm px-1 py-px text-[9px] font-medium truncate flex items-center gap-1 leading-tight ${
-                        replied
-                          ? 'text-muted-foreground/30 line-through'
-                          : 'bg-amber-500/12 text-amber-300/80 hover:bg-amber-500/20'
-                      }`}
-                      title={`${replied ? 'Replied' : 'Needs reply'}: ${sender} — ${subject}`}
-                    >
-                      <Mail className={`w-2 h-2 shrink-0 ${replied ? 'text-muted-foreground/20' : 'text-amber-500/60'}`} />
-                      <span className="truncate">{sender} — {subject}</span>
-                      {replied && <Check className="w-2 h-2 text-emerald-500/50 shrink-0 ml-auto" />}
-                    </div>
-                  );
-                })}
-                {dayEmails.length > 3 && (
-                  <p className="text-[8px] text-muted-foreground/30 pl-1">+{dayEmails.length - 3} more</p>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Scrollable time grid */}
-      <div ref={scrollRef} className="overflow-y-auto relative" style={{ height: 'calc(100vh - 12rem)' }}>
-        <div className="flex relative" style={{ height: `${GRID_HEIGHT}px` }}>
-          {/* Time gutter */}
-          <div className="w-[52px] shrink-0 relative border-r border-border/20">
-            {HOURS.map((hour) => (
-              <div
-                key={hour}
-                className="absolute right-2 -translate-y-1/2 select-none"
-                style={{ top: `${(hour - START_HOUR) * HOUR_HEIGHT}px` }}
-              >
-                <span className="text-[10px] font-medium text-muted-foreground/50 tabular-nums">
-                  {formatHour(hour)}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          {/* Day columns area */}
-          <div className="flex-1 relative">
-            {/* Work-hours background band */}
-            <div
-              className="absolute inset-x-0 bg-muted/[0.04]"
-              style={{
-                top: `${(WORK_START - START_HOUR) * HOUR_HEIGHT}px`,
-                height: `${(WORK_END - WORK_START) * HOUR_HEIGHT}px`,
-              }}
-            />
-
-            {/* Hour grid lines */}
-            {HOURS.map((hour) => (
-              <div
-                key={`h-${hour}`}
-                className="absolute inset-x-0 border-t border-border/[0.12]"
-                style={{ top: `${(hour - START_HOUR) * HOUR_HEIGHT}px` }}
-              />
-            ))}
-
-            {/* Half-hour grid lines */}
-            {HOURS.map((hour) => (
-              <div
-                key={`hh-${hour}`}
-                className="absolute inset-x-0 border-t border-border/[0.06] border-dashed"
-                style={{ top: `${(hour - START_HOUR) * HOUR_HEIGHT + HOUR_HEIGHT / 2}px` }}
-              />
-            ))}
-
-            {/* Day columns */}
-            <div className="absolute inset-0 grid grid-cols-7">
-              {weekDays.map((day, dayIndex) => {
-                const today = isToday(day);
-                return (
-                  <div
-                    key={dayIndex}
-                    className={`relative border-l border-border/20 first:border-l-0 group/col ${
-                      today ? 'bg-primary/[0.02]' : ''
-                    }`}
-                  >
-                    {/* Column hover highlight */}
-                    <div className="absolute inset-0 bg-muted/[0.03] opacity-0 group-hover/col:opacity-100 transition-opacity pointer-events-none" />
-
-                    {scheduleByDay[dayIndex].map((item) =>
-                      item.type === 'event' ? (
-                        <GridEventBlock key={item.data.id} event={item.data} />
-                      ) : (
-                        <GridTaskBlock key={item.data.id} task={item.data as Task} />
-                      ),
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Now indicator */}
-            <NowIndicator weekDays={weekDays} />
-          </div>
-        </div>
-
-      </div>
+      {weekDays.map((day, i) => (
+        <DayColumn key={i} day={day} items={itemsByDay[i]} />
+      ))}
     </motion.div>
   );
 }
 
-function GridEventBlock({ event }: { event: CalendarEvent }) {
+function DayColumn({ day, items }: { day: Date; items: CalendarItem[] }) {
+  const today = isToday(day);
+  const past = isPast(endOfDay(day)) && !today;
+
+  return (
+    <div
+      className={`rounded-lg border flex flex-col overflow-hidden transition-colors ${
+        today
+          ? 'border-primary/50 bg-primary/[0.04] shadow-sm shadow-primary/10'
+          : past
+            ? 'border-border/25 bg-card/15'
+            : 'border-border/40 bg-card/40'
+      }`}
+    >
+      {/* Day header */}
+      <div className={`px-2 py-2.5 text-center border-b ${today ? 'border-primary/20' : 'border-border/15'}`}>
+        <p
+          className={`text-[10px] font-semibold uppercase tracking-widest ${
+            today ? 'text-primary' : 'text-muted-foreground/50'
+          }`}
+        >
+          {format(day, 'EEE')}
+        </p>
+        <div className="mt-1 inline-flex items-center justify-center">
+          {today ? (
+            <span className="w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm font-bold inline-flex items-center justify-center">
+              {format(day, 'd')}
+            </span>
+          ) : (
+            <span className={`text-base font-semibold ${past ? 'text-foreground/25' : 'text-foreground/50'}`}>
+              {format(day, 'd')}
+            </span>
+          )}
+        </div>
+        {items.length > 0 && (
+          <p className={`text-[9px] mt-1 font-medium ${today ? 'text-primary/50' : 'text-muted-foreground/30'}`}>
+            {items.length} item{items.length !== 1 ? 's' : ''}
+          </p>
+        )}
+      </div>
+
+      {/* Items */}
+      <ScrollArea className="flex-1">
+        <div className="p-1 space-y-1">
+          {items.length === 0 ? (
+            <div className="flex items-center justify-center h-16">
+              <span className="text-[10px] text-muted-foreground/15">&mdash;</span>
+            </div>
+          ) : (
+            items.map((item) =>
+              item.type === 'event' ? (
+                <ColumnEventCard key={item.data.id} event={item.data as CalendarEvent} />
+              ) : item.type === 'task' ? (
+                <ColumnTaskCard key={item.data.id} task={item.data as Task} />
+              ) : (
+                <ColumnEmailCard key={item.data.id} email={item.data as Email} />
+              ),
+            )
+          )}
+        </div>
+      </ScrollArea>
+    </div>
+  );
+}
+
+function ColumnEventCard({ event }: { event: CalendarEvent }) {
   const start = new Date(event.start);
   const end = new Date(event.end);
-  const top = getTopOffset(start);
-  const height = getBlockHeight(start, end);
   const isNow = !isPast(end) && isPast(start);
   const isOver = isPast(end);
 
@@ -516,25 +376,21 @@ function GridEventBlock({ event }: { event: CalendarEvent }) {
       href={event.htmlLink || undefined}
       target="_blank"
       rel="noopener noreferrer"
-      className={`absolute left-0.5 right-0.5 rounded border-l-2 px-1.5 py-0.5 overflow-hidden transition-all group/event block hover:-translate-y-px hover:shadow-md ${
+      className={`block rounded-md border-l-2 px-2 py-1.5 transition-all hover:-translate-y-px hover:shadow-sm ${
         isNow
-          ? 'bg-emerald-500/20 border-l-emerald-400'
+          ? 'border-l-emerald-400 bg-emerald-500/15'
           : isOver
-            ? 'bg-muted/20 border-l-muted-foreground/20 opacity-45'
-            : 'bg-emerald-500/10 border-l-emerald-500/70 hover:bg-emerald-500/[0.18]'
+            ? 'border-l-muted-foreground/20 bg-muted/10 opacity-50'
+            : 'border-l-emerald-500 bg-emerald-500/[0.08] hover:bg-emerald-500/15'
       }`}
-      style={{ top: `${top}px`, height: `${height}px` }}
-      title={`${event.title}\n${format(start, 'h:mm a')} – ${format(end, 'h:mm a')}${event.location ? `\n${event.location}` : ''}`}
     >
-      <p className="text-[11px] font-medium truncate leading-tight">{event.title}</p>
-      {height > 32 && (
-        <p className="text-[10px] text-muted-foreground/50 truncate leading-tight">
-          {format(start, 'h:mm')} – {format(end, 'h:mm a')}
-        </p>
-      )}
-      {height > 56 && event.location && (
-        <p className="text-[10px] text-muted-foreground/40 truncate leading-tight mt-0.5 flex items-center gap-0.5">
-          <MapPin className="w-2.5 h-2.5 shrink-0 inline" />
+      <p className="text-[10px] text-muted-foreground/50 tabular-nums leading-none">
+        {format(start, 'h:mm')} &ndash; {format(end, 'h:mm a')}
+      </p>
+      <p className="text-[11px] font-medium truncate leading-snug mt-1">{event.title}</p>
+      {event.location && (
+        <p className="text-[9px] text-muted-foreground/40 truncate mt-0.5 flex items-center gap-0.5">
+          <MapPin className="w-2 h-2 shrink-0" />
           {event.location}
         </p>
       )}
@@ -542,55 +398,54 @@ function GridEventBlock({ event }: { event: CalendarEvent }) {
   );
 }
 
-function GridTaskBlock({ task }: { task: Task }) {
+function ColumnTaskCard({ task }: { task: Task }) {
   const due = new Date(task.due_date!);
-  const top = getTopOffset(due);
   const isOverdue = isPast(due);
   const config = priorityConfig[task.priority];
 
   return (
     <div
-      className={`absolute left-0.5 right-0.5 h-[22px] rounded border-l-2 px-1.5 flex items-center gap-1 overflow-hidden cursor-default transition-all hover:-translate-y-px hover:shadow-md ${
+      className={`rounded-md border-l-2 px-2 py-1.5 transition-all hover:-translate-y-px hover:shadow-sm ${
         isOverdue
-          ? 'bg-red-500/12 border-l-red-500/80'
-          : `bg-primary/[0.07] ${config.border} hover:bg-primary/[0.12]`
+          ? 'border-l-red-500 bg-red-500/10'
+          : `${config.border} bg-primary/[0.05] hover:bg-primary/[0.1]`
       }`}
-      style={{ top: `${top}px` }}
-      title={`${task.title}\nDue: ${format(due, 'h:mm a')}\nPriority: ${config.label}`}
     >
-      <CheckSquare className="w-3 h-3 text-primary/60 shrink-0" />
-      <p className="text-[10px] font-medium truncate leading-none">{task.title}</p>
+      <p className="text-[10px] text-muted-foreground/50 tabular-nums leading-none">
+        Due {format(due, 'h:mm a')}
+      </p>
+      <div className="flex items-center gap-1 mt-1">
+        <CheckSquare className="w-3 h-3 text-primary/50 shrink-0" />
+        <p className="text-[11px] font-medium truncate leading-snug">{task.title}</p>
+      </div>
     </div>
   );
 }
 
-function NowIndicator({ weekDays }: { weekDays: Date[] }) {
-  const [now, setNow] = useState(new Date());
-
-  useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 60_000);
-    return () => clearInterval(id);
-  }, []);
-
-  const h = getHours(now);
-  if (h < START_HOUR || h >= END_HOUR) return null;
-
-  const todayIdx = weekDays.findIndex((d) => isToday(d));
-  if (todayIdx < 0) return null;
-
-  const top = getTopOffset(now);
-  const leftPct = (todayIdx / 7) * 100;
-  const widthPct = (1 / 7) * 100;
+function ColumnEmailCard({ email }: { email: Email }) {
+  const sender = getEmailSender(email.from);
+  const replied = !!email.hasReplied;
+  const subject = email.subject || '(no subject)';
 
   return (
     <div
-      className="absolute z-30 pointer-events-none"
-      style={{ top: `${top}px`, left: `${leftPct}%`, width: `${widthPct}%` }}
+      className={`rounded-md border-l-2 px-2 py-1.5 transition-all ${
+        replied
+          ? 'border-l-muted-foreground/15 bg-muted/[0.06] opacity-50'
+          : 'border-l-amber-500 bg-amber-500/[0.08] hover:-translate-y-px hover:shadow-sm hover:bg-amber-500/15'
+      }`}
+      title={`${replied ? 'Replied' : 'Needs reply'}: ${sender}\n${subject}`}
     >
-      <div className="flex items-center -translate-y-px">
-        <div className="w-2 h-2 rounded-full bg-red-500 -ml-1 shrink-0 shadow-[0_0_6px_rgba(239,68,68,0.5)]" />
-        <div className="flex-1 h-px bg-red-500/80" />
+      <div className="flex items-center gap-1">
+        <Mail className={`w-3 h-3 shrink-0 ${replied ? 'text-muted-foreground/30' : 'text-amber-500/60'}`} />
+        <span className={`text-[11px] font-medium truncate ${replied ? 'line-through text-muted-foreground/40' : ''}`}>
+          {sender}
+        </span>
+        {replied && <Check className="w-2.5 h-2.5 text-emerald-500/50 shrink-0 ml-auto" />}
       </div>
+      <p className={`text-[10px] truncate mt-0.5 leading-snug ${replied ? 'text-muted-foreground/25 line-through' : 'text-muted-foreground/50'}`}>
+        {subject}
+      </p>
     </div>
   );
 }
