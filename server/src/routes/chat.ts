@@ -38,19 +38,25 @@ export default async function chatRoutes(app: FastifyInstance) {
       reply.raw.write(`data: ${JSON.stringify(event)}\n\n`);
     }
 
-    try {
-      await runAgent({
-        userId,
-        userClient,
-        userMessage: parsed.data.message,
-        onEvent: sendSSE,
-      });
-    } catch (err) {
-      sendSSE({
-        type: 'error',
-        message: err instanceof Error ? err.message : 'Agent failed',
-      });
-    }
+    // --- CLAUDE API PAUSED ---
+    // AI agent is paused to stop API costs. Will re-enable with local model.
+    sendSSE({
+      type: 'error',
+      message: 'AI agent is currently paused to save API costs. It will be back soon with a local model!',
+    });
+    // try {
+    //   await runAgent({
+    //     userId,
+    //     userClient,
+    //     userMessage: parsed.data.message,
+    //     onEvent: sendSSE,
+    //   });
+    // } catch (err) {
+    //   sendSSE({
+    //     type: 'error',
+    //     message: err instanceof Error ? err.message : 'Agent failed',
+    //   });
+    // }
 
     reply.raw.end();
   });

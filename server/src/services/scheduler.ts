@@ -469,25 +469,25 @@ async function clearCompletedTasks() {
 }
 
 export function startScheduler() {
-  // Run every minute — process overdue tasks
-  cron.schedule('* * * * *', () => {
-    processOverdueTasks();
-  });
+  // --- ALL CLAUDE API CRONS PAUSED ---
+  // Paused to stop API costs. Will re-enable when switching to local model.
+  //
+  // cron.schedule('* * * * *', () => {
+  //   processOverdueTasks();
+  // });
+  //
+  // cron.schedule('*/30 * * * *', () => {
+  //   syncInboxAndCalendar();
+  // });
+  //
+  // cron.schedule('0 * * * *', () => {
+  //   generateMorningBriefings();
+  // });
 
-  // Check for users needing sync every 30 minutes; per-user intervals control actual frequency
-  cron.schedule('*/30 * * * *', () => {
-    syncInboxAndCalendar();
-  });
-
-  // Morning briefings — run every hour, function checks if it's morning in each user's timezone
-  cron.schedule('0 * * * *', () => {
-    generateMorningBriefings();
-  });
-
-  // Midnight cleanup — delete all completed tasks
+  // Midnight cleanup — delete completed tasks older than 7 days (NO API cost, pure DB)
   cron.schedule('0 0 * * *', () => {
     clearCompletedTasks();
   });
 
-  console.log('[Scheduler] Proactive agent scheduler started (tasks: every 1m, sync check: every 30m, briefings: hourly, cleanup: midnight)');
+  console.log('[Scheduler] Scheduler started (API crons PAUSED — only midnight cleanup active)');
 }

@@ -68,20 +68,26 @@ export default async function briefingRoutes(app: FastifyInstance) {
       reply.raw.write(`data: ${JSON.stringify(event)}\n\n`);
     }
 
-    try {
-      await runAgent({
-        userId,
-        userClient,
-        userMessage:
-          'Good morning! Please generate my personalized morning briefing. Use the generate_morning_briefing tool to get my tasks, calendar, overnight activity, and news topics. Present everything in a clean format.',
-        onEvent: sendSSE,
-      });
-    } catch (err) {
-      sendSSE({
-        type: 'error',
-        message: err instanceof Error ? err.message : 'Briefing generation failed',
-      });
-    }
+    // --- CLAUDE API PAUSED ---
+    // Briefing generation is paused to stop API costs. Will re-enable with local model.
+    sendSSE({
+      type: 'error',
+      message: 'Morning briefing is currently paused to save API costs. It will be back soon with a local model!',
+    });
+    // try {
+    //   await runAgent({
+    //     userId,
+    //     userClient,
+    //     userMessage:
+    //       'Good morning! Please generate my personalized morning briefing. Use the generate_morning_briefing tool to get my tasks, calendar, overnight activity, and news topics. Present everything in a clean format.',
+    //     onEvent: sendSSE,
+    //   });
+    // } catch (err) {
+    //   sendSSE({
+    //     type: 'error',
+    //     message: err instanceof Error ? err.message : 'Briefing generation failed',
+    //   });
+    // }
 
     reply.raw.end();
   });
