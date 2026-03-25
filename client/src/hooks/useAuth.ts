@@ -25,7 +25,7 @@ export function useAuth() {
 
         // Save OAuth provider tokens when signing in via Google/Microsoft
         console.log('[Auth] Event:', event, 'Has provider_token:', !!session?.provider_token);
-        if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session?.provider_token) {
+        if (session?.provider_token) {
           try {
             const token = session.access_token;
             console.log('[Auth] Saving provider tokens for user:', session.user.id);

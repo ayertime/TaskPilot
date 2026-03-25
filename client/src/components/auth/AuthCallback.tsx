@@ -44,7 +44,7 @@ export function AuthCallback() {
           setRecoveryMode(true);
           return;
         }
-        if (session && event !== 'INITIAL_SESSION') {
+        if (session) {
           if (!tokensSaved.current && session.provider_token) {
             tokensSaved.current = true;
             console.log('[AuthCallback] Saving provider tokens...');
@@ -53,8 +53,7 @@ export function AuthCallback() {
           }
           if (!navigated.current) {
             navigated.current = true;
-            const dest = event === 'USER_UPDATED' ? '/settings' : '/dashboard';
-            navigate(dest, { replace: true });
+            navigate('/dashboard', { replace: true });
           }
         }
       }
