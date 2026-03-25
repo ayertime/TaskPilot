@@ -35,7 +35,7 @@ import { toast } from 'sonner';
 
 export function ProfileSettings() {
   const { profile, loading, updateProfile } = useProfile();
-  const { signInWithGoogle, signOut } = useAuth();
+  const { linkGoogle, signOut } = useAuth();
   const navigate = useNavigate();
   const { onShowTutorial } = useOutletContext<{ onShowTutorial?: () => void }>();
   const [displayName, setDisplayName] = useState('');
@@ -248,7 +248,7 @@ export function ProfileSettings() {
                     size="sm"
                     onClick={async () => {
                       try {
-                        await signInWithGoogle();
+                        await linkGoogle();
                       } catch {
                         toast.error('Failed to connect Google');
                       }
@@ -271,7 +271,7 @@ export function ProfileSettings() {
                 size="sm"
                 onClick={async () => {
                   try {
-                    await signInWithGoogle();
+                    await linkGoogle();
                   } catch {
                     toast.error('Failed to reconnect');
                   }

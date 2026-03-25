@@ -106,6 +106,21 @@ export function useAuth() {
     }
   }, []);
 
+  const linkGoogle = useCallback(async () => {
+    const { error } = await supabase.auth.linkIdentity({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+        scopes: 'https://www.googleapis.com/auth/gmail.send https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/calendar.events',
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+        },
+      },
+    });
+    if (error) throw error;
+  }, []);
+
   const signOut = useCallback(async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
@@ -120,6 +135,7 @@ export function useAuth() {
     signInWithYahoo,
     signInWithEmail,
     signUp,
+    linkGoogle,
     signOut,
   };
 }
