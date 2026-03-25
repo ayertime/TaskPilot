@@ -92,7 +92,7 @@ export function useAuth() {
   }, []);
 
   const signUp = useCallback(async (email: string, password: string, fullName: string) => {
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -100,6 +100,10 @@ export function useAuth() {
       },
     });
     if (error) throw error;
+    // Supabase returns a user with empty identities when the email already exists
+    if (data.user && data.user.identities?.length === 0) {
+      throw new Error('An account with this email already exists. Please sign in instead.');
+    }
   }, []);
 
   const signOut = useCallback(async () => {
