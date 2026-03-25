@@ -107,11 +107,41 @@ export function useTasks() {
         method: 'POST',
         body: JSON.stringify(data),
       }) as Promise<Task>,
-    onSuccess: (task) => {
-      queryClient.setQueryData<Task[]>(['tasks'], (prev = []) => {
-        if (prev.some((t) => t.id === task.id)) return prev;
-        return [...prev, task];
-      });
+    onMutate: (data) => {
+      const prev = queryClient.getQueryData<Task[]>(['tasks']) || [];
+      const optimistic: Task = {
+        id: `temp-${Date.now()}`,
+        user_id: '',
+        category_id: data.category_id ?? null,
+        parent_task_id: null,
+        title: data.title,
+        description: data.description ?? null,
+        status: data.status || 'todo',
+        priority: data.priority || 'medium',
+        due_date: data.due_date ?? null,
+        position: prev.length,
+        is_automatable: false,
+        auto_execute_at: null,
+        ai_generated: false,
+        ai_result: null,
+        action_type: null,
+        action_metadata: null,
+        recurrence_pattern: null,
+        completed_at: null,
+        completed_by: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      queryClient.setQueryData<Task[]>(['tasks'], [...prev, optimistic]);
+      return { prev, tempId: optimistic.id };
+    },
+    onSuccess: (task, _, context) => {
+      queryClient.setQueryData<Task[]>(['tasks'], (prev = []) =>
+        prev.map((t) => (t.id === context?.tempId ? task : t))
+      );
+    },
+    onError: (_, __, context) => {
+      if (context?.prev) queryClient.setQueryData(['tasks'], context.prev);
     },
   });
 
@@ -121,20 +151,33 @@ export function useTasks() {
         method: 'PATCH',
         body: JSON.stringify(data),
       }) as Promise<Task>,
+    onMutate: ({ id, data }) => {
+      const prev = queryClient.getQueryData<Task[]>(['tasks']) || [];
+      queryClient.setQueryData<Task[]>(['tasks'],
+        prev.map((t) => (t.id === id ? { ...t, ...data } : t))
+      );
+      return { prev };
+    },
     onSuccess: (task) => {
       queryClient.setQueryData<Task[]>(['tasks'], (prev = []) =>
         prev.map((t) => (t.id === task.id ? task : t))
       );
+    },
+    onError: (_, __, context) => {
+      if (context?.prev) queryClient.setQueryData(['tasks'], context.prev);
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) =>
       apiFetch(`/api/tasks/${id}`, { method: 'DELETE' }),
-    onSuccess: (_, id) => {
-      queryClient.setQueryData<Task[]>(['tasks'], (prev = []) =>
-        prev.filter((t) => t.id !== id)
-      );
+    onMutate: (id) => {
+      const prev = queryClient.getQueryData<Task[]>(['tasks']) || [];
+      queryClient.setQueryData<Task[]>(['tasks'], prev.filter((t) => t.id !== id));
+      return { prev };
+    },
+    onError: (_, __, context) => {
+      if (context?.prev) queryClient.setQueryData(['tasks'], context.prev);
     },
   });
 
@@ -144,10 +187,20 @@ export function useTasks() {
         method: 'POST',
         body: JSON.stringify({}),
       }) as Promise<Task>,
+    onMutate: (id) => {
+      const prev = queryClient.getQueryData<Task[]>(['tasks']) || [];
+      queryClient.setQueryData<Task[]>(['tasks'],
+        prev.map((t) => (t.id === id ? { ...t, status: 'done' as const, completed_at: new Date().toISOString(), completed_by: 'user' as const } : t))
+      );
+      return { prev };
+    },
     onSuccess: (task) => {
       queryClient.setQueryData<Task[]>(['tasks'], (prev = []) =>
         prev.map((t) => (t.id === task.id ? task : t))
       );
+    },
+    onError: (_, __, context) => {
+      if (context?.prev) queryClient.setQueryData(['tasks'], context.prev);
     },
   });
 
@@ -174,10 +227,13 @@ export function useTasks() {
   const clearCompletedMutation = useMutation({
     mutationFn: () =>
       apiFetch('/api/tasks/completed', { method: 'DELETE' }),
-    onSuccess: () => {
-      queryClient.setQueryData<Task[]>(['tasks'], (prev = []) =>
-        prev.filter((t) => t.status !== 'done')
-      );
+    onMutate: () => {
+      const prev = queryClient.getQueryData<Task[]>(['tasks']) || [];
+      queryClient.setQueryData<Task[]>(['tasks'], prev.filter((t) => t.status !== 'done'));
+      return { prev };
+    },
+    onError: (_, __, context) => {
+      if (context?.prev) queryClient.setQueryData(['tasks'], context.prev);
     },
   });
 
