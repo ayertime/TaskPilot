@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { REMEMBER_ME_KEY, setRememberMe as persistRememberMe } from '@/lib/supabase';
 
 export function LoginPage() {
   const { user, signInWithGoogle, signInWithMicrosoft, signInWithYahoo, signInWithEmail, signUp } = useAuth();
@@ -19,12 +20,12 @@ export function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(
-    () => localStorage.getItem('taskpilot-remember-me') !== 'false',
+    () => localStorage.getItem(REMEMBER_ME_KEY) !== 'false',
   );
 
   function handleRememberMe(checked: boolean) {
     setRememberMe(checked);
-    localStorage.setItem('taskpilot-remember-me', String(checked));
+    persistRememberMe(checked);
   }
 
   // Redirect to dashboard if already logged in

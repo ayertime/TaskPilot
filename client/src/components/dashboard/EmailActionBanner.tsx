@@ -10,25 +10,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import type { Email } from '@/types';
-
-const NOISE_LABELS = [
-  'CATEGORY_PROMOTIONS',
-  'CATEGORY_SOCIAL',
-  'CATEGORY_FORUMS',
-  'CATEGORY_UPDATES',
-  'SPAM',
-  'TRASH',
-];
-
-function isRelevantEmail(email: Email): boolean {
-  if (email.labels.some((l) => NOISE_LABELS.includes(l))) return false;
-  return email.isUnread || !!email.hasReplied;
-}
-
-function getEmailSender(from: string): string {
-  const match = from.match(/^(.+?)\s*</);
-  return match ? match[1].replace(/"/g, '').trim() : from.split('@')[0];
-}
+import { isRelevantEmail, getEmailSender } from '@/lib/email';
 
 export function EmailActionBanner() {
   const { data: emails } = useEmails('inbox', 'category:primary', { checkReplied: true });

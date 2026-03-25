@@ -38,6 +38,7 @@ import {
 } from 'date-fns';
 import type { CalendarEvent, Task, Category, Email } from '@/types';
 import { priorityConfig } from '@/lib/priority';
+import { isRelevantEmail, getEmailSender } from '@/lib/email';
 
 interface AppContext {
   categories: Category[];
@@ -58,18 +59,6 @@ type CalendarItem =
   | { type: 'event'; data: CalendarEvent }
   | { type: 'task'; data: Task }
   | { type: 'email'; data: Email };
-
-const NOISE_LABELS = ['CATEGORY_PROMOTIONS', 'CATEGORY_SOCIAL', 'CATEGORY_FORUMS', 'CATEGORY_UPDATES', 'SPAM', 'TRASH'];
-
-function isRelevantEmail(email: Email): boolean {
-  if (email.labels.some((l) => NOISE_LABELS.includes(l))) return false;
-  return email.isUnread || !!email.hasReplied;
-}
-
-function getEmailSender(from: string): string {
-  const match = from.match(/^(.+?)\s*</);
-  return match ? match[1].replace(/"/g, '').trim() : from.split('@')[0];
-}
 
 // --- Utilities ---
 
@@ -112,7 +101,8 @@ export function CalendarView() {
     [weekStart],
   );
 
-  const weekEnd = useMemo(() => endOfDay(addDays(weekStart, 6)), [weekStart]);
+  const weekEndDate = addDays(weekStart, 6);
+  const weekEnd = endOfDay(weekEndDate);
 
   const weekItems = useMemo(() => {
     const start = startOfDay(weekStart);
@@ -134,7 +124,6 @@ export function CalendarView() {
 
   const isCurrentWeek = isSameDay(weekStart, startOfWeek(new Date()));
 
-  const weekEndDate = addDays(weekStart, 6);
   const weekLabel =
     weekStart.getMonth() === weekEndDate.getMonth()
       ? `${format(weekStart, 'MMMM d')} \u2013 ${format(weekEndDate, 'd, yyyy')}`
@@ -306,9 +295,19 @@ function WeekGrid({
 
 function DayColumn({ day, items }: { day: Date; items: CalendarItem[] }) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const hasScrolled = useRef(false);
   const today = isToday(day);
   const past = isPast(endOfDay(day)) && !today;
-  const currentHour = getHours(new Date());
+  const [currentHour, setCurrentHour] = useState(() => getHours(new Date()));
+
+  // Update currentHour when the clock rolls over
+  useEffect(() => {
+    if (!today) return;
+    const id = setInterval(() => {
+      setCurrentHour(getHours(new Date()));
+    }, 60_000);
+    return () => clearInterval(id);
+  }, [today]);
 
   const itemsByHour = useMemo(() => {
     const map = new Map<number, CalendarItem[]>();
@@ -320,18 +319,22 @@ function DayColumn({ day, items }: { day: Date; items: CalendarItem[] }) {
     return map;
   }, [items]);
 
+  // Scroll to relevant hour once on mount
   useEffect(() => {
-    if (scrollRef.current) {
-      const target = today
-        ? scrollRef.current.querySelector(`[data-hour="${currentHour}"]`)
-        : items.length > 0
-          ? scrollRef.current.querySelector(`[data-hour="${getHours(getItemDate(items[0]))}"]`)
-          : null;
-      if (target) {
-        (target as HTMLElement).scrollIntoView({ block: 'start' });
+    if (hasScrolled.current || !scrollRef.current) return;
+    const targetHour = today
+      ? currentHour
+      : items.length > 0
+        ? getHours(getItemDate(items[0]))
+        : null;
+    if (targetHour !== null) {
+      const el = scrollRef.current.querySelector(`[data-hour="${targetHour}"]`);
+      if (el) {
+        (el as HTMLElement).scrollIntoView({ block: 'start' });
+        hasScrolled.current = true;
       }
     }
-  }, [today, currentHour, items]);
+  });
 
   return (
     <div

@@ -3,26 +3,33 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Routes session tokens to localStorage (persist across browser restarts)
-// or sessionStorage (cleared when browser closes) based on user preference.
+export const REMEMBER_ME_KEY = 'taskpilot-remember-me';
+
+let rememberMe = localStorage.getItem(REMEMBER_ME_KEY) !== 'false';
+
+export function setRememberMe(value: boolean) {
+  rememberMe = value;
+  localStorage.setItem(REMEMBER_ME_KEY, String(value));
+}
+
+// Routes session tokens to localStorage or sessionStorage based on preference.
 const authStorage: Storage = {
   get length() {
-    return localStorage.length;
+    const store = rememberMe ? localStorage : sessionStorage;
+    return store.length;
   },
   key(index: number) {
-    return localStorage.key(index);
+    const store = rememberMe ? localStorage : sessionStorage;
+    return store.key(index);
   },
   getItem(key: string): string | null {
-    const remember = localStorage.getItem('taskpilot-remember-me') !== 'false';
-    return (remember ? localStorage : sessionStorage).getItem(key);
+    return (rememberMe ? localStorage : sessionStorage).getItem(key);
   },
   setItem(key: string, value: string): void {
-    const remember = localStorage.getItem('taskpilot-remember-me') !== 'false';
-    if (remember) {
+    if (rememberMe) {
       localStorage.setItem(key, value);
     } else {
       sessionStorage.setItem(key, value);
-      // Clear any stale session from localStorage when not remembering
       if (key.startsWith('sb-')) localStorage.removeItem(key);
     }
   },
