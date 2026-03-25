@@ -43,6 +43,10 @@ interface AgentOptions {
   onEvent: (event: SSEEvent) => void;
   /** When false, skip saving messages to chat_messages (used by scheduler). Defaults to true. */
   saveToHistory?: boolean;
+  /** When true, send_email creates a draft with review window instead of sending directly. */
+  draftMode?: boolean;
+  /** Associated task ID for scheduler-initiated calls. */
+  taskId?: string;
 }
 
 export type SSEEvent =
@@ -105,7 +109,7 @@ export async function runAgent(options: AgentOptions): Promise<{
   assistantText: string;
   toolCalls: Array<{ name: string; input: Record<string, unknown>; result: string }>;
 }> {
-  const { userId, userClient, userMessage, onEvent, saveToHistory = true } = options;
+  const { userId, userClient, userMessage, onEvent, saveToHistory = true, draftMode, taskId } = options;
 
   // Check daily budget
   const budget = checkBudget();
@@ -228,6 +232,8 @@ export async function runAgent(options: AgentOptions): Promise<{
         result = await executeTool(toolCall.name, toolCall.input, {
           userId,
           userClient,
+          draftMode,
+          taskId,
         });
       } catch (err) {
         result = JSON.stringify({

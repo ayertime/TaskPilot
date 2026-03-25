@@ -417,6 +417,11 @@ The scheduler is the core differentiating feature of TaskPilot.
 **chat_messages** — Conversation history
 - id, user_id, role, content, tool_calls
 
+**email_drafts** — Draft-first email sending with review window
+- id, user_id, task_id
+- to_address, subject, body, cc, bcc
+- status (pending_review / sent / cancelled), review_deadline, sent_at
+
 **agent_activity** — Audit log of agent actions
 - id, user_id, task_id, action_type, description, result, metadata (JSONB)
 
@@ -454,6 +459,10 @@ The scheduler is the core differentiating feature of TaskPilot.
 | GET | /api/emails | Read inbox emails via Gmail API |
 | GET | /api/emails/sent | Read sent emails via Gmail API |
 | GET | /api/calendar | Read calendar events via Google Calendar API |
+| GET | /api/drafts | List pending email drafts |
+| POST | /api/drafts/:id/send | Manually send a draft now |
+| POST | /api/drafts/:id/cancel | Cancel a draft |
+| PATCH | /api/drafts/:id | Edit draft content |
 | GET | /api/profile | Get user profile |
 | PATCH | /api/profile | Update profile |
 | GET | /api/profile/oauth-status | Check OAuth connection status |
@@ -527,6 +536,27 @@ Tasks are automatically classified at creation time (both via REST API and agent
 | Unknown | No keyword match | `is_automatable: false`, `action_type: null` |
 
 Manual keywords are checked first to ensure physical tasks are never auto-piloted. The classifier is a placeholder — will be replaced by a local AI model (Llama 3.1 8B on Ollama) for smarter classification.
+
+### 7.2 Draft-First Email Sending
+
+When the scheduler/auto-pilot sends emails on the user's behalf, it uses a **draft-first** approach instead of sending directly:
+
+1. Agent composes the email and creates a **draft** with a 1-hour review window
+2. User is notified via activity log and sees the draft on the Email page
+3. User can **review, edit, send now, or cancel** the draft
+4. If the user doesn't act within the review window, the email **auto-sends**
+
+This ensures:
+- Emails always get sent (core auto-pilot value preserved)
+- User has a safety net to catch bad content or wrong context
+- Interactive chat emails still send immediately (only auto-pilot uses drafts)
+
+| Mode | Trigger | Behavior |
+|------|---------|----------|
+| Interactive (chat) | User asks agent to send | Sends immediately |
+| Auto-pilot (scheduler) | Scheduled task fires | Creates draft → auto-sends after 1 hour |
+
+The `email_drafts` table tracks draft status (`pending_review`, `sent`, `cancelled`), review deadline, and associated task. A cron job every 5 minutes checks for expired drafts and auto-sends them.
 
 This ensures the agent is helpful without overstepping — it handles digital actions autonomously while clearly communicating what it cannot do.
 

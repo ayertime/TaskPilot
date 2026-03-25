@@ -3,6 +3,7 @@ import { supabaseAdmin } from '../services/supabase';
 import { webSearch } from '../services/search-service';
 import { checkWeather } from '../services/weather-service';
 import { sendEmail } from '../services/email-service';
+import { createEmailDraft } from '../services/email-draft-service';
 import { createCalendarEvent } from '../services/calendar-service';
 import { readEmails } from '../services/gmail-service';
 import { readCalendarEvents } from '../services/gcalendar-service';
@@ -12,6 +13,10 @@ import { classifyTask } from '../services/task-classifier';
 interface ToolContext {
   userId: string;
   userClient: SupabaseClient;
+  /** When true, send_email creates a draft with review window instead of sending directly. */
+  draftMode?: boolean;
+  /** Associated task ID for scheduler-initiated calls. */
+  taskId?: string;
 }
 
 export async function executeTool(
@@ -402,6 +407,21 @@ async function handleSendEmail(
     metadata: { step: 'composing', to: input.to, subject: input.subject },
   });
 
+  // Draft mode: scheduler/auto-pilot creates a draft with review window instead of sending directly
+  if (ctx.draftMode) {
+    const draftResult = await createEmailDraft({
+      userId: ctx.userId,
+      taskId: ctx.taskId,
+      to: input.to as string,
+      subject: input.subject as string,
+      body: input.body as string,
+      cc: input.cc as string | undefined,
+      bcc: input.bcc as string | undefined,
+    });
+    return JSON.stringify(draftResult);
+  }
+
+  // Interactive mode: send immediately
   const result = await sendEmail(ctx.userId, {
     to: input.to as string,
     subject: input.subject as string,

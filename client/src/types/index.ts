@@ -84,6 +84,21 @@ export interface Email {
   hasReplied?: boolean;
 }
 
+export interface EmailDraft {
+  id: string;
+  user_id: string;
+  task_id: string | null;
+  to_address: string;
+  subject: string;
+  body: string;
+  cc: string | null;
+  bcc: string | null;
+  status: 'pending_review' | 'sent' | 'cancelled';
+  review_deadline: string;
+  sent_at: string | null;
+  created_at: string;
+}
+
 export interface CalendarEvent {
   id: string;
   title: string;

@@ -3,6 +3,7 @@ import { supabaseAdmin } from './supabase';
 import { runAgent } from './ai-agent';
 import { readEmails } from './gmail-service';
 import { readCalendarEvents } from './gcalendar-service';
+import { processExpiredDrafts } from './email-draft-service';
 
 /**
  * Proactive Agent Scheduler
@@ -181,12 +182,15 @@ async function executeTask(task: {
   }
 
   // Run the agent to execute the task (don't save to chat history)
+  // draftMode: email tasks create a draft with review window instead of sending directly
   await runAgent({
     userId: user_id,
     userClient: supabaseAdmin,
     userMessage: prompt,
     onEvent: () => {},
     saveToHistory: false,
+    draftMode: action_type === 'email',
+    taskId: task.id,
   });
 
   // Log the auto-execution
@@ -540,10 +544,15 @@ export function startScheduler() {
   //   generateMorningBriefings();
   // });
 
+  // Auto-send expired email drafts every 5 minutes (NO API cost, just sends via OAuth)
+  cron.schedule('*/5 * * * *', () => {
+    processExpiredDrafts();
+  });
+
   // Midnight cleanup — delete completed tasks older than 7 days (NO API cost, pure DB)
   cron.schedule('0 0 * * *', () => {
     clearCompletedTasks();
   });
 
-  console.log('[Scheduler] Scheduler started (API crons PAUSED — only midnight cleanup active)');
+  console.log('[Scheduler] Scheduler started (API crons PAUSED — draft auto-send + midnight cleanup active)');
 }
