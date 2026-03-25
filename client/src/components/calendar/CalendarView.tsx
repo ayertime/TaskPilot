@@ -377,39 +377,46 @@ function WeekGrid({
         })}
       </div>
 
-      {/* Pinned email action row */}
+      {/* All-day email row */}
       {hasAnyEmails && (
-        <div className="flex border-b border-amber-500/20 bg-amber-500/[0.03]">
-          <div className="w-[52px] shrink-0 flex items-center justify-center border-r border-border/20">
-            <Mail className="w-3.5 h-3.5 text-amber-500/50" />
+        <div className="flex border-b border-border/30">
+          <div className="w-[52px] shrink-0 border-r border-border/20 flex items-start justify-end pr-1.5 pt-1">
+            <span className="text-[9px] font-semibold text-muted-foreground/40 uppercase tracking-wider">Mail</span>
           </div>
-          {weekDays.map((_day, i) => (
-            <div
-              key={i}
-              className="flex-1 border-l border-border/20 first:border-l-0 p-1 space-y-0.5"
-            >
-              {emailsByDay[i].map((item) => {
-                const email = item.data as Email;
-                const sender = getEmailSender(email.from);
-                const replied = !!email.hasReplied;
-                return (
-                  <div
-                    key={email.id}
-                    className={`rounded px-1.5 py-1 text-[10px] font-medium flex items-center gap-1 transition-colors ${
-                      replied
-                        ? 'bg-muted/15 text-muted-foreground/40'
-                        : 'bg-amber-500/10 text-amber-300/90 hover:bg-amber-500/20'
-                    }`}
-                    title={`${replied ? 'Replied' : 'Needs reply'}: ${sender}\n${email.subject}`}
-                  >
-                    <Mail className={`w-2.5 h-2.5 shrink-0 ${replied ? 'text-muted-foreground/30' : 'text-amber-500/70'}`} />
-                    <span className={`truncate ${replied ? 'line-through' : ''}`}>{sender}</span>
-                    {replied && <Check className="w-2.5 h-2.5 text-emerald-500/60 shrink-0 ml-auto" />}
-                  </div>
-                );
-              })}
-            </div>
-          ))}
+          {weekDays.map((_day, i) => {
+            const dayEmails = emailsByDay[i];
+            return (
+              <div
+                key={i}
+                className="flex-1 border-l border-border/20 first:border-l-0 py-0.5 px-0.5 space-y-px"
+              >
+                {dayEmails.slice(0, 3).map((item) => {
+                  const email = item.data as Email;
+                  const sender = getEmailSender(email.from);
+                  const replied = !!email.hasReplied;
+                  const subject = email.subject || '(no subject)';
+                  return (
+                    <div
+                      key={email.id}
+                      className={`rounded-sm px-1 py-px text-[9px] font-medium truncate flex items-center gap-1 leading-tight ${
+                        replied
+                          ? 'text-muted-foreground/30 line-through'
+                          : 'bg-amber-500/12 text-amber-300/80 hover:bg-amber-500/20'
+                      }`}
+                      title={`${replied ? 'Replied' : 'Needs reply'}: ${sender} — ${subject}`}
+                    >
+                      <Mail className={`w-2 h-2 shrink-0 ${replied ? 'text-muted-foreground/20' : 'text-amber-500/60'}`} />
+                      <span className="truncate">{sender} — {subject}</span>
+                      {replied && <Check className="w-2 h-2 text-emerald-500/50 shrink-0 ml-auto" />}
+                    </div>
+                  );
+                })}
+                {dayEmails.length > 3 && (
+                  <p className="text-[8px] text-muted-foreground/30 pl-1">+{dayEmails.length - 3} more</p>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 
