@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -57,6 +58,26 @@ export function LoginPage() {
       setError('Check your email for a confirmation link!');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Sign up failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      setError('Enter your email address first, then click Forgot Password.');
+      return;
+    }
+    setError('');
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      });
+      if (error) throw error;
+      setError('Check your email for a password reset link!');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to send reset email');
     } finally {
       setLoading(false);
     }
@@ -223,6 +244,15 @@ export function LoginPage() {
                       required
                     />
                   </div>
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={handleForgotPassword}
+                      className="text-xs text-muted-foreground hover:text-primary transition-colors"
+                    >
+                      Forgot Password?
+                    </button>
+                  </div>
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? 'Signing in...' : 'Sign In'}
                   </Button>
@@ -273,7 +303,7 @@ export function LoginPage() {
             </Tabs>
 
             {error && (
-              <p className={`mt-4 text-sm text-center ${error.includes('Check your email') ? 'text-green-600' : 'text-destructive'}`}>
+              <p className={`mt-4 text-sm text-center ${error.startsWith('Check your email') ? 'text-green-600' : 'text-destructive'}`}>
                 {error}
               </p>
             )}

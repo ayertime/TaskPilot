@@ -1,7 +1,11 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { supabase } from '@/lib/supabase';
 import { API_URL } from '@/lib/api';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 async function saveProviderTokens(session: { access_token: string; provider_token?: string | null; provider_refresh_token?: string | null; user: { app_metadata: { provider?: string } } }) {
   if (!session.provider_token) return;
@@ -27,14 +31,19 @@ export function AuthCallback() {
   const navigate = useNavigate();
   const navigated = useRef(false);
   const tokensSaved = useRef(false);
+  const [recoveryMode, setRecoveryMode] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [resetError, setResetError] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
 
   useEffect(() => {
-    // onAuthStateChange is the ONLY reliable way to get provider_token
-    // from OAuth redirects — getSession() does NOT include it
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (event === 'PASSWORD_RECOVERY') {
+          setRecoveryMode(true);
+          return;
+        }
         if (event === 'SIGNED_IN' && session) {
-          // Save tokens if we haven't yet (provider_token is only here, not in getSession)
           if (!tokensSaved.current && session.provider_token) {
             tokensSaved.current = true;
             await saveProviderTokens(session);
@@ -47,10 +56,8 @@ export function AuthCallback() {
       }
     );
 
-    // Fallback: if onAuthStateChange doesn't fire within 3s
-    // (e.g., session already existed from a page reload)
     const fallbackTimer = setTimeout(async () => {
-      if (navigated.current) return;
+      if (navigated.current || recoveryMode) return;
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         navigated.current = true;
@@ -64,7 +71,57 @@ export function AuthCallback() {
       subscription.unsubscribe();
       clearTimeout(fallbackTimer);
     };
-  }, [navigate]);
+  }, [navigate, recoveryMode]);
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setResetError('');
+    setResetLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      navigate('/dashboard', { replace: true });
+    } catch (err) {
+      setResetError(err instanceof Error ? err.message : 'Failed to update password');
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
+  if (recoveryMode) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-sm">
+          <CardHeader className="text-center">
+            <CardTitle>Reset Password</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleResetPassword} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="new-password">New Password</Label>
+                <Input
+                  id="new-password"
+                  type="password"
+                  placeholder="Min 6 characters"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                  minLength={6}
+                  autoFocus
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={resetLoading}>
+                {resetLoading ? 'Updating...' : 'Update Password'}
+              </Button>
+              {resetError && (
+                <p className="text-sm text-center text-destructive">{resetError}</p>
+              )}
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center">
