@@ -40,10 +40,20 @@ export default async function chatRoutes(app: FastifyInstance) {
 
     // --- CLAUDE API PAUSED ---
     // AI agent is paused to stop API costs. Will re-enable with local model.
+    // Fetch user's name for a personalized greeting
+    const { data: profile } = await supabaseAdmin
+      .from('profiles')
+      .select('display_name, full_name')
+      .eq('id', userId)
+      .single();
+
+    const name = profile?.display_name || profile?.full_name?.split(' ')[0] || 'there';
+
     sendSSE({
-      type: 'error',
-      message: 'AI agent is currently paused to save API costs. It will be back soon with a local model!',
+      type: 'text',
+      content: `Hello ${name}! I'm currently taking a short break while we upgrade to a faster, local AI model. I'll be back soon and ready to help you manage your tasks, emails, and calendar. In the meantime, you can still create and organize tasks manually. Thanks for your patience!`,
     });
+    sendSSE({ type: 'done' });
     // try {
     //   await runAgent({
     //     userId,
