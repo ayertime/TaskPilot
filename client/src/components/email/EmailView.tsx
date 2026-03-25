@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useEmails } from '@/hooks/useEmails';
+import { EmailActionBanner } from '@/components/dashboard/EmailActionBanner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -150,6 +151,8 @@ export function EmailView() {
           </p>
         </div>
       </motion.div>
+
+      <EmailActionBanner />
 
       <Tabs value={folder} onValueChange={(v) => setFolder(v as 'inbox' | 'sent')}>
         <TabsList>
