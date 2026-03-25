@@ -213,14 +213,18 @@ export function useTasks() {
         body: JSON.stringify({ tasks: reordered }),
       }),
     onMutate: (reordered) => {
-      // Optimistically update the query cache so localTasks sync doesn't flash back
-      queryClient.setQueryData<Task[]>(['tasks'], (prev = []) => {
+      const prev = queryClient.getQueryData<Task[]>(['tasks']) || [];
+      queryClient.setQueryData<Task[]>(['tasks'], (old = []) => {
         const updates = new Map(reordered.map((r) => [r.id, r]));
-        return prev.map((t) => {
+        return old.map((t) => {
           const update = updates.get(t.id);
           return update ? { ...t, status: update.status, position: update.position } : t;
         });
       });
+      return { prev };
+    },
+    onError: (_, __, context) => {
+      if (context?.prev) queryClient.setQueryData(['tasks'], context.prev);
     },
   });
 

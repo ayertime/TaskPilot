@@ -16,18 +16,25 @@ export default async function draftRoutes(app: FastifyInstance) {
   app.addHook('onRequest', authMiddleware);
 
   // GET /api/drafts — list pending drafts for the user
-  app.get('/', async (req) => {
-    const userId = (req as any).userId as string;
+  app.get('/', async (req, reply) => {
+    try {
+      const userId = (req as any).userId as string;
 
-    const { data, error } = await supabaseAdmin
-      .from('email_drafts')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('status', 'pending_review')
-      .order('review_deadline', { ascending: true });
+      const { data, error } = await supabaseAdmin
+        .from('email_drafts')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('status', 'pending_review')
+        .order('review_deadline', { ascending: true });
 
-    if (error) throw error;
-    return { drafts: data || [] };
+      if (error) {
+        reply.code(500).send({ error: 'Failed to fetch drafts' });
+        return;
+      }
+      return { drafts: data || [] };
+    } catch {
+      reply.code(500).send({ error: 'Failed to fetch drafts' });
+    }
   });
 
   // POST /api/drafts/:id/send — manually send a draft now

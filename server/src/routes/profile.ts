@@ -5,9 +5,9 @@ import { createUserClient, supabaseAdmin } from '../services/supabase';
 
 const updateProfileSchema = z.object({
   display_name: z.string().min(1).optional(),
-  custom_avatar_url: z.string().nullable().optional(),
+  custom_avatar_url: z.string().url().nullable().optional(),
   theme: z.enum(['light', 'dark', 'system']).optional(),
-  accent_color: z.string().optional(),
+  accent_color: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
   timezone: z.string().optional(),
   sync_enabled: z.boolean().optional(),
   sync_interval: z.enum(['1h', '3h', '5h', '12h', '24h']).optional(),
@@ -50,12 +50,13 @@ export default async function profileRoutes(app: FastifyInstance) {
       const userId = (req as any).userId as string;
       const { data } = await supabaseAdmin
         .from('profiles')
-        .select('provider, provider_token')
+        .select('provider')
+        .not('provider_token', 'is', null)
         .eq('id', userId)
         .single();
 
       return {
-        connected: !!data?.provider_token,
+        connected: !!data,
         provider: data?.provider || null,
       };
     } catch {
@@ -100,6 +101,7 @@ export default async function profileRoutes(app: FastifyInstance) {
     const userId = (req as any).userId as string;
     try {
       // Delete child tables first (foreign key order)
+      await supabaseAdmin.from('email_drafts').delete().eq('user_id', userId);
       await supabaseAdmin.from('chat_messages').delete().eq('user_id', userId);
       await supabaseAdmin.from('agent_activity').delete().eq('user_id', userId);
       await supabaseAdmin.from('tasks').delete().eq('user_id', userId);
@@ -134,7 +136,7 @@ export default async function profileRoutes(app: FastifyInstance) {
         .from('profiles')
         .update(result.data)
         .eq('id', (req as any).userId!)
-        .select()
+        .select('id, email, display_name, full_name, custom_avatar_url, theme, accent_color, timezone, provider, sync_enabled, sync_interval, has_seen_tutorial, briefing_topics, created_at, updated_at')
         .single();
 
       if (error) {

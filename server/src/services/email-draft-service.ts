@@ -149,14 +149,16 @@ export async function cancelDraft(
   draftId: string,
   userId: string,
 ): Promise<{ success: boolean; message: string }> {
-  const { error } = await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from('email_drafts')
     .update({ status: 'cancelled' })
     .eq('id', draftId)
     .eq('user_id', userId)
-    .eq('status', 'pending_review');
+    .eq('status', 'pending_review')
+    .select('id')
+    .single();
 
-  if (error) {
+  if (error || !data) {
     return { success: false, message: 'Draft not found or already processed' };
   }
 

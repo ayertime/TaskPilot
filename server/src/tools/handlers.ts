@@ -193,7 +193,7 @@ async function handleUpdateTask(
 
   for (const key of [
     'title', 'description', 'priority', 'status', 'category_id',
-    'due_date', 'is_automatable', 'auto_execute_at', 'action_type', 'action_metadata',
+    'due_date', 'is_automatable', 'auto_execute_at', 'action_type', 'action_metadata', 'ai_result',
   ]) {
     if (input[key] !== undefined) updates[key] = input[key];
   }
@@ -548,11 +548,12 @@ async function handleSummarizeUrl(
       return JSON.stringify({ error: 'Only http and https URLs are supported' });
     }
     // Block private/internal IPs
-    const hostname = parsed.hostname;
+    const hostname = parsed.hostname.replace(/^\[|\]$/g, ''); // strip IPv6 brackets
     if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0' ||
+        hostname === '::1' || hostname === '0000:0000:0000:0000:0000:0000:0000:0001' ||
         hostname.startsWith('10.') || hostname.startsWith('192.168.') || hostname.startsWith('169.254.') ||
-        hostname.startsWith('172.16.') || hostname.startsWith('172.17.') || hostname.startsWith('172.18.') ||
-        hostname.startsWith('172.19.') || hostname.startsWith('172.2') || hostname.startsWith('172.3')) {
+        hostname.startsWith('fc') || hostname.startsWith('fd') || hostname.startsWith('fe80') ||
+        /^172\.(1[6-9]|2\d|3[01])\./.test(hostname)) {
       return JSON.stringify({ error: 'Cannot fetch internal or private URLs' });
     }
   } catch {

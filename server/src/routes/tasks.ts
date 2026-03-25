@@ -136,7 +136,7 @@ export default async function taskRoutes(app: FastifyInstance) {
 
       const supabase = createUserClient((req as any).accessToken!);
 
-      await Promise.all(
+      const results = await Promise.all(
         result.data.tasks.map((task) =>
           supabase
             .from('tasks')
@@ -144,6 +144,12 @@ export default async function taskRoutes(app: FastifyInstance) {
             .eq('id', task.id)
         )
       );
+
+      const failed = results.filter((r) => r.error);
+      if (failed.length > 0) {
+        reply.code(500).send({ error: 'Some tasks failed to reorder' });
+        return;
+      }
 
       return { success: true };
     } catch {

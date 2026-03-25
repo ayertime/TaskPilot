@@ -155,16 +155,20 @@ export function useChat() {
   }, [queryClient]);
 
   const clearHistory = useCallback(async () => {
-    const { data: session } = await supabase.auth.getSession();
-    const token = session.session?.access_token;
-    if (!token) return;
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      const token = session.session?.access_token;
+      if (!token) return;
 
-    await fetch(`${API_URL}/api/chat/history`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
-    });
+      const res = await fetch(`${API_URL}/api/chat/history`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-    setMessages([]);
+      if (res.ok) setMessages([]);
+    } catch {
+      // Network error — don't clear local messages
+    }
   }, []);
 
   return { messages, streaming, loading, sendMessage, clearHistory };
