@@ -37,9 +37,11 @@ import { priorityConfig } from '@/lib/priority';
 
 // --- Constants ---
 
-const HOUR_HEIGHT = 64;
+const HOUR_HEIGHT = 56;
 const START_HOUR = 0;
 const END_HOUR = 24;
+const WORK_START = 8;
+const WORK_END = 18;
 const HOURS = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i);
 const GRID_HEIGHT = HOURS.length * HOUR_HEIGHT;
 
@@ -61,12 +63,13 @@ function getTopOffset(date: Date): number {
 function getBlockHeight(start: Date, end: Date): number {
   const s = Math.max(getHours(start) * 60 + getMinutes(start), START_HOUR * 60);
   const e = Math.min(getHours(end) * 60 + getMinutes(end), END_HOUR * 60);
-  return Math.max(((e - s) / 60) * HOUR_HEIGHT, 24);
+  return Math.max(((e - s) / 60) * HOUR_HEIGHT, 22);
 }
 
 function formatHour(hour: number): string {
-  const h = hour % 12 || 12;
-  return `${h} ${hour >= 12 ? 'PM' : 'AM'}`;
+  if (hour === 0 || hour === 24) return '12 AM';
+  if (hour === 12) return '12 PM';
+  return hour < 12 ? `${hour} AM` : `${hour - 12} PM`;
 }
 
 // --- Main Component ---
@@ -116,7 +119,6 @@ export function CalendarView() {
     return grouped;
   }, [weekItems, weekDays]);
 
-  const hasContent = allItems.length > 0;
   const isCurrentWeek = isSameDay(weekStart, startOfWeek(new Date()));
 
   const weekEndDate = addDays(weekStart, 6);
@@ -126,52 +128,38 @@ export function CalendarView() {
       : `${format(weekStart, 'MMM d')} \u2013 ${format(weekEndDate, 'MMM d, yyyy')}`;
 
   return (
-    <div className="space-y-4">
-      {/* Page header */}
+    <div className="space-y-3">
+      {/* Header & navigation */}
       <motion.div
-        initial={{ opacity: 0, y: -10 }}
+        initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center gap-3"
-      >
-        <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
-          <Calendar className="w-5 h-5 text-green-500" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold">Calendar</h1>
-          <p className="text-sm text-muted-foreground">Events and tasks with due dates</p>
-        </div>
-      </motion.div>
-
-      {/* Week navigation */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.1 }}
         className="flex items-center justify-between"
       >
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setWeekStart(startOfWeek(new Date()))}
-            disabled={isCurrentWeek}
-          >
-            Today
-          </Button>
-          <div className="flex items-center">
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold tracking-tight">Calendar</h1>
+          <div className="flex items-center gap-1">
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8"
+              className="h-7 w-7 rounded-md"
               onClick={() => setWeekStart((w) => subWeeks(w, 1))}
               aria-label="Previous week"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <Button
+              variant="outline"
+              size="sm"
+              className="h-7 px-2.5 text-xs font-medium"
+              onClick={() => setWeekStart(startOfWeek(new Date()))}
+              disabled={isCurrentWeek}
+            >
+              Today
+            </Button>
+            <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8"
+              className="h-7 w-7 rounded-md"
               onClick={() => setWeekStart((w) => addWeeks(w, 1))}
               aria-label="Next week"
             >
@@ -179,52 +167,51 @@ export function CalendarView() {
             </Button>
           </div>
         </div>
-        <h2 className="text-base font-semibold tracking-tight">{weekLabel}</h2>
+        <p className="text-sm font-medium text-muted-foreground tabular-nums">{weekLabel}</p>
       </motion.div>
 
       {/* Loading skeleton */}
       {isLoading && (
-        <div className="rounded-xl border border-border/50 overflow-hidden">
+        <div className="rounded-lg border border-border/50 overflow-hidden">
           <div className="flex border-b border-border/30">
-            <div className="w-14 shrink-0" />
+            <div className="w-[52px] shrink-0" />
             {Array.from({ length: 7 }, (_, i) => (
-              <Skeleton key={i} className="flex-1 h-16 border-l border-border/10 first:border-l-0" />
+              <Skeleton key={i} className="flex-1 h-14 border-l border-border/10 first:border-l-0" />
             ))}
           </div>
-          <Skeleton className="h-[400px] w-full" />
+          <Skeleton className="h-[500px] w-full" />
         </div>
       )}
 
-      {/* Empty state */}
-      {!isLoading && !hasContent && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="flex flex-col items-center justify-center py-16 text-center"
-        >
-          <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-            <CalendarX2 className="w-8 h-8 text-muted-foreground" />
-          </div>
-          <h3 className="text-lg font-semibold mb-1">No upcoming events or tasks</h3>
-          <p className="text-sm text-muted-foreground max-w-sm">
-            {error
-              ? 'Connect your Google account in Settings to see calendar events, or create tasks with due dates.'
-              : "Create tasks with due dates and they'll appear here."}
-          </p>
-        </motion.div>
-      )}
-
-      {/* Calendar content */}
-      {!isLoading && hasContent && (
+      {/* Calendar grid — always visible once loaded */}
+      {!isLoading && (
         <>
           <div className="hidden md:block">
             <WeekGrid weekDays={weekDays} itemsByDay={itemsByDay} />
           </div>
           <div className="md:hidden">
-            <MobileTimeline items={weekItems} />
+            {weekItems.length > 0 ? (
+              <MobileTimeline items={weekItems} />
+            ) : (
+              <EmptyState error={error} />
+            )}
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+function EmptyState({ error }: { error: unknown }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 text-center">
+      <CalendarX2 className="w-10 h-10 text-muted-foreground/30 mb-3" />
+      <h3 className="text-sm font-medium mb-1">No events this week</h3>
+      <p className="text-xs text-muted-foreground max-w-xs">
+        {error
+          ? 'Connect your Google account in Settings to see calendar events.'
+          : "Create tasks with due dates and they'll appear here."}
+      </p>
     </div>
   );
 }
@@ -243,44 +230,46 @@ function WeekGrid({
   useEffect(() => {
     if (!scrollRef.current) return;
     const hour = getHours(new Date());
-    const target = Math.max(START_HOUR, hour - 2);
+    const target = Math.max(START_HOUR, hour - 1);
     scrollRef.current.scrollTop = (target - START_HOUR) * HOUR_HEIGHT;
   }, []);
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.15 }}
-      className="rounded-xl border border-border/50 bg-card overflow-hidden"
+      transition={{ delay: 0.08 }}
+      className="rounded-lg border border-border/60 bg-card/50 overflow-hidden"
     >
       {/* Day header row */}
-      <div className="flex border-b border-border/30">
-        <div className="w-14 shrink-0" />
+      <div className="flex border-b border-border/40 bg-muted/30">
+        <div className="w-[52px] shrink-0" />
         {weekDays.map((day, i) => {
           const today = isToday(day);
           return (
             <div
               key={i}
-              className={`flex-1 py-2.5 text-center border-l border-border/15 ${
-                today ? 'bg-primary/[0.04]' : ''
+              className={`flex-1 py-2 text-center border-l border-border/20 first:border-l-0 ${
+                today ? 'bg-primary/[0.06]' : ''
               }`}
             >
               <p
-                className={`text-[11px] font-medium uppercase tracking-wider ${
-                  today ? 'text-primary' : 'text-muted-foreground/50'
+                className={`text-[10px] font-semibold uppercase tracking-widest ${
+                  today ? 'text-primary' : 'text-muted-foreground/60'
                 }`}
               >
                 {format(day, 'EEE')}
               </p>
-              <div
-                className={`inline-flex items-center justify-center w-8 h-8 rounded-full mt-0.5 ${
-                  today ? 'bg-primary text-primary-foreground' : ''
-                }`}
-              >
-                <span className={`text-sm ${today ? 'font-bold' : 'font-medium text-foreground/70'}`}>
-                  {format(day, 'd')}
-                </span>
+              <div className="mt-0.5 inline-flex items-center justify-center">
+                {today ? (
+                  <span className="w-7 h-7 rounded-full bg-primary text-primary-foreground text-xs font-bold inline-flex items-center justify-center">
+                    {format(day, 'd')}
+                  </span>
+                ) : (
+                  <span className="text-sm font-medium text-foreground/60">
+                    {format(day, 'd')}
+                  </span>
+                )}
               </div>
             </div>
           );
@@ -288,28 +277,39 @@ function WeekGrid({
       </div>
 
       {/* Scrollable time grid */}
-      <div ref={scrollRef} className="overflow-y-auto" style={{ height: 'calc(100vh - 20rem)' }}>
-        <div className="flex" style={{ height: `${GRID_HEIGHT}px` }}>
+      <div ref={scrollRef} className="overflow-y-auto" style={{ height: 'calc(100vh - 12rem)' }}>
+        <div className="flex relative" style={{ height: `${GRID_HEIGHT}px` }}>
           {/* Time gutter */}
-          <div className="w-14 shrink-0 relative">
+          <div className="w-[52px] shrink-0 relative border-r border-border/20">
             {HOURS.map((hour) => (
               <div
                 key={hour}
-                className="absolute right-3 text-[11px] text-muted-foreground/40 tabular-nums -translate-y-1/2 select-none"
+                className="absolute right-2 -translate-y-1/2 select-none"
                 style={{ top: `${(hour - START_HOUR) * HOUR_HEIGHT}px` }}
               >
-                {formatHour(hour)}
+                <span className="text-[10px] font-medium text-muted-foreground/50 tabular-nums">
+                  {formatHour(hour)}
+                </span>
               </div>
             ))}
           </div>
 
           {/* Day columns area */}
           <div className="flex-1 relative">
-            {/* Full-hour grid lines */}
+            {/* Work-hours background band */}
+            <div
+              className="absolute inset-x-0 bg-muted/[0.04]"
+              style={{
+                top: `${(WORK_START - START_HOUR) * HOUR_HEIGHT}px`,
+                height: `${(WORK_END - WORK_START) * HOUR_HEIGHT}px`,
+              }}
+            />
+
+            {/* Hour grid lines */}
             {HOURS.map((hour) => (
               <div
                 key={`h-${hour}`}
-                className="absolute inset-x-0 border-t border-border/15"
+                className="absolute inset-x-0 border-t border-border/[0.12]"
                 style={{ top: `${(hour - START_HOUR) * HOUR_HEIGHT}px` }}
               />
             ))}
@@ -318,30 +318,36 @@ function WeekGrid({
             {HOURS.map((hour) => (
               <div
                 key={`hh-${hour}`}
-                className="absolute inset-x-0 border-t border-dashed border-border/8"
+                className="absolute inset-x-0 border-t border-border/[0.06] border-dashed"
                 style={{ top: `${(hour - START_HOUR) * HOUR_HEIGHT + HOUR_HEIGHT / 2}px` }}
               />
             ))}
 
-            {/* Day columns with events */}
+            {/* Day columns */}
             <div className="absolute inset-0 grid grid-cols-7">
-              {weekDays.map((day, dayIndex) => (
-                <div key={dayIndex} className="relative border-l border-border/15 overflow-hidden">
-                  {isToday(day) && <div className="absolute inset-0 bg-primary/[0.03]" />}
-
-                  {itemsByDay[dayIndex].map((item) =>
-                    item.type === 'event' ? (
-                      <GridEventBlock key={item.data.id} event={item.data} />
-                    ) : (
-                      <GridTaskBlock key={item.data.id} task={item.data} />
-                    ),
-                  )}
-                </div>
-              ))}
+              {weekDays.map((day, dayIndex) => {
+                const today = isToday(day);
+                return (
+                  <div
+                    key={dayIndex}
+                    className={`relative border-l border-border/20 first:border-l-0 ${
+                      today ? 'bg-primary/[0.02]' : ''
+                    }`}
+                  >
+                    {itemsByDay[dayIndex].map((item) =>
+                      item.type === 'event' ? (
+                        <GridEventBlock key={item.data.id} event={item.data} />
+                      ) : (
+                        <GridTaskBlock key={item.data.id} task={item.data} />
+                      ),
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
             {/* Now indicator */}
-            <NowIndicator />
+            <NowIndicator weekDays={weekDays} />
           </div>
         </div>
       </div>
@@ -358,30 +364,33 @@ function GridEventBlock({ event }: { event: CalendarEvent }) {
   const isOver = isPast(end);
 
   return (
-    <div
-      className={`absolute left-1 right-1 rounded-[5px] border-l-[3px] px-1.5 py-1 overflow-hidden cursor-default transition-all hover:shadow-lg hover:z-20 ${
+    <a
+      href={event.htmlLink || undefined}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={`absolute left-0.5 right-0.5 rounded border-l-2 px-1.5 py-0.5 overflow-hidden transition-colors group block ${
         isNow
-          ? 'bg-emerald-500/20 border-l-emerald-400 shadow-sm shadow-emerald-500/10'
+          ? 'bg-emerald-500/20 border-l-emerald-400'
           : isOver
-            ? 'bg-muted/30 border-l-muted-foreground/25 opacity-50'
-            : 'bg-emerald-500/10 border-l-emerald-500/60 hover:bg-emerald-500/15'
+            ? 'bg-muted/20 border-l-muted-foreground/20 opacity-45'
+            : 'bg-emerald-500/10 border-l-emerald-500/70 hover:bg-emerald-500/[0.18]'
       }`}
       style={{ top: `${top}px`, height: `${height}px` }}
-      title={`${event.title}\n${format(start, 'h:mm a')} - ${format(end, 'h:mm a')}${event.location ? `\n${event.location}` : ''}`}
+      title={`${event.title}\n${format(start, 'h:mm a')} – ${format(end, 'h:mm a')}${event.location ? `\n${event.location}` : ''}`}
     >
       <p className="text-[11px] font-medium truncate leading-tight">{event.title}</p>
-      {height > 36 && (
-        <p className="text-[10px] text-muted-foreground/60 truncate">
-          {format(start, 'h:mm')} - {format(end, 'h:mm a')}
+      {height > 32 && (
+        <p className="text-[10px] text-muted-foreground/50 truncate leading-tight">
+          {format(start, 'h:mm')} – {format(end, 'h:mm a')}
         </p>
       )}
-      {height > 60 && event.location && (
-        <div className="flex items-center gap-1 mt-0.5">
-          <MapPin className="w-2.5 h-2.5 text-muted-foreground/40 shrink-0" />
-          <p className="text-[10px] text-muted-foreground/40 truncate">{event.location}</p>
-        </div>
+      {height > 56 && event.location && (
+        <p className="text-[10px] text-muted-foreground/40 truncate leading-tight mt-0.5 flex items-center gap-0.5">
+          <MapPin className="w-2.5 h-2.5 shrink-0 inline" />
+          {event.location}
+        </p>
       )}
-    </div>
+    </a>
   );
 }
 
@@ -393,21 +402,21 @@ function GridTaskBlock({ task }: { task: Task }) {
 
   return (
     <div
-      className={`absolute left-1 right-1 h-7 rounded-[5px] border-l-[3px] px-1.5 flex items-center gap-1 overflow-hidden cursor-default transition-all hover:shadow-lg hover:z-20 ${
+      className={`absolute left-0.5 right-0.5 h-[22px] rounded border-l-2 px-1.5 flex items-center gap-1 overflow-hidden cursor-default transition-colors ${
         isOverdue
-          ? 'bg-red-500/15 border-l-red-500'
-          : `bg-blue-500/10 ${config.border} hover:bg-blue-500/15`
+          ? 'bg-red-500/12 border-l-red-500/80'
+          : `bg-primary/[0.07] ${config.border} hover:bg-primary/[0.12]`
       }`}
       style={{ top: `${top}px` }}
       title={`${task.title}\nDue: ${format(due, 'h:mm a')}\nPriority: ${config.label}`}
     >
-      <CheckSquare className="w-3 h-3 text-blue-400 shrink-0" />
-      <p className="text-[11px] font-medium truncate leading-none">{task.title}</p>
+      <CheckSquare className="w-3 h-3 text-primary/60 shrink-0" />
+      <p className="text-[10px] font-medium truncate leading-none">{task.title}</p>
     </div>
   );
 }
 
-function NowIndicator() {
+function NowIndicator({ weekDays }: { weekDays: Date[] }) {
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
@@ -418,13 +427,21 @@ function NowIndicator() {
   const h = getHours(now);
   if (h < START_HOUR || h >= END_HOUR) return null;
 
+  const todayIdx = weekDays.findIndex((d) => isToday(d));
+  if (todayIdx < 0) return null;
+
   const top = getTopOffset(now);
+  const leftPct = (todayIdx / 7) * 100;
+  const widthPct = (1 / 7) * 100;
 
   return (
-    <div className="absolute inset-x-0 z-30 pointer-events-none" style={{ top: `${top}px` }}>
+    <div
+      className="absolute z-30 pointer-events-none"
+      style={{ top: `${top}px`, left: `${leftPct}%`, width: `${widthPct}%` }}
+    >
       <div className="flex items-center -translate-y-px">
-        <div className="w-2.5 h-2.5 rounded-full bg-red-500 -ml-1 shrink-0 shadow-sm shadow-red-500/40" />
-        <div className="flex-1 h-[2px] bg-red-500/70" />
+        <div className="w-2 h-2 rounded-full bg-red-500 -ml-1 shrink-0" />
+        <div className="flex-1 h-px bg-red-500/80" />
       </div>
     </div>
   );
@@ -433,29 +450,20 @@ function NowIndicator() {
 // --- Mobile Timeline ---
 
 function MobileTimeline({ items }: { items: CalendarItem[] }) {
-  if (items.length === 0) {
-    return (
-      <div className="flex flex-col items-center py-12 text-center">
-        <CalendarX2 className="w-8 h-8 text-muted-foreground/40 mb-2" />
-        <p className="text-sm text-muted-foreground">No events this week</p>
-      </div>
-    );
-  }
-
   return (
-    <ScrollArea className="h-[calc(100vh-14rem)]">
-      <div className="space-y-2 pr-4">
+    <ScrollArea className="h-[calc(100vh-10rem)]">
+      <div className="space-y-1.5 pr-4">
         {groupItemsByDay(items).map(([day, dayItems], gi) => (
           <motion.div
             key={day}
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: gi * 0.05 }}
+            transition={{ delay: gi * 0.04 }}
           >
-            <h2 className="text-sm font-semibold text-muted-foreground mb-2 sticky top-0 bg-background py-1">
+            <h2 className="text-xs font-semibold text-muted-foreground/70 uppercase tracking-wider mb-1.5 sticky top-0 bg-background/90 backdrop-blur-sm py-1 z-10">
               {day}
             </h2>
-            <div className="space-y-2 mb-4">
+            <div className="space-y-1.5 mb-3">
               {dayItems.map((item, i) =>
                 item.type === 'event' ? (
                   <MobileEventCard key={item.data.id} event={item.data} index={i} />
@@ -478,7 +486,7 @@ function MobileTaskCard({ task, index }: { task: Task; index: number }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: -8 }}
+      initial={{ opacity: 0, x: -6 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: index * 0.03 }}
       className={`rounded-lg border p-3 flex items-start gap-3 ${
@@ -490,7 +498,7 @@ function MobileTaskCard({ task, index }: { task: Task; index: number }) {
         <p className="text-[10px] text-muted-foreground">Due</p>
       </div>
 
-      <div className={`w-1 self-stretch rounded-full shrink-0 ${config.dot}`} />
+      <div className={`w-0.5 self-stretch rounded-full shrink-0 ${config.dot}`} />
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
@@ -520,14 +528,14 @@ function MobileEventCard({ event, index }: { event: CalendarEvent; index: number
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: -8 }}
+      initial={{ opacity: 0, x: -6 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: index * 0.03 }}
       className={`rounded-lg border p-3 flex items-start gap-3 ${
         isNow
-          ? 'border-green-500/50 bg-green-500/5'
+          ? 'border-emerald-500/40 bg-emerald-500/5'
           : isOver
-            ? 'border-border/30 opacity-60'
+            ? 'border-border/30 opacity-50'
             : 'border-border/40 bg-card'
       }`}
     >
@@ -541,15 +549,15 @@ function MobileEventCard({ event, index }: { event: CalendarEvent; index: number
       </div>
 
       <div
-        className={`w-1 self-stretch rounded-full shrink-0 ${
-          isNow ? 'bg-green-500' : isOver ? 'bg-muted-foreground/30' : 'bg-emerald-500'
+        className={`w-0.5 self-stretch rounded-full shrink-0 ${
+          isNow ? 'bg-emerald-500' : isOver ? 'bg-muted-foreground/25' : 'bg-emerald-500/70'
         }`}
       />
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <p className="text-sm font-medium truncate">{event.title}</p>
-          {isNow && <Badge className="text-[9px] px-1 py-0 bg-green-500 shrink-0">Now</Badge>}
+          {isNow && <Badge className="text-[9px] px-1 py-0 bg-emerald-500 shrink-0">Now</Badge>}
           {event.htmlLink && (
             <a
               href={event.htmlLink}
@@ -568,7 +576,7 @@ function MobileEventCard({ event, index }: { event: CalendarEvent; index: number
           <div className="flex items-center gap-1">
             <Clock className="w-3 h-3" />
             <span>
-              {format(start, 'h:mm a')} - {format(end, 'h:mm a')}
+              {format(start, 'h:mm a')} – {format(end, 'h:mm a')}
             </span>
           </div>
           {event.location && (
@@ -580,7 +588,7 @@ function MobileEventCard({ event, index }: { event: CalendarEvent; index: number
         </div>
 
         {event.description && (
-          <p className="text-xs text-muted-foreground/70 mt-1.5 line-clamp-2">{event.description}</p>
+          <p className="text-xs text-muted-foreground/60 mt-1.5 line-clamp-2">{event.description}</p>
         )}
       </div>
     </motion.div>
