@@ -217,11 +217,31 @@ export function CalendarView() {
         </div>
       )}
 
+      {/* AI hint when no items */}
+      {!isLoading && weekItems.length === 0 && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex items-center justify-between rounded-lg border border-dashed border-border/50 bg-muted/[0.03] px-4 py-3"
+        >
+          <p className="text-sm text-muted-foreground">No events or tasks this week</p>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5 text-xs"
+            onClick={() => onOpenChat?.('Help me plan my week. What tasks should I create and schedule?')}
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            Ask AI to plan your week
+          </Button>
+        </motion.div>
+      )}
+
       {/* Calendar grid — always visible once loaded */}
       {!isLoading && (
         <>
           <div className="hidden md:block">
-            <WeekGrid weekDays={weekDays} itemsByDay={itemsByDay} onOpenChat={onOpenChat} />
+            <WeekGrid weekDays={weekDays} itemsByDay={itemsByDay} />
           </div>
           <div className="md:hidden">
             {weekItems.length > 0 ? (
@@ -264,14 +284,11 @@ function EmptyState({ error, onOpenChat }: { error: unknown; onOpenChat?: (promp
 function WeekGrid({
   weekDays,
   itemsByDay,
-  onOpenChat,
 }: {
   weekDays: Date[];
   itemsByDay: CalendarItem[][];
-  onOpenChat?: (prompt?: string) => void;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const hasAnyItems = itemsByDay.some((d) => d.length > 0);
 
   useEffect(() => {
     if (!scrollRef.current) return;
@@ -400,23 +417,6 @@ function WeekGrid({
           </div>
         </div>
 
-        {/* AI hint overlay when grid is empty */}
-        {!hasAnyItems && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="pointer-events-auto text-center">
-              <p className="text-sm text-muted-foreground/50 mb-2">No events or tasks this week</p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1.5 text-xs"
-                onClick={() => onOpenChat?.('Help me plan my week. What tasks should I create and schedule?')}
-              >
-                <Sparkles className="h-3.5 w-3.5" />
-                Ask AI to plan your week
-              </Button>
-            </div>
-          </div>
-        )}
       </div>
     </motion.div>
   );
