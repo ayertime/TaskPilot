@@ -6,6 +6,7 @@ import { ArrowLeft } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -17,6 +18,14 @@ export function LoginPage() {
   const [fullName, setFullName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(
+    () => localStorage.getItem('taskpilot-remember-me') !== 'false',
+  );
+
+  function handleRememberMe(checked: boolean) {
+    setRememberMe(checked);
+    localStorage.setItem('taskpilot-remember-me', String(checked));
+  }
 
   // Redirect to dashboard if already logged in
   useEffect(() => {
@@ -162,6 +171,17 @@ export function LoginPage() {
                 <span className="absolute right-3 text-[10px] font-medium text-muted-foreground">Coming Soon</span>
               </Button>
               )}
+            </div>
+
+            <div className="flex items-center gap-2 mt-4">
+              <Checkbox
+                id="remember-me"
+                checked={rememberMe}
+                onCheckedChange={(checked) => handleRememberMe(checked === true)}
+              />
+              <Label htmlFor="remember-me" className="text-sm font-normal text-muted-foreground cursor-pointer">
+                Remember me on this device
+              </Label>
             </div>
 
             <div className="relative my-6">
