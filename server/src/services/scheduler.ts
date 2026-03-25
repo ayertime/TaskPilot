@@ -80,6 +80,33 @@ async function processOverdueTasks() {
   }
 }
 
+async function checkIfUserAlreadySentEmail(
+  userId: string,
+  to: string,
+  subject: string,
+): Promise<boolean> {
+  try {
+    // Search sent emails for a match on recipient or subject
+    const query = to
+      ? `in:sent to:${to}`
+      : `in:sent subject:${subject}`;
+    const result = await readEmails(userId, {
+      query,
+      maxResults: 5,
+    });
+    if (!result.success || !result.emails || result.emails.length === 0) return false;
+
+    // Check if any sent email matches the subject (fuzzy)
+    const subjectLower = subject.toLowerCase();
+    return result.emails.some((e) =>
+      e.subject.toLowerCase().includes(subjectLower) ||
+      subjectLower.includes(e.subject.toLowerCase()),
+    );
+  } catch {
+    return false;
+  }
+}
+
 async function executeTask(task: {
   id: string;
   user_id: string;
@@ -92,6 +119,35 @@ async function executeTask(task: {
   recurrence_pattern: string | null;
 }) {
   const { user_id, title, action_type } = task;
+
+  // Skip manual/physical tasks — only the user can complete these
+  if (!action_type || action_type === 'manual') {
+    console.log(`[Scheduler] Skipping manual task "${title}" — only user can complete`);
+    return;
+  }
+
+  // For email tasks, check if the user already sent the email themselves
+  if (action_type === 'email' && task.action_metadata) {
+    const to = (task.action_metadata.to as string) || '';
+    const subject = (task.action_metadata.subject as string) || '';
+    if (to || subject) {
+      const alreadySent = await checkIfUserAlreadySentEmail(user_id, to, subject);
+      if (alreadySent) {
+        console.log(`[Scheduler] User already sent email for "${title}" — marking complete`);
+        await supabaseAdmin
+          .from('tasks')
+          .update({ status: 'done', completed_at: new Date().toISOString(), completed_by: 'agent' })
+          .eq('id', task.id);
+        await supabaseAdmin.from('agent_activity').insert({
+          user_id,
+          task_id: task.id,
+          action_type: 'auto_complete_detected',
+          description: `Detected user already sent email for "${title}" — marked complete`,
+        });
+        return;
+      }
+    }
+  }
 
   // Build a prompt for the agent based on the task's action type
   let prompt: string;

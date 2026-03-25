@@ -50,7 +50,7 @@ export default async function chatRoutes(app: FastifyInstance) {
     const name = profile?.display_name || profile?.full_name?.split(' ')[0] || 'there';
 
     sendSSE({
-      type: 'text',
+      type: 'text_delta',
       content: `Hello ${name}! I'm currently taking a short break while we upgrade to a faster, local AI model. I'll be back soon and ready to help you manage your tasks, emails, and calendar. In the meantime, you can still create and organize tasks manually. Thanks for your patience!`,
     });
     sendSSE({ type: 'done' });

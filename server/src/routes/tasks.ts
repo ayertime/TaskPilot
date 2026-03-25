@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { authMiddleware } from '../middleware/auth';
 import { createUserClient, supabaseAdmin } from '../services/supabase';
+import { classifyTask } from '../services/task-classifier';
 
 const createTaskSchema = z.object({
   title: z.string().min(1),
@@ -80,9 +81,17 @@ export default async function taskRoutes(app: FastifyInstance) {
 
       const position = (existing?.position ?? -1) + 1;
 
+      // Auto-classify task if user didn't explicitly set action_type
+      const taskData = { ...result.data, user_id: (req as any).userId, position };
+      if (!taskData.action_type) {
+        const classification = classifyTask(taskData.title, taskData.description);
+        taskData.is_automatable = classification.is_automatable;
+        taskData.action_type = classification.action_type;
+      }
+
       const { data, error } = await supabase
         .from('tasks')
-        .insert({ ...result.data, user_id: (req as any).userId, position })
+        .insert(taskData)
         .select()
         .single();
 

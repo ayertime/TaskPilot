@@ -7,6 +7,7 @@ import { createCalendarEvent } from '../services/calendar-service';
 import { readEmails } from '../services/gmail-service';
 import { readCalendarEvents } from '../services/gcalendar-service';
 import { exportTasksCsv, exportTasksMarkdown } from '../services/export-service';
+import { classifyTask } from '../services/task-classifier';
 
 interface ToolContext {
   userId: string;
@@ -141,11 +142,22 @@ async function handleCreateTask(
   if (input.description) taskData.description = input.description;
   if (input.category_id) taskData.category_id = input.category_id;
   if (input.due_date) taskData.due_date = input.due_date;
-  if (input.is_automatable != null) taskData.is_automatable = input.is_automatable;
   if (input.auto_execute_at) taskData.auto_execute_at = input.auto_execute_at;
   if (input.action_type) taskData.action_type = input.action_type;
   if (input.action_metadata) taskData.action_metadata = input.action_metadata;
   taskData.ai_generated = true;
+
+  // Auto-classify if agent didn't explicitly set action_type
+  if (!input.action_type) {
+    const classification = classifyTask(
+      input.title as string,
+      input.description as string | undefined,
+    );
+    taskData.is_automatable = classification.is_automatable;
+    taskData.action_type = classification.action_type;
+  } else if (input.is_automatable != null) {
+    taskData.is_automatable = input.is_automatable;
+  }
 
   const { data, error } = await ctx.userClient
     .from('tasks')
