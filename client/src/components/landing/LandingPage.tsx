@@ -35,7 +35,7 @@ const features = [
     icon: LayoutDashboard,
     title: 'Kanban Board',
     description:
-      'Drag-and-drop tasks between To Do, In Progress, and Done columns with smooth animations.',
+      'Drag-and-drop tasks between Not Started, In Progress, and Completed columns with smooth animations.',
     color: 'text-blue-500',
   },
   {
@@ -232,10 +232,10 @@ export function LandingPage() {
               {/* Fake Kanban preview */}
               <div className="p-6">
                 <div className="grid grid-cols-3 gap-4">
-                  {/* To Do Column */}
+                  {/* Not Started Column */}
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 mb-3">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">To Do</span>
+                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Not Started</span>
                       <span className="text-[10px] font-medium text-blue-600 bg-blue-500/10 px-1.5 py-0.5 rounded-full">
                         3
                       </span>
@@ -277,10 +277,10 @@ export function LandingPage() {
                     ))}
                   </div>
 
-                  {/* Done Column */}
+                  {/* Completed Column */}
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 mb-3">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Done</span>
+                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Completed</span>
                       <span className="text-[10px] font-medium text-green-600 bg-green-500/10 px-1.5 py-0.5 rounded-full">
                         3
                       </span>
