@@ -334,7 +334,8 @@ function DayColumn({ day, items }: { day: Date; items: CalendarItem[] }) {
         hasScrolled.current = true;
       }
     }
-  });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div
