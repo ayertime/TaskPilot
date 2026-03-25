@@ -18,6 +18,9 @@ import {
   CheckCircle2,
   Inbox,
   Sunrise,
+  Brain,
+  CalendarRange,
+  Reply,
 } from 'lucide-react';
 
 const features = [
@@ -46,7 +49,7 @@ const features = [
     icon: Mail,
     title: 'Email & Calendar',
     description:
-      'Send emails via Gmail or Outlook and create calendar events — all from a chat message.',
+      'View your inbox with reply tracking, send emails via Gmail or Outlook, and see events on a weekly calendar grid — all in one place.',
     color: 'text-emerald-500',
   },
   {
@@ -60,7 +63,7 @@ const features = [
     icon: Inbox,
     title: 'Smart Inbox Scanner',
     description:
-      'TaskPilot scans your emails for action items and auto-creates tasks — with smart reply drafts ready to send.',
+      'TaskPilot scans your emails for action items and auto-creates tasks. Reply detection badges show which emails still need your attention.',
     color: 'text-cyan-500',
   },
   {
@@ -77,6 +80,27 @@ const features = [
       'See everything TaskPilot has done for you — emails sent, events created, tasks completed.',
     color: 'text-rose-500',
   },
+  {
+    icon: Brain,
+    title: 'Smart Classification',
+    description:
+      'TaskPilot automatically detects whether a task is something the AI can handle or something only you can do — like going to the gym.',
+    color: 'text-pink-500',
+  },
+  {
+    icon: CalendarRange,
+    title: 'Weekly Calendar Grid',
+    description:
+      'View your week at a glance with a time-slot grid showing events, tasks with due dates, and emails that need your reply.',
+    color: 'text-teal-500',
+  },
+  {
+    icon: Reply,
+    title: 'Email Reply Tracking',
+    description:
+      'Replied emails are automatically detected and marked as complete — on your task board, calendar, and email inbox.',
+    color: 'text-emerald-400',
+  },
 ];
 
 const capabilities = [
@@ -92,6 +116,9 @@ const capabilities = [
   'Scan inbox for action items',
   'Draft smart email replies',
   'Personalized morning briefings',
+  'Smart task classification',
+  'Track email reply status',
+  'Weekly calendar grid with time slots',
   'Auto-categorize tasks',
   'Export tasks as CSV or markdown',
   'Check weather for outdoor planning',

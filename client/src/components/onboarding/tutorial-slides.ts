@@ -12,6 +12,7 @@ import {
   Activity,
   Inbox,
   Sunrise,
+  Brain,
 } from 'lucide-react';
 
 export interface TutorialSlideData {
@@ -58,7 +59,7 @@ export const TUTORIAL_SLIDES: TutorialSlideData[] = [
     iconColor: 'text-amber-500',
     title: 'Auto-Pilot Mode',
     description:
-      'Schedule tasks for automatic execution. TaskPilot will complete them even if you forget.',
+      'Schedule tasks for automatic execution. TaskPilot smart-classifies each task so it only auto-pilots what it can actually handle.',
   },
   {
     id: 'integrations',
@@ -70,7 +71,7 @@ export const TUTORIAL_SLIDES: TutorialSlideData[] = [
     ],
     title: 'Email, Calendar & Activity',
     description:
-      'View your inbox and sent emails, see calendar events alongside tasks with due dates, and track every agent action in real time.',
+      'View your inbox with reply tracking, see your week on a calendar grid with events and tasks, and track every agent action in real time.',
   },
   {
     id: 'smart-inbox',
@@ -79,7 +80,16 @@ export const TUTORIAL_SLIDES: TutorialSlideData[] = [
     iconColor: 'text-cyan-500',
     title: 'Smart Inbox Scanner',
     description:
-      'TaskPilot automatically scans your emails for action items and creates tasks on your board. Someone asks you for something? It becomes a To Do — with the sender and due date right on the card.',
+      'TaskPilot scans your emails for action items and creates tasks on your board. Reply detection badges show which emails still need your attention and which are already handled.',
+  },
+  {
+    id: 'smart-classification',
+    type: 'feature',
+    icon: Brain,
+    iconColor: 'text-pink-500',
+    title: 'Smart Task Classification',
+    description:
+      'TaskPilot automatically knows the difference between tasks it can handle (like sending emails) and tasks only you can do (like going to the gym). No manual tagging needed.',
   },
   {
     id: 'morning-briefing',

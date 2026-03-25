@@ -41,7 +41,7 @@ TaskPilot bridges the gap between planning and execution. Users describe what ne
 | Drag & Drop | @dnd-kit |
 | Backend | Node.js, Fastify 5, TypeScript |
 | Database | Supabase (PostgreSQL) with Row Level Security |
-| AI | Anthropic Claude API (claude-haiku-4-5) |
+| AI | Anthropic Claude API (claude-haiku-4-5); local model planned (Llama 3.1 8B via Ollama on Raspberry Pi 5) |
 | Authentication | Supabase Auth (Google OAuth + email/password; Microsoft, Yahoo, Slack coming soon) |
 | Scheduling | node-cron (1-minute intervals) |
 | Validation | Zod |
@@ -217,10 +217,12 @@ The scheduler is the core differentiating feature of TaskPilot.
 1. Runs every 60 seconds via node-cron
 2. Queries tasks where `is_automatable = true`, `status != 'done'`, and `auto_execute_at <= now()`
 3. Processes up to 5 tasks per cycle to prevent overload
-4. For each task, builds a prompt based on action_type and calls the AI agent
-5. Agent determines the appropriate tool and executes the action
-6. Task is marked complete with `completed_by = 'agent'`
-7. Action is logged in the agent_activity table
+4. **Smart classification gate**: Skips tasks with no `action_type` or `action_type = 'manual'` — only user can complete physical tasks
+5. **Sent email detection**: Before executing email tasks, checks Gmail sent folder to see if the user already sent it manually (prevents duplicate emails)
+6. For each task, builds a prompt based on action_type and calls the AI agent
+7. Agent determines the appropriate tool and executes the action
+8. Task is marked complete with `completed_by = 'agent'`
+9. Action is logged in the agent_activity table
 
 **Supported Autonomous Actions**
 
@@ -288,16 +290,22 @@ The scheduler is the core differentiating feature of TaskPilot.
 - **Sent tab**: View sent emails
 - Expandable email cards showing full headers (from, to, date) and body
 - Unread email indicators with "New" badge
+- **Reply detection badges**: Green "Replied" badge with reply icon on emails that have been responded to (via Gmail Threads API)
+- **Email action banner**: Collapsible banner at top of Email page showing emails needing a reply (amber) and already-replied emails (faded/strikethrough), with counts for each state
 - Graceful fallback message when email account is not connected
 - Uses existing Gmail API integration (no additional API costs)
 
 ### 3.7.2 In-App Calendar View
 
 - Dedicated Calendar page accessible from sidebar navigation
-- **Unified view**: Google Calendar events and TaskPilot tasks with due dates displayed together
-- Events and tasks sorted by time, grouped by day (Today, Tomorrow, or date)
+- **Weekly calendar grid** (desktop): Time-slot grid with days across the top and hours on the left axis, showing events and tasks as positioned blocks within the grid
+  - "Today" column indicator and current time line
+  - Week navigation bar with prev/next arrows and current week range
+- **Timeline list** (mobile): Events and tasks sorted by time, grouped by day (Today, Tomorrow, or date)
+- **Unified view**: Google Calendar events, TaskPilot tasks with due dates, and actionable emails displayed together
 - **Event cards**: Time column, duration, color bars, location, attendees, and deep links to Google Calendar
 - **Task cards**: Priority-colored bars (red=urgent, orange=high, yellow=medium, blue=low), "Task" badge, overdue indicators
+- **Email blocks on calendar**: Actionable emails from inbox shown on calendar; replied emails rendered with strikethrough sender name, faded/muted colors, and green checkmark
 - "Now" badge on currently active events
 - Past events shown with reduced opacity
 - Graceful fallback when Google Calendar is not connected (tasks still display)
@@ -305,7 +313,7 @@ The scheduler is the core differentiating feature of TaskPilot.
 ### 3.8 New-User Tutorial
 
 - Auto-playing animated slideshow modal for first-time users
-- 7 slides using real content from the landing page (features, icons, how-it-works steps)
+- 10 slides using real content from the landing page (features, icons, how-it-works steps)
 - Auto-advances every 4.5 seconds, pausable on hover
 - Smooth cross-fade transitions and staggered element reveals via Motion
 - Progress bar, dot navigation, arrow key support, and skip button
@@ -469,7 +477,7 @@ All endpoints except /api/health require JWT authentication.
 | 6 | Google OAuth, Gmail/Calendar integration, Smart Sync, token refresh, time countdown, welcome-back modal, dark mode fix, task form redesign |
 | 7 | UI polish (tinted neutrals, glassmorphism, list view), new-user tutorial, chat cleanup (scheduler messages hidden), drag-and-drop performance fixes |
 | 8 | Browser notifications (Notification API), PWA (vite-plugin-pwa, installable on all devices), polished README, deployment (Vercel + Railway) |
-| 9 | Real-time agent monitoring (live progress steps, expandable activity details), in-app Email and Calendar views, tasks on calendar, mobile real-time updates, clear completed tasks, UI polish (task form redesign, sidebar, landing page mobile fixes) |
+| 9 | Real-time agent monitoring (live progress steps, expandable activity details), in-app Email and Calendar views, weekly calendar grid, tasks on calendar, email reply detection badges, email action banner, smart task classification (manual vs automatable), sent email detection, replied email rendering on calendar, mobile real-time updates, clear completed tasks, UI polish (task form redesign, sidebar, landing page mobile fixes), updated landing page and tutorial with new features |
 
 ### 6.2 Deployment
 
@@ -503,6 +511,22 @@ The agent uses a decision framework to determine what requires user confirmation
 | Auto-executable | Email, calendar events, research, documents, reminders | Agent acts without asking |
 | Not auto-executable | Physical tasks (buy groceries, go to gym) | Agent notifies but cannot act |
 | User-configurable | Any task | User can toggle auto-pilot per task |
+
+### 7.1 Smart Task Classification
+
+Tasks are automatically classified at creation time (both via REST API and agent tool) using a keyword-based classifier:
+
+| Classification | Keywords | Result |
+|----------------|----------|--------|
+| Email | email, send, reply to, forward, mail | `is_automatable: true`, `action_type: 'email'` |
+| Calendar | schedule, meeting, book, appointment | `is_automatable: true`, `action_type: 'calendar_event'` |
+| Research | research, look up, search for, investigate | `is_automatable: true`, `action_type: 'research'` |
+| Document | write, draft, generate report, summarize | `is_automatable: true`, `action_type: 'document'` |
+| Reminder | remind, reminder, don't forget | `is_automatable: true`, `action_type: 'reminder'` |
+| Manual | gym, workout, grocery, cook, clean, haircut, dentist, etc. | `is_automatable: false`, `action_type: null` |
+| Unknown | No keyword match | `is_automatable: false`, `action_type: null` |
+
+Manual keywords are checked first to ensure physical tasks are never auto-piloted. The classifier is a placeholder — will be replaced by a local AI model (Llama 3.1 8B on Ollama) for smarter classification.
 
 This ensures the agent is helpful without overstepping — it handles digital actions autonomously while clearly communicating what it cannot do.
 
