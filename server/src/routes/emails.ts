@@ -14,6 +14,7 @@ export default async function emailRoutes(app: FastifyInstance) {
       query: query.q || undefined,
       maxResults: query.limit ? parseInt(query.limit, 10) : 10,
       unreadOnly: query.unread === 'true',
+      checkReplied: query.check_replied === 'true',
     });
 
     if (!result.success) {

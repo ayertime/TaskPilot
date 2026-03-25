@@ -63,6 +63,7 @@ const NOISE_LABELS = ['CATEGORY_PROMOTIONS', 'CATEGORY_SOCIAL', 'CATEGORY_FORUMS
 
 function isActionableEmail(email: Email): boolean {
   if (!email.isUnread) return false;
+  if (email.hasReplied) return false;
   if (email.labels.some((l) => NOISE_LABELS.includes(l))) return false;
   return true;
 }
@@ -104,7 +105,7 @@ export function CalendarView() {
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
   const { data: events, isLoading, error } = useCalendarEvents();
   const { tasks } = useTasks();
-  const { data: emails } = useEmails('inbox', 'category:primary');
+  const { data: emails } = useEmails('inbox', 'category:primary', { checkReplied: true });
 
   const allItems = useMemo(() => {
     const taskItems: CalendarItem[] = tasks

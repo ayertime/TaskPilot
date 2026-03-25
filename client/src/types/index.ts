@@ -81,6 +81,7 @@ export interface Email {
   date: string;
   isUnread: boolean;
   labels: string[];
+  hasReplied?: boolean;
 }
 
 export interface CalendarEvent {

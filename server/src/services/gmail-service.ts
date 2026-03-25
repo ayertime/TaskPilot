@@ -11,12 +11,14 @@ interface EmailMessage {
   date: string;
   isUnread: boolean;
   labels: string[];
+  hasReplied?: boolean;
 }
 
 interface ReadEmailsParams {
   query?: string;
   maxResults?: number;
   unreadOnly?: boolean;
+  checkReplied?: boolean;
 }
 
 /**
@@ -78,6 +80,21 @@ export async function readEmails(
     for (const msg of listData.messages.slice(0, maxResults)) {
       const detail = await fetchMessageDetail(token.accessToken, msg.id);
       if (detail) emails.push(detail);
+    }
+
+    // Check if user has replied to each thread
+    if (params.checkReplied && emails.length > 0) {
+      const checked = await Promise.all(
+        emails.map(async (email) => {
+          email.hasReplied = await hasUserReplied(token.accessToken, email.threadId, email.id);
+          return email;
+        }),
+      );
+      return {
+        success: true,
+        emails: checked,
+        message: `Found ${checked.length} email(s).`,
+      };
     }
 
     return {
@@ -147,6 +164,41 @@ async function fetchMessageDetail(
     isUnread: data.labelIds?.includes('UNREAD') || false,
     labels: data.labelIds || [],
   };
+}
+
+/**
+ * Check if the user has sent a reply in the given thread after the specified message.
+ * Uses Gmail Threads API (minimal format) to check for SENT label on newer messages.
+ */
+async function hasUserReplied(
+  accessToken: string,
+  threadId: string,
+  originalMessageId: string,
+): Promise<boolean> {
+  try {
+    const res = await fetch(
+      `https://gmail.googleapis.com/gmail/v1/users/me/threads/${threadId}?format=minimal`,
+      { headers: { Authorization: `Bearer ${accessToken}` } },
+    );
+
+    if (!res.ok) return false;
+
+    const data = (await res.json()) as {
+      messages?: { id: string; labelIds?: string[] }[];
+    };
+
+    if (!data.messages || data.messages.length < 2) return false;
+
+    // Find the original message index, then check if any later message was sent by the user
+    const originalIdx = data.messages.findIndex((m) => m.id === originalMessageId);
+    if (originalIdx < 0) return false;
+
+    return data.messages
+      .slice(originalIdx + 1)
+      .some((m) => m.labelIds?.includes('SENT'));
+  } catch {
+    return false;
+  }
 }
 
 function decodeBase64Url(data: string): string {
