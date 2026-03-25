@@ -3,6 +3,7 @@ import { useOutletContext } from 'react-router';
 import { motion } from 'motion/react';
 import { useCalendarEvents } from '@/hooks/useCalendarEvents';
 import { useTasks } from '@/hooks/useTasks';
+import { useEmails } from '@/hooks/useEmails';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -17,6 +18,7 @@ import {
   ChevronRight,
   Sparkles,
   CalendarClock,
+  Mail,
 } from 'lucide-react';
 import {
   format,
@@ -34,7 +36,7 @@ import {
   startOfDay,
   endOfDay,
 } from 'date-fns';
-import type { CalendarEvent, Task, Category } from '@/types';
+import type { CalendarEvent, Task, Category, Email } from '@/types';
 import { priorityConfig } from '@/lib/priority';
 
 interface AppContext {
@@ -54,12 +56,28 @@ const GRID_HEIGHT = HOURS.length * HOUR_HEIGHT;
 
 type CalendarItem =
   | { type: 'event'; data: CalendarEvent }
-  | { type: 'task'; data: Task };
+  | { type: 'task'; data: Task }
+  | { type: 'email'; data: Email };
+
+const NOISE_LABELS = ['CATEGORY_PROMOTIONS', 'CATEGORY_SOCIAL', 'CATEGORY_FORUMS', 'CATEGORY_UPDATES', 'SPAM', 'TRASH'];
+
+function isActionableEmail(email: Email): boolean {
+  if (!email.isUnread) return false;
+  if (email.labels.some((l) => NOISE_LABELS.includes(l))) return false;
+  return true;
+}
+
+function getEmailSender(from: string): string {
+  const match = from.match(/^(.+?)\s*</);
+  return match ? match[1].replace(/"/g, '').trim() : from.split('@')[0];
+}
 
 // --- Utilities ---
 
 function getItemDate(item: CalendarItem): Date {
-  return new Date(item.type === 'event' ? item.data.start : (item.data as Task).due_date!);
+  if (item.type === 'event') return new Date(item.data.start);
+  if (item.type === 'task') return new Date((item.data as Task).due_date!);
+  return new Date((item.data as Email).date);
 }
 
 function getTopOffset(date: Date): number {
@@ -86,6 +104,7 @@ export function CalendarView() {
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
   const { data: events, isLoading, error } = useCalendarEvents();
   const { tasks } = useTasks();
+  const { data: emails } = useEmails('inbox', 'category:primary');
 
   const allItems = useMemo(() => {
     const taskItems: CalendarItem[] = tasks
@@ -97,10 +116,14 @@ export function CalendarView() {
       data: e,
     }));
 
-    return [...eventItems, ...taskItems].sort(
+    const emailItems: CalendarItem[] = (emails || [])
+      .filter(isActionableEmail)
+      .map((e) => ({ type: 'email', data: e }));
+
+    return [...eventItems, ...taskItems, ...emailItems].sort(
       (a, b) => getItemDate(a).getTime() - getItemDate(b).getTime(),
     );
-  }, [events, tasks]);
+  }, [events, tasks, emails]);
 
   const weekDays = useMemo(
     () => Array.from({ length: 7 }, (_, i) => addDays(weekStart, i)),
@@ -403,8 +426,10 @@ function WeekGrid({
                     {itemsByDay[dayIndex].map((item) =>
                       item.type === 'event' ? (
                         <GridEventBlock key={item.data.id} event={item.data} />
-                      ) : (
+                      ) : item.type === 'task' ? (
                         <GridTaskBlock key={item.data.id} task={item.data} />
+                      ) : (
+                        <GridEmailBlock key={item.data.id} email={item.data} />
                       ),
                     )}
                   </div>
@@ -483,6 +508,23 @@ function GridTaskBlock({ task }: { task: Task }) {
   );
 }
 
+function GridEmailBlock({ email }: { email: Email }) {
+  const date = new Date(email.date);
+  const top = getTopOffset(date);
+  const sender = getEmailSender(email.from);
+
+  return (
+    <div
+      className="absolute left-0.5 right-0.5 h-[22px] rounded border-l-2 border-l-amber-500/70 bg-amber-500/10 px-1.5 flex items-center gap-1 overflow-hidden cursor-default transition-all hover:-translate-y-px hover:shadow-md hover:bg-amber-500/[0.18]"
+      style={{ top: `${top}px` }}
+      title={`Reply to: ${sender}\n${email.subject}\nReceived: ${format(date, 'h:mm a')}`}
+    >
+      <Mail className="w-3 h-3 text-amber-500/70 shrink-0" />
+      <p className="text-[10px] font-medium truncate leading-none">{sender}</p>
+    </div>
+  );
+}
+
 function NowIndicator({ weekDays }: { weekDays: Date[] }) {
   const [now, setNow] = useState(new Date());
 
@@ -534,8 +576,10 @@ function MobileTimeline({ items }: { items: CalendarItem[] }) {
               {dayItems.map((item, i) =>
                 item.type === 'event' ? (
                   <MobileEventCard key={item.data.id} event={item.data} index={i} />
-                ) : (
+                ) : item.type === 'task' ? (
                   <MobileTaskCard key={item.data.id} task={item.data} index={i} />
+                ) : (
+                  <MobileEmailCard key={item.data.id} email={item.data} index={i} />
                 ),
               )}
             </div>
@@ -581,6 +625,39 @@ function MobileTaskCard({ task, index }: { task: Task; index: number }) {
           <span className={`${config.color} font-medium`}>{config.label}</span>
           <span>{task.status === 'in_progress' ? 'In Progress' : 'To Do'}</span>
         </div>
+      </div>
+    </motion.div>
+  );
+}
+
+function MobileEmailCard({ email, index }: { email: Email; index: number }) {
+  const date = new Date(email.date);
+  const sender = getEmailSender(email.from);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: -6 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: index * 0.03 }}
+      className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 flex items-start gap-3"
+    >
+      <div className="w-14 shrink-0 text-center">
+        <p className="text-sm font-semibold tabular-nums">{format(date, 'h:mm a')}</p>
+        <p className="text-[10px] text-muted-foreground">Email</p>
+      </div>
+
+      <div className="w-0.5 self-stretch rounded-full shrink-0 bg-amber-500/70" />
+
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <Mail className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+          <p className="text-sm font-medium truncate">{sender}</p>
+          <Badge className="text-[9px] px-1 py-0 bg-amber-500/20 text-amber-400 border-amber-500/30 shrink-0">
+            Needs reply
+          </Badge>
+        </div>
+        <p className="text-xs text-muted-foreground mt-1 truncate">{email.subject}</p>
+        <p className="text-xs text-muted-foreground/50 mt-0.5 line-clamp-1">{email.snippet}</p>
       </div>
     </motion.div>
   );
