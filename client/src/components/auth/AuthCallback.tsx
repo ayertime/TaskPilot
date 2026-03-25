@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-async function saveProviderTokens(session: { access_token: string; provider_token?: string | null; provider_refresh_token?: string | null; user: { app_metadata: { provider?: string } } }) {
+async function saveProviderTokens(session: { access_token: string; provider_token?: string | null; provider_refresh_token?: string | null; user: { app_metadata: { provider?: string; providers?: string[] } } }) {
   if (!session.provider_token) return;
   try {
     await fetch(`${API_URL}/api/profile/oauth-tokens`, {
@@ -17,7 +17,9 @@ async function saveProviderTokens(session: { access_token: string; provider_toke
         Authorization: `Bearer ${session.access_token}`,
       },
       body: JSON.stringify({
-        provider: session.user.app_metadata.provider || 'google',
+        provider: session.user.app_metadata.providers?.includes('google') ? 'google' :
+          session.user.app_metadata.providers?.includes('azure') ? 'azure' :
+          session.user.app_metadata.provider || 'google',
         provider_token: session.provider_token,
         provider_refresh_token: session.provider_refresh_token || null,
       }),

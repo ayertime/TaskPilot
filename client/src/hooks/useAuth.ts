@@ -36,7 +36,9 @@ export function useAuth() {
                 Authorization: `Bearer ${token}`,
               },
               body: JSON.stringify({
-                provider: session.user.app_metadata.provider || 'google',
+                provider: (session.user.app_metadata as any).providers?.includes('google') ? 'google' :
+                  (session.user.app_metadata as any).providers?.includes('azure') ? 'azure' :
+                  session.user.app_metadata.provider || 'google',
                 provider_token: session.provider_token,
                 provider_refresh_token: session.provider_refresh_token || null,
               }),
