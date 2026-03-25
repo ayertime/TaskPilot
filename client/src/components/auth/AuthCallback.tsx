@@ -43,14 +43,16 @@ export function AuthCallback() {
           setRecoveryMode(true);
           return;
         }
-        if (event === 'SIGNED_IN' && session) {
+        if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session) {
           if (!tokensSaved.current && session.provider_token) {
             tokensSaved.current = true;
             await saveProviderTokens(session);
           }
           if (!navigated.current) {
             navigated.current = true;
-            navigate('/dashboard', { replace: true });
+            // After linking an identity, go back to settings
+            const dest = event === 'USER_UPDATED' ? '/settings' : '/dashboard';
+            navigate(dest, { replace: true });
           }
         }
       }

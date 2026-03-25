@@ -249,8 +249,8 @@ export function ProfileSettings() {
                     onClick={async () => {
                       try {
                         await linkGoogle();
-                      } catch {
-                        toast.error('Failed to connect Google');
+                      } catch (err) {
+                        toast.error(err instanceof Error ? err.message : 'Failed to connect Google');
                       }
                     }}
                   >
