@@ -23,12 +23,9 @@ export function useAuth() {
         setUser(session?.user ?? null);
         setLoading(false);
 
-        // Save OAuth provider tokens when signing in via Google/Microsoft
-        console.log('[Auth] Event:', event, 'Has provider_token:', !!session?.provider_token);
         if (session?.provider_token) {
           try {
             const token = session.access_token;
-            console.log('[Auth] Saving provider tokens for user:', session.user.id);
             const res = await fetch(`${API_URL}/api/profile/oauth-tokens`, {
               method: 'POST',
               headers: {
@@ -43,9 +40,9 @@ export function useAuth() {
                 provider_refresh_token: session.provider_refresh_token || null,
               }),
             });
-            console.log('[Auth] Token save response:', res.status, res.statusText);
-          } catch (err) {
-            console.error('[Auth] Token save failed:', err);
+            if (!res.ok) console.error('[Auth] Token save failed:', res.status);
+          } catch {
+            // Non-blocking
           }
         }
       }

@@ -41,7 +41,6 @@ export function AuthCallback() {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('[AuthCallback] Event:', event, 'provider_token:', !!session?.provider_token, 'user:', session?.user?.email);
         if (event === 'PASSWORD_RECOVERY') {
           setRecoveryMode(true);
           return;
@@ -49,9 +48,7 @@ export function AuthCallback() {
         if (session) {
           if (!tokensSaved.current && session.provider_token) {
             tokensSaved.current = true;
-            console.log('[AuthCallback] Saving provider tokens...');
             await saveProviderTokens(session);
-            console.log('[AuthCallback] Tokens saved');
           }
           if (!navigated.current) {
             navigated.current = true;
