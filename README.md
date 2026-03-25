@@ -232,10 +232,4 @@ taskpilot/
 
 ## Author
 
-**Philip Civitello**
-
----
-
-## License
-
-MIT
+**PJ C**

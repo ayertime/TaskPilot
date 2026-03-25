@@ -1,7 +1,7 @@
 # Product Requirements Document: TaskPilot
 
 **Version:** 1.0
-**Author:** Philip Civitello
+**Author:** PJ C
 **Date:** March 2026
 **Status:** Released (v1.0)
 
