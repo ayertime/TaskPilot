@@ -488,6 +488,9 @@ export function ProfileSettings() {
                     try {
                       await apiFetch('/api/profile/account', { method: 'DELETE' });
                       toast.success('Account successfully deleted');
+                      // Clear local flags so re-signup triggers tutorial + briefing onboarding
+                      localStorage.removeItem('taskpilot_tutorial_completed');
+                      localStorage.removeItem('taskpilot_last_active');
                       // signOut may fail since the auth user is already deleted — that's fine
                       try { await signOut(); } catch { /* expected */ }
                       navigate('/login', { replace: true });
