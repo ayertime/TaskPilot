@@ -21,40 +21,45 @@ async function saveProviderTokens(session: { provider_token?: string | null; pro
 
 export function AuthCallback() {
   const navigate = useNavigate();
-  const handled = useRef(false);
+  const navigated = useRef(false);
+  const tokensSaved = useRef(false);
 
   useEffect(() => {
-    // Listen for the SIGNED_IN event — this is the most reliable way
-    // to capture the provider_token from OAuth redirects
+    // onAuthStateChange is the ONLY reliable way to get provider_token
+    // from OAuth redirects — getSession() does NOT include it
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (handled.current) return;
         if (event === 'SIGNED_IN' && session) {
-          handled.current = true;
-          await saveProviderTokens(session);
-          navigate('/dashboard', { replace: true });
+          // Save tokens if we haven't yet (provider_token is only here, not in getSession)
+          if (!tokensSaved.current && session.provider_token) {
+            tokensSaved.current = true;
+            await saveProviderTokens(session);
+          }
+          if (!navigated.current) {
+            navigated.current = true;
+            navigate('/dashboard', { replace: true });
+          }
         }
       }
     );
 
-    // Fallback: if session already exists (e.g., page reload)
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (handled.current) return;
+    // Fallback: if onAuthStateChange doesn't fire within 3s
+    // (e.g., session already existed from a page reload)
+    const fallbackTimer = setTimeout(async () => {
+      if (navigated.current) return;
+      const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        handled.current = true;
-        await saveProviderTokens(session);
+        navigated.current = true;
         navigate('/dashboard', { replace: true });
       } else {
-        // Give the auth state change listener a moment, then redirect
-        setTimeout(() => {
-          if (!handled.current) {
-            navigate('/login', { replace: true });
-          }
-        }, 3000);
+        navigate('/login', { replace: true });
       }
-    });
+    }, 3000);
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(fallbackTimer);
+    };
   }, [navigate]);
 
   return (
