@@ -99,6 +99,31 @@ export default async function profileRoutes(app: FastifyInstance) {
     }
   });
 
+  // DELETE /api/profile/oauth-tokens — Disconnect OAuth provider
+  app.delete('/oauth-tokens', async (req, reply) => {
+    try {
+      const userId = (req as any).userId as string;
+
+      const { error } = await supabaseAdmin
+        .from('profiles')
+        .update({
+          provider: null,
+          provider_token: null,
+          provider_refresh_token: null,
+        })
+        .eq('id', userId);
+
+      if (error) {
+        reply.code(400).send({ error: error.message });
+        return;
+      }
+
+      return { success: true };
+    } catch {
+      reply.code(500).send({ error: 'Failed to disconnect provider' });
+    }
+  });
+
   // DELETE /api/profile/account — Permanently delete user account and all data
   app.delete('/account', async (req, reply) => {
     const userId = (req as any).userId as string;

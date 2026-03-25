@@ -266,19 +266,37 @@ export function ProfileSettings() {
               <p className="text-xs text-muted-foreground">
                 TaskPilot can read your inbox, send emails, and create calendar events using your Google account.
               </p>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={async () => {
-                  try {
-                    await linkGoogle();
-                  } catch {
-                    toast.error('Failed to reconnect');
-                  }
-                }}
-              >
-                Reconnect
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    try {
+                      await linkGoogle();
+                    } catch (err) {
+                      toast.error(err instanceof Error ? err.message : 'Failed to reconnect');
+                    }
+                  }}
+                >
+                  Reconnect
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-destructive hover:text-destructive"
+                  onClick={async () => {
+                    try {
+                      await apiFetch('/api/profile/oauth-tokens', { method: 'DELETE' });
+                      setOauthStatus({ connected: false, provider: null });
+                      toast.success('Google account disconnected');
+                    } catch {
+                      toast.error('Failed to disconnect');
+                    }
+                  }}
+                >
+                  Disconnect
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>
