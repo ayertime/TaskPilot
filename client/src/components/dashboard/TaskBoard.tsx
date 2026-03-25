@@ -268,16 +268,17 @@ export function TaskBoard() {
   }
 
   async function handleSubmit(data: Partial<Task>) {
+    const wasEditing = editingTask;
+    setFormOpen(false);
+    setEditingTask(null);
     try {
-      if (editingTask) {
-        await updateTask(editingTask.id, data);
+      if (wasEditing) {
+        await updateTask(wasEditing.id, data);
         toast.success('Task updated');
       } else {
         await createTask(data as Parameters<typeof createTask>[0]);
         toast.success('Task created');
       }
-      setFormOpen(false);
-      setEditingTask(null);
     } catch {
       toast.error('Something went wrong');
     }
