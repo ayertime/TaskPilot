@@ -1,13 +1,17 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { supabase } from '@/lib/supabase';
-import { apiFetch } from '@/lib/api';
+import { API_URL } from '@/lib/api';
 
-async function saveProviderTokens(session: { provider_token?: string | null; provider_refresh_token?: string | null; user: { app_metadata: { provider?: string } } }) {
+async function saveProviderTokens(session: { access_token: string; provider_token?: string | null; provider_refresh_token?: string | null; user: { app_metadata: { provider?: string } } }) {
   if (!session.provider_token) return;
   try {
-    await apiFetch('/api/profile/oauth-tokens', {
+    await fetch(`${API_URL}/api/profile/oauth-tokens`, {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${session.access_token}`,
+      },
       body: JSON.stringify({
         provider: session.user.app_metadata.provider || 'google',
         provider_token: session.provider_token,
