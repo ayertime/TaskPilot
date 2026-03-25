@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useOutletContext } from 'react-router';
+import { useOutletContext, useNavigate } from 'react-router';
 import { useProfile } from '@/hooks/useProfile';
 import { useAuth } from '@/hooks/useAuth';
 import { apiFetch } from '@/lib/api';
@@ -36,6 +36,7 @@ import { toast } from 'sonner';
 export function ProfileSettings() {
   const { profile, loading, updateProfile } = useProfile();
   const { signInWithGoogle, signOut } = useAuth();
+  const navigate = useNavigate();
   const { onShowTutorial } = useOutletContext<{ onShowTutorial?: () => void }>();
   const [displayName, setDisplayName] = useState('');
   const [theme, setTheme] = useState('system');
@@ -486,7 +487,10 @@ export function ProfileSettings() {
                     setDeleting(true);
                     try {
                       await apiFetch('/api/profile/account', { method: 'DELETE' });
-                      await signOut();
+                      toast.success('Account successfully deleted');
+                      // signOut may fail since the auth user is already deleted — that's fine
+                      try { await signOut(); } catch { /* expected */ }
+                      navigate('/login', { replace: true });
                     } catch {
                       toast.error('Failed to delete account');
                       setDeleting(false);
