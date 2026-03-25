@@ -314,6 +314,20 @@ function WeekGrid({
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  const { emailsByDay, scheduleByDay } = useMemo(() => {
+    const emails: CalendarItem[][] = Array.from({ length: 7 }, () => []);
+    const schedule: CalendarItem[][] = Array.from({ length: 7 }, () => []);
+    for (let i = 0; i < 7; i++) {
+      for (const item of itemsByDay[i]) {
+        if (item.type === 'email') emails[i].push(item);
+        else schedule[i].push(item);
+      }
+    }
+    return { emailsByDay: emails, scheduleByDay: schedule };
+  }, [itemsByDay]);
+
+  const hasAnyEmails = emailsByDay.some((day) => day.length > 0);
+
   useEffect(() => {
     if (!scrollRef.current) return;
     const hour = getHours(new Date());
@@ -362,6 +376,42 @@ function WeekGrid({
           );
         })}
       </div>
+
+      {/* Pinned email action row */}
+      {hasAnyEmails && (
+        <div className="flex border-b border-amber-500/20 bg-amber-500/[0.03]">
+          <div className="w-[52px] shrink-0 flex items-center justify-center border-r border-border/20">
+            <Mail className="w-3.5 h-3.5 text-amber-500/50" />
+          </div>
+          {weekDays.map((_day, i) => (
+            <div
+              key={i}
+              className="flex-1 border-l border-border/20 first:border-l-0 p-1 space-y-0.5"
+            >
+              {emailsByDay[i].map((item) => {
+                const email = item.data as Email;
+                const sender = getEmailSender(email.from);
+                const replied = !!email.hasReplied;
+                return (
+                  <div
+                    key={email.id}
+                    className={`rounded px-1.5 py-1 text-[10px] font-medium flex items-center gap-1 transition-colors ${
+                      replied
+                        ? 'bg-muted/15 text-muted-foreground/40'
+                        : 'bg-amber-500/10 text-amber-300/90 hover:bg-amber-500/20'
+                    }`}
+                    title={`${replied ? 'Replied' : 'Needs reply'}: ${sender}\n${email.subject}`}
+                  >
+                    <Mail className={`w-2.5 h-2.5 shrink-0 ${replied ? 'text-muted-foreground/30' : 'text-amber-500/70'}`} />
+                    <span className={`truncate ${replied ? 'line-through' : ''}`}>{sender}</span>
+                    {replied && <Check className="w-2.5 h-2.5 text-emerald-500/60 shrink-0 ml-auto" />}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Scrollable time grid */}
       <div ref={scrollRef} className="overflow-y-auto relative" style={{ height: 'calc(100vh - 12rem)' }}>
@@ -424,13 +474,11 @@ function WeekGrid({
                     {/* Column hover highlight */}
                     <div className="absolute inset-0 bg-muted/[0.03] opacity-0 group-hover/col:opacity-100 transition-opacity pointer-events-none" />
 
-                    {itemsByDay[dayIndex].map((item) =>
+                    {scheduleByDay[dayIndex].map((item) =>
                       item.type === 'event' ? (
                         <GridEventBlock key={item.data.id} event={item.data} />
-                      ) : item.type === 'task' ? (
-                        <GridTaskBlock key={item.data.id} task={item.data} />
                       ) : (
-                        <GridEmailBlock key={item.data.id} email={item.data} />
+                        <GridTaskBlock key={item.data.id} task={item.data as Task} />
                       ),
                     )}
                   </div>
@@ -505,31 +553,6 @@ function GridTaskBlock({ task }: { task: Task }) {
     >
       <CheckSquare className="w-3 h-3 text-primary/60 shrink-0" />
       <p className="text-[10px] font-medium truncate leading-none">{task.title}</p>
-    </div>
-  );
-}
-
-function GridEmailBlock({ email }: { email: Email }) {
-  const date = new Date(email.date);
-  const top = getTopOffset(date);
-  const sender = getEmailSender(email.from);
-  const replied = !!email.hasReplied;
-
-  return (
-    <div
-      className={`absolute left-0.5 right-0.5 h-[22px] rounded border-l-2 px-1.5 flex items-center gap-1 overflow-hidden cursor-default transition-all ${
-        replied
-          ? 'border-l-muted-foreground/20 bg-muted/15 opacity-45'
-          : 'border-l-amber-500/70 bg-amber-500/10 hover:-translate-y-px hover:shadow-md hover:bg-amber-500/[0.18]'
-      }`}
-      style={{ top: `${top}px` }}
-      title={`${replied ? 'Replied' : 'Reply to'}: ${sender}\n${email.subject}\nReceived: ${format(date, 'h:mm a')}`}
-    >
-      <Mail className={`w-3 h-3 shrink-0 ${replied ? 'text-muted-foreground/40' : 'text-amber-500/70'}`} />
-      <p className={`text-[10px] font-medium truncate leading-none ${replied ? 'line-through text-muted-foreground/50' : ''}`}>
-        {sender}
-      </p>
-      {replied && <Check className="w-2.5 h-2.5 text-emerald-500/60 shrink-0 ml-auto" />}
     </div>
   );
 }
