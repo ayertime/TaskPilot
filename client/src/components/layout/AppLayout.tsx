@@ -76,6 +76,7 @@ export function AppLayout() {
   const navigate = useNavigate();
   const [categoryFormOpen, setCategoryFormOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const [chatPrompt, setChatPrompt] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [tutorialOpen, setTutorialOpen] = useState(false);
   const [briefingOnboardingOpen, setBriefingOnboardingOpen] = useState(false);
@@ -132,6 +133,12 @@ export function AppLayout() {
       requestNotificationPermission();
     }
   }, [profile]);
+
+  // Open chat panel with an optional pre-filled prompt
+  const openChatWith = useCallback((prompt?: string) => {
+    if (prompt) setChatPrompt(prompt);
+    setChatOpen(true);
+  }, []);
 
   // Ctrl+K to toggle chat panel
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
@@ -353,7 +360,7 @@ export function AppLayout() {
 
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
-          <Outlet context={{ categories, onShowTutorial: () => setTutorialOpen(true) }} />
+          <Outlet context={{ categories, onShowTutorial: () => setTutorialOpen(true), onOpenChat: openChatWith }} />
         </main>
       </div>
 
@@ -363,7 +370,12 @@ export function AppLayout() {
         onSubmit={handleCreateCategory}
       />
 
-      <ChatPanel open={chatOpen} onOpenChange={setChatOpen} />
+      <ChatPanel
+        open={chatOpen}
+        onOpenChange={setChatOpen}
+        initialPrompt={chatPrompt}
+        onInitialPromptHandled={() => setChatPrompt(null)}
+      />
 
       <TutorialModal
         open={tutorialOpen}

@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
+import { useOutletContext } from 'react-router';
 import { motion } from 'motion/react';
 import { useCalendarEvents } from '@/hooks/useCalendarEvents';
 import { useTasks } from '@/hooks/useTasks';
@@ -14,6 +15,8 @@ import {
   CheckSquare,
   ChevronLeft,
   ChevronRight,
+  Sparkles,
+  CalendarClock,
 } from 'lucide-react';
 import {
   format,
@@ -31,8 +34,13 @@ import {
   startOfDay,
   endOfDay,
 } from 'date-fns';
-import type { CalendarEvent, Task } from '@/types';
+import type { CalendarEvent, Task, Category } from '@/types';
 import { priorityConfig } from '@/lib/priority';
+
+interface AppContext {
+  categories: Category[];
+  onOpenChat?: (prompt?: string) => void;
+}
 
 // --- Constants ---
 
@@ -74,6 +82,7 @@ function formatHour(hour: number): string {
 // --- Main Component ---
 
 export function CalendarView() {
+  const { onOpenChat } = useOutletContext<AppContext>();
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
   const { data: events, isLoading, error } = useCalendarEvents();
   const { tasks } = useTasks();
@@ -126,13 +135,15 @@ export function CalendarView() {
       ? `${format(weekStart, 'MMMM d')} \u2013 ${format(weekEndDate, 'd, yyyy')}`
       : `${format(weekStart, 'MMM d')} \u2013 ${format(weekEndDate, 'MMM d, yyyy')}`;
 
+  const pendingTaskCount = tasks.filter((t) => t.status !== 'done' && t.due_date).length;
+
   return (
     <div className="space-y-3">
       {/* Header & navigation */}
       <motion.div
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between"
+        className="flex items-center justify-between flex-wrap gap-2"
       >
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold tracking-tight">Calendar</h1>
@@ -165,8 +176,32 @@ export function CalendarView() {
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
+          <span className="text-sm font-medium text-muted-foreground tabular-nums hidden sm:inline">
+            {weekLabel}
+          </span>
         </div>
-        <p className="text-sm font-medium text-muted-foreground tabular-nums">{weekLabel}</p>
+
+        {/* AI action buttons */}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1.5 text-xs"
+            onClick={() => onOpenChat?.('Plan my day based on my current tasks, calendar events, and priorities. Suggest a schedule.')}
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            Plan My Day
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1.5 text-xs"
+            onClick={() => onOpenChat?.(`I have ${pendingTaskCount} tasks with due dates. Help me auto-schedule them across my week for the best productivity. Consider priorities and deadlines.`)}
+          >
+            <CalendarClock className="h-3.5 w-3.5" />
+            Auto-Schedule
+          </Button>
+        </div>
       </motion.div>
 
       {/* Loading skeleton */}
@@ -186,13 +221,13 @@ export function CalendarView() {
       {!isLoading && (
         <>
           <div className="hidden md:block">
-            <WeekGrid weekDays={weekDays} itemsByDay={itemsByDay} />
+            <WeekGrid weekDays={weekDays} itemsByDay={itemsByDay} onOpenChat={onOpenChat} />
           </div>
           <div className="md:hidden">
             {weekItems.length > 0 ? (
               <MobileTimeline items={weekItems} />
             ) : (
-              <EmptyState error={error} />
+              <EmptyState error={error} onOpenChat={onOpenChat} />
             )}
           </div>
         </>
@@ -201,16 +236,25 @@ export function CalendarView() {
   );
 }
 
-function EmptyState({ error }: { error: unknown }) {
+function EmptyState({ error, onOpenChat }: { error: unknown; onOpenChat?: (prompt?: string) => void }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center">
       <CalendarX2 className="w-10 h-10 text-muted-foreground/30 mb-3" />
       <h3 className="text-sm font-medium mb-1">No events this week</h3>
-      <p className="text-xs text-muted-foreground max-w-xs">
+      <p className="text-xs text-muted-foreground max-w-xs mb-4">
         {error
           ? 'Connect your Google account in Settings to see calendar events.'
           : "Create tasks with due dates and they'll appear here."}
       </p>
+      <Button
+        variant="outline"
+        size="sm"
+        className="gap-1.5 text-xs"
+        onClick={() => onOpenChat?.('Help me plan my week. What tasks should I create and schedule?')}
+      >
+        <Sparkles className="h-3.5 w-3.5" />
+        Ask AI to plan your week
+      </Button>
     </div>
   );
 }
@@ -220,11 +264,14 @@ function EmptyState({ error }: { error: unknown }) {
 function WeekGrid({
   weekDays,
   itemsByDay,
+  onOpenChat,
 }: {
   weekDays: Date[];
   itemsByDay: CalendarItem[][];
+  onOpenChat?: (prompt?: string) => void;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const hasAnyItems = itemsByDay.some((d) => d.length > 0);
 
   useEffect(() => {
     if (!scrollRef.current) return;
@@ -276,7 +323,7 @@ function WeekGrid({
       </div>
 
       {/* Scrollable time grid */}
-      <div ref={scrollRef} className="overflow-y-auto" style={{ height: 'calc(100vh - 12rem)' }}>
+      <div ref={scrollRef} className="overflow-y-auto relative" style={{ height: 'calc(100vh - 12rem)' }}>
         <div className="flex relative" style={{ height: `${GRID_HEIGHT}px` }}>
           {/* Time gutter */}
           <div className="w-[52px] shrink-0 relative border-r border-border/20">
@@ -329,10 +376,13 @@ function WeekGrid({
                 return (
                   <div
                     key={dayIndex}
-                    className={`relative border-l border-border/20 first:border-l-0 ${
+                    className={`relative border-l border-border/20 first:border-l-0 group/col ${
                       today ? 'bg-primary/[0.02]' : ''
                     }`}
                   >
+                    {/* Column hover highlight */}
+                    <div className="absolute inset-0 bg-muted/[0.03] opacity-0 group-hover/col:opacity-100 transition-opacity pointer-events-none" />
+
                     {itemsByDay[dayIndex].map((item) =>
                       item.type === 'event' ? (
                         <GridEventBlock key={item.data.id} event={item.data} />
@@ -349,6 +399,24 @@ function WeekGrid({
             <NowIndicator weekDays={weekDays} />
           </div>
         </div>
+
+        {/* AI hint overlay when grid is empty */}
+        {!hasAnyItems && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="pointer-events-auto text-center">
+              <p className="text-sm text-muted-foreground/50 mb-2">No events or tasks this week</p>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs"
+                onClick={() => onOpenChat?.('Help me plan my week. What tasks should I create and schedule?')}
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                Ask AI to plan your week
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </motion.div>
   );
@@ -367,7 +435,7 @@ function GridEventBlock({ event }: { event: CalendarEvent }) {
       href={event.htmlLink || undefined}
       target="_blank"
       rel="noopener noreferrer"
-      className={`absolute left-0.5 right-0.5 rounded border-l-2 px-1.5 py-0.5 overflow-hidden transition-colors group block ${
+      className={`absolute left-0.5 right-0.5 rounded border-l-2 px-1.5 py-0.5 overflow-hidden transition-all group/event block hover:-translate-y-px hover:shadow-md ${
         isNow
           ? 'bg-emerald-500/20 border-l-emerald-400'
           : isOver
@@ -401,7 +469,7 @@ function GridTaskBlock({ task }: { task: Task }) {
 
   return (
     <div
-      className={`absolute left-0.5 right-0.5 h-[22px] rounded border-l-2 px-1.5 flex items-center gap-1 overflow-hidden cursor-default transition-colors ${
+      className={`absolute left-0.5 right-0.5 h-[22px] rounded border-l-2 px-1.5 flex items-center gap-1 overflow-hidden cursor-default transition-all hover:-translate-y-px hover:shadow-md ${
         isOverdue
           ? 'bg-red-500/12 border-l-red-500/80'
           : `bg-primary/[0.07] ${config.border} hover:bg-primary/[0.12]`
@@ -439,7 +507,7 @@ function NowIndicator({ weekDays }: { weekDays: Date[] }) {
       style={{ top: `${top}px`, left: `${leftPct}%`, width: `${widthPct}%` }}
     >
       <div className="flex items-center -translate-y-px">
-        <div className="w-2 h-2 rounded-full bg-red-500 -ml-1 shrink-0" />
+        <div className="w-2 h-2 rounded-full bg-red-500 -ml-1 shrink-0 shadow-[0_0_6px_rgba(239,68,68,0.5)]" />
         <div className="flex-1 h-px bg-red-500/80" />
       </div>
     </div>

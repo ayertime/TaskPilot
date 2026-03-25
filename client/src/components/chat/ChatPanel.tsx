@@ -15,11 +15,21 @@ import { Trash2, Bot, Sparkles, X } from 'lucide-react';
 interface ChatPanelProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  initialPrompt?: string | null;
+  onInitialPromptHandled?: () => void;
 }
 
-export function ChatPanel({ open, onOpenChange }: ChatPanelProps) {
+export function ChatPanel({ open, onOpenChange, initialPrompt, onInitialPromptHandled }: ChatPanelProps) {
   const { messages, streaming, sendMessage, clearHistory } = useChat();
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Auto-send initial prompt when panel opens with one
+  useEffect(() => {
+    if (open && initialPrompt && !streaming) {
+      sendMessage(initialPrompt);
+      onInitialPromptHandled?.();
+    }
+  }, [open, initialPrompt]);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
