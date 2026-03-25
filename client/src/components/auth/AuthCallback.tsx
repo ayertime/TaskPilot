@@ -39,18 +39,20 @@ export function AuthCallback() {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('[AuthCallback] Event:', event, 'provider_token:', !!session?.provider_token, 'user:', session?.user?.email);
         if (event === 'PASSWORD_RECOVERY') {
           setRecoveryMode(true);
           return;
         }
-        if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session) {
+        if (session && event !== 'INITIAL_SESSION') {
           if (!tokensSaved.current && session.provider_token) {
             tokensSaved.current = true;
+            console.log('[AuthCallback] Saving provider tokens...');
             await saveProviderTokens(session);
+            console.log('[AuthCallback] Tokens saved');
           }
           if (!navigated.current) {
             navigated.current = true;
-            // After linking an identity, go back to settings
             const dest = event === 'USER_UPDATED' ? '/settings' : '/dashboard';
             navigate(dest, { replace: true });
           }
