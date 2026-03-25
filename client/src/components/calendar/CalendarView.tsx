@@ -38,8 +38,8 @@ import { priorityConfig } from '@/lib/priority';
 // --- Constants ---
 
 const HOUR_HEIGHT = 64;
-const START_HOUR = 6;
-const END_HOUR = 22;
+const START_HOUR = 0;
+const END_HOUR = 24;
 const HOURS = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => START_HOUR + i);
 const GRID_HEIGHT = HOURS.length * HOUR_HEIGHT;
 
