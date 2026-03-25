@@ -3,7 +3,7 @@
 **Version:** 1.0
 **Author:** Philip Civitello
 **Date:** March 2026
-**Status:** In Development
+**Status:** Released (v1.0)
 
 ---
 
@@ -88,7 +88,7 @@ Supabase (PostgreSQL)
 ### 3.1 Task Management
 
 **Kanban Board**
-- Three-column layout: To Do, In Progress, Done
+- Three-column layout: Not Started, In Progress, Completed
 - Drag-and-drop reordering within and between columns via @dnd-kit
 - Animated card transitions with Motion
 - Position persistence across sessions
@@ -248,19 +248,25 @@ The scheduler is the core differentiating feature of TaskPilot.
 - Yahoo OAuth (coming soon)
 - Slack (coming soon)
 - Email and password signup with email confirmation
+- Duplicate email detection on signup (friendly error message)
 
 **OAuth Token Management**
 - Access tokens refreshed automatically when expired (via refresh token + client credentials)
-- Tokens stored in profiles table and managed by a centralized oauth-token-service
-- AuthCallback page captures provider tokens during OAuth redirect flow
-- No manual reconnection needed after initial setup
+- Tokens encrypted at rest with AES-256-GCM and stored in profiles table
+- Managed by a centralized oauth-token-service with backward compatibility (auto-detects plaintext vs encrypted)
+- AuthCallback page captures provider tokens via onAuthStateChange (only reliable source during OAuth redirect)
+- Identity linking via linkIdentity (connect Google to existing email/password account without changing primary email)
+- Disconnect button in Settings to unlink a connected Google account
+- Provider detection uses app_metadata.providers array (not app_metadata.provider) for linked identities
 
 **Security**
 - JWT-based session management via Supabase
 - Row Level Security on all database tables
 - Users can only access their own data
-- OAuth tokens stored securely for API access (email, calendar)
+- OAuth tokens encrypted at rest with AES-256-GCM (application-layer encryption)
+- SSRF protection on web search tool (blocks private IPs, IPv6 loopback, RFC 1918 ranges)
 - Protected routes redirect unauthenticated users to login
+- Forgot password flow with email reset link and inline password update form
 
 ### 3.6 User Customization
 
@@ -271,6 +277,8 @@ The scheduler is the core differentiating feature of TaskPilot.
 - Timezone (dropdown of all IANA timezones, used for scheduling and header clock)
 - Smart Sync toggle (enable/disable automatic email and calendar syncing)
 - Sync interval (1h, 3h, 5h, 12h, or once a day)
+- Google account connect/disconnect/reconnect in Settings
+- Delete account with full data cleanup and redirect to login
 
 ### 3.7 Activity Log
 
@@ -487,6 +495,7 @@ All endpoints except /api/health require JWT authentication.
 | 7 | UI polish (tinted neutrals, glassmorphism, list view), new-user tutorial, chat cleanup (scheduler messages hidden), drag-and-drop performance fixes |
 | 8 | Browser notifications (Notification API), PWA (vite-plugin-pwa, installable on all devices), polished README, deployment (Vercel + Railway) |
 | 9 | Real-time agent monitoring (live progress steps, expandable activity details), in-app Email and Calendar views, weekly calendar grid, tasks on calendar, email reply detection badges, email action banner, smart task classification (manual vs automatable), sent email detection, replied email rendering on calendar, mobile real-time updates, clear completed tasks, UI polish (task form redesign, sidebar, landing page mobile fixes), updated landing page and tutorial with new features |
+| 10 | Security hardening (AES-256-GCM token encryption, SSRF protection, input validation), forgot password flow, duplicate email signup detection, Google identity linking (linkIdentity instead of signInWithOAuth), disconnect Google button, optimistic task creation dialog, column rename (Not Started/Completed), delete account improvements, tutorial reset on account recreation, v1.0 release tag |
 
 ### 6.2 Deployment
 
@@ -504,6 +513,7 @@ All endpoints except /api/health require JWT authentication.
 - TAVILY_API_KEY
 - OPENWEATHERMAP_API_KEY
 - GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET (for token refresh)
+- TOKEN_ENCRYPTION_KEY (64-char hex string for AES-256-GCM token encryption)
 
 **Client**
 - VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY
