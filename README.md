@@ -225,7 +225,7 @@ taskpilot/
 | Component | Platform |
 |-----------|----------|
 | Frontend | [Vercel](https://vercel.com) |
-| Backend | [Railway](https://railway.app) (persistent process for scheduler) |
+| Backend | [Railway](https://railway.app) — Node.js (persistent process for scheduler) |
 | Database | [Supabase](https://supabase.com) (hosted PostgreSQL) |
 
 ---
