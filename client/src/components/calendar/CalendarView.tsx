@@ -19,6 +19,7 @@ import {
   Sparkles,
   CalendarClock,
   Mail,
+  Check,
 } from 'lucide-react';
 import {
   format,
@@ -61,11 +62,10 @@ type CalendarItem =
 
 const NOISE_LABELS = ['CATEGORY_PROMOTIONS', 'CATEGORY_SOCIAL', 'CATEGORY_FORUMS', 'CATEGORY_UPDATES', 'SPAM', 'TRASH'];
 
-function isActionableEmail(email: Email): boolean {
-  if (!email.isUnread) return false;
-  if (email.hasReplied) return false;
+function isRelevantEmail(email: Email): boolean {
   if (email.labels.some((l) => NOISE_LABELS.includes(l))) return false;
-  return true;
+  // Show unread emails (needs action) or replied emails (completed state)
+  return email.isUnread || !!email.hasReplied;
 }
 
 function getEmailSender(from: string): string {
@@ -118,7 +118,7 @@ export function CalendarView() {
     }));
 
     const emailItems: CalendarItem[] = (emails || [])
-      .filter(isActionableEmail)
+      .filter(isRelevantEmail)
       .map((e) => ({ type: 'email', data: e }));
 
     return [...eventItems, ...taskItems, ...emailItems].sort(
@@ -513,15 +513,23 @@ function GridEmailBlock({ email }: { email: Email }) {
   const date = new Date(email.date);
   const top = getTopOffset(date);
   const sender = getEmailSender(email.from);
+  const replied = !!email.hasReplied;
 
   return (
     <div
-      className="absolute left-0.5 right-0.5 h-[22px] rounded border-l-2 border-l-amber-500/70 bg-amber-500/10 px-1.5 flex items-center gap-1 overflow-hidden cursor-default transition-all hover:-translate-y-px hover:shadow-md hover:bg-amber-500/[0.18]"
+      className={`absolute left-0.5 right-0.5 h-[22px] rounded border-l-2 px-1.5 flex items-center gap-1 overflow-hidden cursor-default transition-all ${
+        replied
+          ? 'border-l-muted-foreground/20 bg-muted/15 opacity-45'
+          : 'border-l-amber-500/70 bg-amber-500/10 hover:-translate-y-px hover:shadow-md hover:bg-amber-500/[0.18]'
+      }`}
       style={{ top: `${top}px` }}
-      title={`Reply to: ${sender}\n${email.subject}\nReceived: ${format(date, 'h:mm a')}`}
+      title={`${replied ? 'Replied' : 'Reply to'}: ${sender}\n${email.subject}\nReceived: ${format(date, 'h:mm a')}`}
     >
-      <Mail className="w-3 h-3 text-amber-500/70 shrink-0" />
-      <p className="text-[10px] font-medium truncate leading-none">{sender}</p>
+      <Mail className={`w-3 h-3 shrink-0 ${replied ? 'text-muted-foreground/40' : 'text-amber-500/70'}`} />
+      <p className={`text-[10px] font-medium truncate leading-none ${replied ? 'line-through text-muted-foreground/50' : ''}`}>
+        {sender}
+      </p>
+      {replied && <Check className="w-2.5 h-2.5 text-emerald-500/60 shrink-0 ml-auto" />}
     </div>
   );
 }
@@ -634,31 +642,42 @@ function MobileTaskCard({ task, index }: { task: Task; index: number }) {
 function MobileEmailCard({ email, index }: { email: Email; index: number }) {
   const date = new Date(email.date);
   const sender = getEmailSender(email.from);
+  const replied = !!email.hasReplied;
 
   return (
     <motion.div
       initial={{ opacity: 0, x: -6 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: index * 0.03 }}
-      className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 flex items-start gap-3"
+      className={`rounded-lg border p-3 flex items-start gap-3 ${
+        replied
+          ? 'border-border/30 bg-muted/5 opacity-50'
+          : 'border-amber-500/30 bg-amber-500/5'
+      }`}
     >
       <div className="w-14 shrink-0 text-center">
         <p className="text-sm font-semibold tabular-nums">{format(date, 'h:mm a')}</p>
         <p className="text-[10px] text-muted-foreground">Email</p>
       </div>
 
-      <div className="w-0.5 self-stretch rounded-full shrink-0 bg-amber-500/70" />
+      <div className={`w-0.5 self-stretch rounded-full shrink-0 ${replied ? 'bg-muted-foreground/20' : 'bg-amber-500/70'}`} />
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <Mail className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-          <p className="text-sm font-medium truncate">{sender}</p>
-          <Badge className="text-[9px] px-1 py-0 bg-amber-500/20 text-amber-400 border-amber-500/30 shrink-0">
-            Needs reply
-          </Badge>
+          <Mail className={`w-3.5 h-3.5 shrink-0 ${replied ? 'text-muted-foreground/40' : 'text-amber-500'}`} />
+          <p className={`text-sm font-medium truncate ${replied ? 'line-through text-muted-foreground' : ''}`}>{sender}</p>
+          {replied ? (
+            <Badge className="text-[9px] px-1 py-0 bg-emerald-500/15 text-emerald-400 border-emerald-500/30 shrink-0">
+              Replied
+            </Badge>
+          ) : (
+            <Badge className="text-[9px] px-1 py-0 bg-amber-500/20 text-amber-400 border-amber-500/30 shrink-0">
+              Needs reply
+            </Badge>
+          )}
         </div>
-        <p className="text-xs text-muted-foreground mt-1 truncate">{email.subject}</p>
-        <p className="text-xs text-muted-foreground/50 mt-0.5 line-clamp-1">{email.snippet}</p>
+        <p className={`text-xs mt-1 truncate ${replied ? 'text-muted-foreground/40 line-through' : 'text-muted-foreground'}`}>{email.subject}</p>
+        {!replied && <p className="text-xs text-muted-foreground/50 mt-0.5 line-clamp-1">{email.snippet}</p>}
       </div>
     </motion.div>
   );

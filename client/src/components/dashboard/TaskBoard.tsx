@@ -22,6 +22,7 @@ import { TaskDetailModal } from './TaskDetailModal';
 import { TaskFilters, type ViewMode } from './TaskFilters';
 import { TaskListView } from './TaskListView';
 import { WelcomeBackModal } from './WelcomeBackModal';
+import { EmailActionBanner } from './EmailActionBanner';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
 import { formatDistanceStrict } from 'date-fns';
@@ -341,6 +342,7 @@ export function TaskBoard() {
 
   return (
     <>
+      <EmailActionBanner />
       <TaskStats tasks={localTasks} />
 
       <TaskFilters

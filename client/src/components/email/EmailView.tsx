@@ -11,6 +11,7 @@ import {
   ChevronRight,
   AlertCircle,
   MailOpen,
+  Reply,
 } from 'lucide-react';
 import { format, isToday, isYesterday } from 'date-fns';
 import type { Email } from '@/types';
@@ -174,7 +175,11 @@ export function EmailView() {
 }
 
 function EmailList({ folder }: { folder: 'inbox' | 'sent' }) {
-  const { data: emails, isLoading, error } = useEmails(folder);
+  const { data: emails, isLoading, error } = useEmails(
+    folder,
+    undefined,
+    folder === 'inbox' ? { checkReplied: true } : undefined,
+  );
 
   if (isLoading) {
     return (
@@ -293,8 +298,16 @@ function EmailRow({ email, index }: { email: Email; index: number }) {
             >
               {sender.name}
             </span>
-            <span className="text-[11px] text-muted-foreground/60 shrink-0 tabular-nums">
-              {email.date ? formatEmailDate(email.date) : ''}
+            <span className="flex items-center gap-1.5 shrink-0">
+              {email.hasReplied && (
+                <span className="inline-flex items-center gap-0.5 text-[10px] font-medium text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-full">
+                  <Reply className="w-3 h-3" />
+                  Replied
+                </span>
+              )}
+              <span className="text-[11px] text-muted-foreground/60 tabular-nums">
+                {email.date ? formatEmailDate(email.date) : ''}
+              </span>
             </span>
           </div>
           <p
